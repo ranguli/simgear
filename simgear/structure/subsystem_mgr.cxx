@@ -1050,6 +1050,19 @@ SGSubsystemMgr::is_suspended () const
 }
 
 void
+SGSubsystemMgr::add(const char* subsystemClassId)
+{
+    if (get_subsystem(subsystemClassId) != nullptr)
+        throw sg_exception("Duplicate add of subsystem: " + std::string(subsystemClassId));
+
+    SG_LOG(SG_GENERAL, SG_DEBUG, "Adding subsystem " << subsystemClassId);
+    auto sub = create(subsystemClassId);
+    auto group = defaultGroupFor(subsystemClassId);
+    auto updateInterval = defaultUpdateIntervalFor(subsystemClassId);
+    get_group(group)->set_subsystem(subsystemClassId, sub, updateInterval);
+}
+
+void
 SGSubsystemMgr::add (const char * name, SGSubsystem * subsystem,
                      GroupType group, double min_time_sec)
 {
@@ -1058,6 +1071,38 @@ SGSubsystemMgr::add (const char * name, SGSubsystem * subsystem,
 
     SG_LOG(SG_GENERAL, SG_DEBUG, "Adding subsystem " << name);
     get_group(group)->set_subsystem(name, subsystem, min_time_sec);
+}
+
+void
+SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
+                            const std::string& subsystemInstanceId)
+{
+    addInstance(subsystemClassId, subsystemInstanceId, INVALID, -1);
+}
+
+void
+SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
+                            const std::string& subsystemInstanceId,
+                            GroupType group,
+                            double updateInterval)
+{
+    // The subsystem name.
+    const auto combinedName = subsystemClassId + SUBSYSTEM_NAME_SEPARATOR + subsystemInstanceId;
+
+    // Not unique.
+    if (get_subsystem(subsystemClassId, subsystemInstanceId) != nullptr)
+        throw sg_exception("Duplicate add of subsystem: " + combinedName);
+
+    // Create the subsytem.
+    SG_LOG(SG_GENERAL, SG_DEBUG, "Adding subsystem " << combinedName);
+    auto sub = createInstance(subsystemClassId, subsystemInstanceId);
+
+    // Store it.
+    if (group == INVALID)
+        group = defaultGroupFor(subsystemClassId.c_str());
+    if (updateInterval == -1)
+        updateInterval = defaultUpdateIntervalFor(subsystemClassId.c_str());
+    get_group(group)->set_subsystem(combinedName, sub, updateInterval);
 }
 
 bool
@@ -1234,7 +1279,7 @@ SGSubsystemMgr::create(const std::string& name)
     }
 
     if (it->instanced) {
-        throw sg_exception("SGSubsystemMgr::create: using non-instanced mode for instanced subsytem");
+        throw sg_exception("SGSubsystemMgr::create: using non-instanced mode for instanced subsytem " + name);
     }
 
     SGSubsystemRef ref = it->functor();
@@ -1256,7 +1301,7 @@ SGSubsystemMgr::createInstance(const std::string& name, const std::string& subsy
     }
 
     if (!it->instanced) {
-        throw sg_exception("SGSubsystemMgr::create: using instanced mode for non-instanced subsytem");
+        throw sg_exception("SGSubsystemMgr::create: using instanced mode for non-instanced subsytem " + name);
     }
 
     SGSubsystemRef ref = it->functor();

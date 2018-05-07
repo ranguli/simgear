@@ -531,10 +531,24 @@ public:
     // Subsystem identification.
     static const char* staticSubsystemClassId() { return "subsystem-mgr"; }
 
+    virtual void add(const char* subsystemClassId);
+
     virtual void add (const char * name,
                       SGSubsystem * subsystem,
                       GroupType group = GENERAL,
                       double min_time_sec = 0);
+
+    /**
+     * Create a subsystem instance and add it to the corresponding subsystem
+     * manager group.
+     */
+    void addInstance(const std::string& subsystemClassId,
+                     const std::string& subsystemInstanceId);
+
+    void addInstance(const std::string& subsystemClassId,
+                     const std::string& subsystemInstanceId,
+                     GroupType group,
+                     double updateInterval);
 
     /**
      * remove a subsystem, and return true on success
