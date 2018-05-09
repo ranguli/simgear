@@ -182,6 +182,16 @@ SGSubsystemMgr* SGSubsystem::get_manager() const
     return nullptr;
 }
 
+void SGSubsystem::setConfigNode(SGPropertyNode_ptr node)
+{
+    _configNode = node;
+}
+
+SGPropertyNode_ptr SGSubsystem::getConfigNode() const
+{
+    return _configNode;
+}
+
 std::string SGSubsystem::nameForState(State s)
 {
     switch (s) {
@@ -1077,14 +1087,32 @@ void
 SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
                             const std::string& subsystemInstanceId)
 {
-    addInstance(subsystemClassId, subsystemInstanceId, INVALID, -1);
+    addInstance(subsystemClassId, subsystemInstanceId, INVALID, -1, nullptr);
+}
+
+void
+SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
+                            const std::string& subsystemInstanceId,
+                            SGPropertyNode_ptr node)
+{
+    addInstance(subsystemClassId, subsystemInstanceId, INVALID, -1, node);
+}
+
+void
+SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
+                            const std::string& subsystemInstanceId,
+                            double updateInterval,
+                            SGPropertyNode_ptr node)
+{
+    addInstance(subsystemClassId, subsystemInstanceId, INVALID, updateInterval, node);
 }
 
 void
 SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
                             const std::string& subsystemInstanceId,
                             GroupType group,
-                            double updateInterval)
+                            double updateInterval,
+                            SGPropertyNode_ptr node)
 {
     // The subsystem name.
     const auto combinedName = subsystemClassId + SUBSYSTEM_NAME_SEPARATOR + subsystemInstanceId;
@@ -1103,6 +1131,10 @@ SGSubsystemMgr::addInstance(const std::string& subsystemClassId,
     if (updateInterval == -1)
         updateInterval = defaultUpdateIntervalFor(subsystemClassId.c_str());
     get_group(group)->set_subsystem(combinedName, sub, updateInterval);
+
+    // Set the property tree configuration node, if given.
+    if (node != nullptr)
+        sub->setConfigNode(node);
 }
 
 bool

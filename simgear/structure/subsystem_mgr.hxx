@@ -340,6 +340,16 @@ public:
     */
     virtual void resetTimerStats(double val = 0) { }
 
+    /**
+     * Set the property tree configuration node specific for this subsystem.
+     */
+    virtual void setConfigNode(SGPropertyNode_ptr node);
+
+    /**
+     * Retrieve the property tree configuration node specific for this subsystem.
+     */
+    SGPropertyNode_ptr getConfigNode() const;
+
 protected:
     friend class SGSubsystemMgr;
     friend class SGSubsystemGroup;
@@ -361,6 +371,8 @@ protected:
     static void* reportTimingUserData;
     static bool reportTimingStatsRequest;
     static int maxTimePerFrame_ms;
+
+    SGPropertyNode_ptr _configNode;
 
 private:
     /// composite name for the subsystem (type name and instance name if this
@@ -547,8 +559,18 @@ public:
 
     void addInstance(const std::string& subsystemClassId,
                      const std::string& subsystemInstanceId,
+                     SGPropertyNode_ptr node);
+
+    void addInstance(const std::string& subsystemClassId,
+                     const std::string& subsystemInstanceId,
+                     double updateInterval,
+                     SGPropertyNode_ptr node);
+
+    void addInstance(const std::string& subsystemClassId,
+                     const std::string& subsystemInstanceId,
                      GroupType group,
-                     double updateInterval);
+                     double updateInterval,
+                     SGPropertyNode_ptr node);
 
     /**
      * remove a subsystem, and return true on success
