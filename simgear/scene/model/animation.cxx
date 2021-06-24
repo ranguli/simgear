@@ -714,7 +714,7 @@ protected:
  * This function will take action when axis has an object-name tag and the corresponding object
  * can be found within the hierarchy.
  */
-bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, simgear::SGTransientModelData &modelData) const
+bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, SGVec3d &offset, simgear::SGTransientModelData &modelData) const
 {
     std::string axis_object_name = std::string();
     bool can_warn = true;
@@ -792,6 +792,7 @@ bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& cente
         }
         if (axisSegment)
         {
+            offset = axisSegment->getStart() - axisSegment->getEnd();
             center = 0.5*(axisSegment->getStart() + axisSegment->getEnd());
             axis = axisSegment->getEnd() - axisSegment->getStart();
             return true;
@@ -805,7 +806,8 @@ void SGAnimation::readRotationCenterAndAxis(osg::Node *_rootNode, SGVec3d& cente
                                              SGVec3d& axis, simgear::SGTransientModelData &modelData) const
 {
   center = SGVec3d::zeros();
-  if (setCenterAndAxisFromObject(_rootNode, center, axis, modelData))
+  SGVec3d offsets;
+  if (setCenterAndAxisFromObject(_rootNode, center, axis, offsets, modelData))
   {
       if (8 * SGLimitsd::min() < norm(axis))
           axis = normalize(axis);
@@ -969,9 +971,11 @@ SGTranslateAnimation::SGTranslateAnimation(simgear::SGTransientModelData &modelD
   else
     _initialValue = 0;
 
-      SGVec3d _center;
-  if (modelData.getNode() && !setCenterAndAxisFromObject(modelData.getNode(), _center, _axis, modelData))
-    _axis = readTranslateAxis(modelData.getConfigNode());
+      SGVec3d _center, _offsets;
+      if (modelData.getNode() && !setCenterAndAxisFromObject(modelData.getNode(), _center, _axis, _offsets, modelData))
+          _axis = readTranslateAxis(modelData.getConfigNode());
+      else
+          _axis = _offsets;
 }
 
 osg::Group*
