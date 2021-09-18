@@ -374,8 +374,8 @@ Compositor::setCullMask(osg::Node::NodeMask cull_mask)
         if (pass->inherit_cull_mask) {
             osg::Camera *camera = pass->camera;
             camera->setCullMask(pass->cull_mask & cull_mask);
-            camera->setCullMaskLeft(pass->cull_mask & cull_mask);
-            camera->setCullMaskRight(pass->cull_mask & cull_mask);
+            camera->setCullMaskLeft(pass->cull_mask & cull_mask & ~RIGHT_BIT);
+            camera->setCullMaskRight(pass->cull_mask & cull_mask & ~LEFT_BIT);
         }
     }
 }

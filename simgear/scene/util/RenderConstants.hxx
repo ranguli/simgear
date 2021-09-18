@@ -45,7 +45,10 @@ enum NodeMask {
     // eventually for other models?
     MODEL_BIT = (1 << 12),
     MODELLIGHT_BIT = (1 << 13),
-    PERMANENTLIGHT_BIT = (1 << 14)
+    PERMANENTLIGHT_BIT = (1 << 14),
+    // Used for per-eye VR visibility masks
+    LEFT_BIT = (1 << 15),
+    RIGHT_BIT = (1 << 16)
 };
 
 // Theory of bin numbering:

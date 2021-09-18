@@ -28,6 +28,7 @@
 #include <simgear/scene/material/EffectCullVisitor.hxx>
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
+#include <simgear/scene/util/RenderConstants.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/scene/util/SGUpdateVisitor.hxx>
 #include <simgear/structure/exception.hxx>
@@ -167,8 +168,8 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
         std::stoul(root->getStringValue("cull-mask", "0xffffffff"), nullptr, 0);
     pass->cull_mask = cull_mask;
     camera->setCullMask(pass->cull_mask);
-    camera->setCullMaskLeft(pass->cull_mask);
-    camera->setCullMaskRight(pass->cull_mask);
+    camera->setCullMaskLeft(pass->cull_mask & ~RIGHT_BIT);
+    camera->setCullMaskRight(pass->cull_mask & ~LEFT_BIT);
 
     osg::Vec4f clear_color(0.0f, 0.0f, 0.0f, 1.0f);
     const SGPropertyNode *p_clear_color = root->getChild("clear-color");
