@@ -39,6 +39,11 @@ read_value(const SGPropertyNode* configNode, SGPropertyNode* modelRoot,
 SGVec3d readTranslateAxis(const SGPropertyNode* configNode);
 
 /**
+ * Returns transform's expression if it has one.
+ */
+SGSharedPtr<SGExpressiond const> TransformExpression(osg::Transform* transform);
+
+/**
  * Base class for animation installers
  */
 class SGAnimation : protected osg::NodeVisitor {

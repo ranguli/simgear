@@ -24,6 +24,9 @@
 
 #include <osg/Transform>
 #include <simgear/math/SGMath.hxx>
+#include <simgear/structure/SGSharedPtr.hxx>
+#include <simgear/structure/SGExpression.hxx>
+
 
 class SGTranslateTransform : public osg::Transform {
 public:
@@ -49,6 +52,9 @@ public:
                                          osg::NodeVisitor* nv) const;
   virtual osg::BoundingSphere computeBound() const;
 
+  // Only used for highlighting.
+  SGSharedPtr<SGExpressiond const> _animationValue;
+  
 private:
   SGVec3d _axis;
   double _value;

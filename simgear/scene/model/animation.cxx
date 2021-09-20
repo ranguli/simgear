@@ -982,6 +982,7 @@ SGTranslateAnimation::createAnimationGroup(osg::Group& parent)
   if (_animationValue && !_animationValue->isConst()) {
     UpdateCallback* uc = new UpdateCallback(_condition, _animationValue);
     transform->setUpdateCallback(uc);
+    transform->_animationValue = _animationValue;
   }
   transform->setAxis(_axis);
   transform->setValue(_initialValue);
@@ -2494,3 +2495,16 @@ SGTexTransformAnimation::appendTexTrapezoid( const SGPropertyNode& cfg,
   trapezoid->setValue(cfg.getDoubleValue("starting-position", 0));
   updateCallback->appendTransform(trapezoid, readValue(cfg));
 }
+
+SGSharedPtr<SGExpressiond const> TransformExpression(osg::Transform* transform)
+{
+    SGSharedPtr<SGExpressiond const>    ret;
+    if (auto rot_anim_transform = dynamic_cast<SGRotAnimTransform*>(transform)) {
+        ret = rot_anim_transform->_animationValue;
+    }
+    else if (auto translate_transform = dynamic_cast<SGTranslateTransform*>(transform)) {
+        ret = translate_transform->_animationValue;
+    }
+    return ret;
+}
+
