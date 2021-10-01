@@ -147,12 +147,14 @@ class VPBTechnique : public TerrainTechnique
             osg::Vec3Array* v, 
             osg::Vec2Array* t, 
             osg::Vec3Array* n,
-            osg::Vec3Array* lights,            
-            unsigned int xsize,
+            osg::Vec3Array* lights,
+            double x0,
+            double x1,
             unsigned int ysize,
             double light_edge_spacing,
             double light_edge_height,
-            bool light_edge_offset);
+            bool light_edge_offset,
+            double elevation_offset_m);
 
         virtual void applyAreaFeatures(BufferData& buffer, Locator* masterLocator);
         virtual void generateAreaFeature(BufferData& buffer, 

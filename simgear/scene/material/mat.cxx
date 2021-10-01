@@ -284,6 +284,11 @@ SGMaterial::read_properties(const SGReaderWriterOptions* options,
     light_edge_colour[2] = props->getDoubleValue("light-edge-color/b", 1.0);
     light_edge_colour[3] = props->getDoubleValue("light-edge-color/a", 1.0);
 
+    // Line feature texture coordinates
+    line_feature_tex_x0 = props->getDoubleValue("line-feature-tex-x0", 0.0);
+    line_feature_tex_x1 = props->getDoubleValue("line-feature-tex-x1", 0.0);
+    line_feature_offset_m = props->getDoubleValue("line-feature-offset-m", 1.0);
+
     // Building properties
     building_coverage = props->getDoubleValue("building-coverage", 0.0);
     building_spacing = props->getDoubleValue("building-spacing-m", 5.0);

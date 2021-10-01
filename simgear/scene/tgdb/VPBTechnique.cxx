@@ -1674,11 +1674,13 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
                 continue;
             }    
 
-            const unsigned int xsize = mat->get_xsize();
             const unsigned int ysize = mat->get_ysize();
             const bool   light_edge_offset = mat->get_light_edge_offset();
             const double light_edge_spacing = mat->get_light_edge_spacing_m();
             const double light_edge_height = mat->get_light_edge_height_m();
+            const double x0 = mat->get_line_feature_tex_x0();
+            const double x1 = mat->get_line_feature_tex_x1();
+            const double elevation_offset_m = mat->get_line_feature_offset_m();
 
             //  Generate a geometry for this set of roads.
             osg::Vec3Array* v = new osg::Vec3Array;
@@ -1690,7 +1692,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
             auto lineFeatures = rb->getLineFeatures();
 
             for (auto r = lineFeatures.begin(); r != lineFeatures.end(); ++r) {
-                if (r->_width > minWidth) generateLineFeature(buffer, masterLocator, *r, world, v, t, n, lights, xsize, ysize, light_edge_spacing, light_edge_height, light_edge_offset);
+                if (r->_width > minWidth) generateLineFeature(buffer, masterLocator, *r, world, v, t, n, lights, x0, x1, ysize, light_edge_spacing, light_edge_height, light_edge_offset, elevation_offset_m);
             }
 
             if (v->size() == 0) continue;
@@ -1736,7 +1738,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
     if (lightbin.getNumLights() > 0) buffer._transform->addChild(createLights(lightbin, osg::Matrix::identity(), _options));
 }
 
-void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocator, LineFeatureBin::LineFeature road, osg::Vec3d modelCenter, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, osg::Vec3Array* lights, unsigned int xsize, unsigned int ysize, double light_edge_spacing, double light_edge_height, bool light_edge_offset)
+void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocator, LineFeatureBin::LineFeature road, osg::Vec3d modelCenter, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, osg::Vec3Array* lights, double x0, double x1, unsigned int ysize, double light_edge_spacing, double light_edge_height, bool light_edge_offset, double elevation_offset_m)
 {
     // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
     osg::Vec3d up = modelCenter;
@@ -1794,13 +1796,12 @@ void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocato
         spanwise.normalize();
 
         // Define the road extents
-        const osg::Vec3d a = start - last_spanwise * road._width * 0.5 + up;
-        const osg::Vec3d b = start + last_spanwise * road._width * 0.5 + up;
-        const osg::Vec3d c = end   - spanwise * road._width * 0.5 + up;
-        const osg::Vec3d d = end   + spanwise * road._width * 0.5 + up;
+        const osg::Vec3d a = start - last_spanwise * road._width * 0.5 + up * elevation_offset_m;
+        const osg::Vec3d b = start + last_spanwise * road._width * 0.5 + up * elevation_offset_m;
+        const osg::Vec3d c = end   - spanwise * road._width * 0.5 + up * elevation_offset_m;
+        const osg::Vec3d d = end   + spanwise * road._width * 0.5 + up * elevation_offset_m;
 
         // Determine the x and y texture coordinates for the edges
-        const float xTex = 1.0 / xsize;
         const float yTexA = yTexBaseA + (c-a).length() / ysize;
         const float yTexB = yTexBaseB + (d-b).length() / ysize;
 
@@ -1809,17 +1810,17 @@ void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocato
         v->push_back(b);
         v->push_back(c);
 
-        t->push_back(osg::Vec2d(0, yTexBaseA));
-        t->push_back(osg::Vec2d(xTex, yTexBaseB));
-        t->push_back(osg::Vec2d(0, yTexA));
+        t->push_back(osg::Vec2d(x0, yTexBaseA));
+        t->push_back(osg::Vec2d(x1, yTexBaseB));
+        t->push_back(osg::Vec2d(x0, yTexA));
 
         v->push_back(b);
         v->push_back(d);
         v->push_back(c);
 
-        t->push_back(osg::Vec2d(xTex, yTexBaseB));
-        t->push_back(osg::Vec2d(xTex, yTexB));
-        t->push_back(osg::Vec2d(0, yTexA));
+        t->push_back(osg::Vec2d(x1, yTexBaseB));
+        t->push_back(osg::Vec2d(x1, yTexB));
+        t->push_back(osg::Vec2d(x0, yTexA));
 
         // Normal is straight from the quad
         osg::Vec3d normal = -(end-start)^spanwise;
@@ -2211,7 +2212,7 @@ void VPBTechnique::generateCoastlineFeature(BufferData& buffer, Locator* masterL
 
         t->push_back(osg::Vec2d(xTex, yTexBaseB));
         t->push_back(osg::Vec2d(xTex, yTexB));
-        t->push_back(osg::Vec2d(0, yTexBaseA));
+        t->push_back(osg::Vec2d(0, yTexA));
 
         // Normal is straight from the quad
         osg::Vec3d normal = -(end-start)^spanwise;

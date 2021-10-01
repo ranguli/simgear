@@ -176,9 +176,7 @@ public:
   inline double get_light_coverage () const { return light_coverage; }
 
   /**
-   * Get the edge lighting for Roads etc.
-   *
-   * @return The spacing (in m) between individual lights
+   * Get the edge lighting and other parameters for line features (Roads, Railways) etc.
    */
   inline double get_light_edge_spacing_m () const { return light_edge_spacing_m; }
   inline double get_light_edge_size_cm() const { return light_edge_size_cm; };
@@ -188,6 +186,10 @@ public:
   inline double get_light_edge_angle_vertical_deg() const { return light_edge_angle_vertical_deg; };
   inline SGVec4f get_light_edge_colour() const { return light_edge_colour; };
   inline bool   get_light_edge_offset() const { return light_edge_offset; };
+  inline double get_line_feature_tex_x0() const { return line_feature_tex_x0; };
+  inline double get_line_feature_tex_x1() const { return line_feature_tex_x1; };
+  inline double get_line_feature_offset_m() const { return line_feature_offset_m; };
+  
 
   /**
    * Get the building coverage.
@@ -454,6 +456,9 @@ private:
   double light_edge_angle_vertical_deg;
   SGVec4f light_edge_colour; 
   bool   light_edge_offset;
+  double line_feature_tex_x0;
+  double line_feature_tex_x1;
+  double line_feature_offset_m;
 
   // coverage of buildings
   double building_coverage;
