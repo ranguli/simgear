@@ -762,8 +762,6 @@ struct ReaderWriterSTG::_ModelBin {
         return true;
     }
 
-    std::map<std::string, osg::ref_ptr<osg::Node> > tile_map;
-
     osg::Node* load(const SGBucket& bucket, const osgDB::Options* opt)
     {
         osg::ref_ptr<SGReaderWriterOptions> options;
@@ -822,18 +820,24 @@ struct ReaderWriterSTG::_ModelBin {
             }
 
             std::string filename = "vpb/" + bucket.gen_vpb_base() + ".osgb";
-            if (tile_map.count(filename) == 0) {
-                vpb_node = osgDB::readRefNodeFile(filename, options);
-                if (!vpb_node.valid()) {
-                    SG_LOG(SG_TERRAIN, SG_WARN, "Failure to load: " <<filename);
+
+            // Lock for this scope
+            {
+                const std::lock_guard<std::mutex> lock(ReaderWriterSTG::_tileMapMutex); 
+
+                if (_tileMap.count(filename) == 0) {
+                    vpb_node = osgDB::readRefNodeFile(filename, options);
+                    if (!vpb_node.valid()) {
+                        SG_LOG(SG_TERRAIN, SG_WARN, "Failure to load: " <<filename);
+                    }
+                    else {
+                        terrainGroup->addChild(vpb_node);
+                        _tileMap[filename] = vpb_node;
+                        SG_LOG(SG_TERRAIN, SG_INFO, "Loading: " << filename);
+                    }
+                } else {
+                    vpb_node = _tileMap[filename];
                 }
-                else {
-                    terrainGroup->addChild(vpb_node);
-                    tile_map[filename] = vpb_node;
-                    SG_LOG(SG_TERRAIN, SG_INFO, "Loading: " << filename);
-                }
-            } else {
-                vpb_node = tile_map[filename];
             }
 
             // OBJECTs include airports

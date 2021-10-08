@@ -23,6 +23,7 @@
 #define _READERWRITERSTG_HXX
 
 #include <functional>
+#include <mutex>
 
 #include <osgDB/ReaderWriter>
 #include <simgear/math/sg_types.hxx>
@@ -49,6 +50,10 @@ public:
     static void removeSTGObjectHandler(const std::string &token, STGObjectCallback callback);
 private:
     struct _ModelBin;
+
+    inline static std::map<std::string, osg::ref_ptr<osg::Node> > _tileMap;
+    inline static std::mutex _tileMapMutex;  // protects the _lineFeatureLists;
+
 };
 
 }
