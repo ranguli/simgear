@@ -29,6 +29,7 @@
 #include <simgear/compiler.h>
 
 #include <osg/Array>
+#include <osg/Depth>
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/Node>
@@ -143,11 +144,12 @@ SGSkyDome::build( double hscale, double vscale, simgear::SGReaderWriterOptions *
     stateSet->setAttributeAndModes(shadeModel);
     stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
     stateSet->setMode(GL_FOG, osg::StateAttribute::OFF);
-    stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::ON);
     stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::ON);
     stateSet->setMode(GL_BLEND, osg::StateAttribute::OFF);
     stateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::OFF);
 
+    stateSet->setAttribute(new osg::Depth(osg::Depth::LESS, 0, 1, false));
     stateSet->setAttribute(new osg::CullFace(osg::CullFace::BACK));
 
     osg::Material* material = new osg::Material;
