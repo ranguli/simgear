@@ -996,40 +996,6 @@ public:
     }
 };
 
-class AdjustLODVisitor : public osg::NodeVisitor
-{
-public:
-    float _rangeFactor;
-    float _maxRange;
-    AdjustLODVisitor(float rangeFactor, float maxRange): osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN) 
-    {
-        _rangeFactor = rangeFactor;
-        _maxRange = maxRange;
-    }
-
-    void apply(osg::PagedLOD& node)
-    {
-        if (node.getNumChildren() == 0) return;
-
-        if (node.getNumFileNames() == 2) {
-            // We use internal knowledge of VPB to modify the LOD ranges. 
-            // The first child is the current node.  The second is the sub-tile at higher resolution.
-            // See VirtualPlanetBuild src/vpb/Destination.cpp CompositeDestination::createPagedLODScene() 
-            // lines 3330-3333
-            node.dirtyBound(); // At this point the bounds haven't been calculated, so we need to force this.
-            float maxRange = _maxRange + node.getBound().radius();
-            float cutoff = std::min(node.getBound().radius() * _rangeFactor, maxRange);
-            SG_LOG(SG_TERRAIN, SG_DEBUG, "VPB PagedLOD range " << cutoff << " " << maxRange);
-            node.setRange(0, cutoff, maxRange);
-            node.setRange(1, 0, cutoff);
-        } else {
-            SG_LOG(SG_TERRAIN, SG_ALERT, "Unexpected PagedLOD type in LOD range update");
-        }
-
-        traverse(node);
-    }
-};
-
 struct OSGOptimizePolicy : public OptimizeModelPolicy {
 
     
@@ -1054,12 +1020,6 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
 
             SGSceneFeatures* features = SGSceneFeatures::instance();
 
-            // Adjust the LOD ranges as required.
-            double rangeFactor = features->getVPBRangeFactor();
-            double maxRange = features->getVPBMaxRange();
-            AdjustLODVisitor alv = AdjustLODVisitor(rangeFactor, maxRange);
-            optimized->accept(alv);
-
             osg::ref_ptr<osgTerrain::Terrain> terrain = findTopMostNodeOfType<osgTerrain::Terrain>(optimized.get());
             osg::ref_ptr<osgTerrain::TerrainTile> terrainTile = findTopMostNodeOfType<osgTerrain::TerrainTile>(optimized.get());
 
@@ -1067,7 +1027,7 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
                 // Top level.  This is likely to have the default GeometryTechnique already assigned which we need to replace with our own
                 terrain->setSampleRatio(features->getVPBSampleRatio());
                 terrain->setVerticalScale(features->getVPBVerticalScale());
-                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt));         
+                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt));
                 if (terrainTile != NULL) {
                     terrainTile->setTerrainTechnique(new VPBTechnique(sgopt));
                     terrainTile->setDirty(true);

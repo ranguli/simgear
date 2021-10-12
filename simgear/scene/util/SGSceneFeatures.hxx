@@ -64,12 +64,6 @@ public:
     bool getVPBActive() const { return _VPBActive; }
     void setVPBActive(const bool val) { _VPBActive = val; }
 
-    float getVPBRangeFactor() const { return _VPBRangeFactor; }
-    void  setVPBRangeFactor(const float val) { _VPBRangeFactor = val; }
-
-    float getVPBMaxRange() const { return _VPBMaxRange; }
-    void  setVPBMaxRange(const float val) { _VPBMaxRange = val; }
-
     float getVPBConstraintGap() const { return _VPBConstraintGap; }
     void  setVPBConstraintGap(const float val) { _VPBConstraintGap = val; }
 
