@@ -186,9 +186,9 @@ public:
 		std::vector<std::string> phenomena;
 	};
 
-	inline const char *getData()		const { return _data; }
-	inline const char *getUnusedData()	const { return _m; }
-	inline       bool getProxy()		const { return _x_proxy; }
+    const char* getRawDataPtr();
+
+    inline       bool getProxy()		const { return _x_proxy; }
 	inline const char *getId()		const { return _icao; }
 	inline int	getYear()		const { return _year; }
 	inline int	getMonth()		const { return _month; }
@@ -244,9 +244,9 @@ protected:
 	std::string	_url;
 	int	_grpcount;
 	bool	_x_proxy;
-	char	*_data;
-	char	*_m;
-	char	_icao[5];
+    std::vector<char> _data;
+    char* _m;
+    char	_icao[5];
 	int	_year;
 	int	_month;
 	int	_day;

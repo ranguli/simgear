@@ -96,14 +96,14 @@ SGMetar::SGMetar(const string& m) :
 	_snow(false),
 	_cavok(false)
 {
-	_data = new char[m.length() + 2];	// make room for " \0"
-	strcpy(_data, m.c_str());
-	_url = _data;
-		
-	normalizeData();
+    _data.resize(m.length() + 2); // make room for " \0"
+    strcpy(_data.data(), m.c_str());
+    _url = m;
 
-	_m = _data;
-	_icao[0] = '\0';
+    normalizeData();
+
+    _m = _data.data();
+    _icao[0] = '\0';
 
 	// NOAA preample
 	if (!scanPreambleDate())
@@ -113,7 +113,6 @@ SGMetar::SGMetar(const string& m) :
 	// METAR header
 	scanType();
 	if (!scanId() || !scanDate()) {
-		delete[] _data;
 		throw sg_io_exception("metar data bogus ", sg_location(_url));
 	}
 	scanModifier();
@@ -125,7 +124,15 @@ SGMetar::SGMetar(const string& m) :
 	while (scanRwyVisRange()) ;
 	while (scanWeather()) ;
 	while (scanSkyCondition()) ;
-	scanTemperature();
+
+    if (!scanTemperature()) {
+        throw sg_io_exception("metar temperature data malformed or missing ", sg_location(_url));
+    }
+    if (!scanPressure()) {
+        throw sg_io_exception("metar pressure data malformed or missing ", sg_location(_url));
+    }
+
+    scanTemperature();
 	scanPressure();
 	while (scanSkyCondition()) ;
 	while (scanRunwayReport()) ;
@@ -139,11 +146,10 @@ SGMetar::SGMetar(const string& m) :
 	scanRemark();
 
 	if (_grpcount < 4) {
-		delete[] _data;
 		throw sg_io_exception("metar data incomplete ", sg_location(_url));
 	}
 
-	_url = "";
+    _url.clear();
 }
 
 
@@ -155,7 +161,6 @@ SGMetar::~SGMetar()
 	_clouds.clear();
 	_runways.clear();
 	_weather.clear();
-	delete[] _data;
 }
 
 
@@ -486,17 +491,24 @@ void SGMetar::useCurrentDate()
 	_month = now.tm_mon + 1;
 }
 
+const char* SGMetar::getRawDataPtr()
+{
+    return _data.data();
+}
 /**
   * Replace any number of subsequent spaces by just one space, and add
   * a trailing space. This makes scanning for things like "ALL RWY" easier.
   */
 void SGMetar::normalizeData()
 {
-	char *src, *dest;
-	for (src = dest = _data; (*dest++ = *src++); )
-		while (*src == ' ' && src[1] == ' ')
+    // TODO : use strutils::simplify here
+    char* src = _data.data();
+    char* dest = src;
+    for (; (*dest++ = *src++);) {
+        while (*src == ' ' && src[1] == ' ')
 			src++;
-	for (dest--; isspace(*--dest); ) ;
+    }
+    for (dest--; isspace(*--dest); ) ;
 	*++dest = ' ';
 	*++dest = '\0';
 }
