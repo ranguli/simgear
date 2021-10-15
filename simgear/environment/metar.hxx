@@ -186,7 +186,8 @@ public:
 		std::vector<std::string> phenomena;
 	};
 
-    const char* getRawDataPtr();
+    std::string getDataString() const;
+    std::string getUnparsedData() const;
 
     inline       bool getProxy()		const { return _x_proxy; }
 	inline const char *getId()		const { return _icao; }

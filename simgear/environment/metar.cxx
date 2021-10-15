@@ -491,9 +491,17 @@ void SGMetar::useCurrentDate()
 	_month = now.tm_mon + 1;
 }
 
-const char* SGMetar::getRawDataPtr()
+std::string SGMetar::getDataString() const
 {
-    return _data.data();
+    return std::string{_data.data()};
+}
+
+std::string SGMetar::getUnparsedData() const
+{
+    if (!_m || (strlen(_m) < 1))
+        return {};
+
+    return std::string{_m};
 }
 /**
   * Replace any number of subsequent spaces by just one space, and add
