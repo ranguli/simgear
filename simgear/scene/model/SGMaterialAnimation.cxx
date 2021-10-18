@@ -419,6 +419,11 @@ private:
 SGMaterialAnimation::SGMaterialAnimation(simgear::SGTransientModelData &modelData) :
     SGAnimation(modelData), texturePathList(modelData.getOptions()->getDatabasePathList())
 {
+    // add model directory to texture path - this allows short paths relative to 
+    // model root.
+    SGPath modelDir(_modelData.getPath());
+    texturePathList.insert(texturePathList.begin(), modelDir.dir());
+
   if (modelData.getConfigNode()->hasChild("global"))
     SG_LOG(SG_IO, SG_DEV_ALERT, modelData.getPath() <<
            ": Use of <global> in material animation is "
