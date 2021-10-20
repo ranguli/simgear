@@ -137,7 +137,7 @@ class VPBTechnique : public TerrainTechnique
 
         virtual double det2(const osg::Vec2d a, const osg::Vec2d b);
 
-        virtual void applyTrees(BufferData& buffer, Locator* masterLocator);
+        virtual void applyMaterials(BufferData& buffer, Locator* masterLocator);
 
         virtual void applyLineFeatures(BufferData& buffer, Locator* masterLocator);
         virtual void generateLineFeature(BufferData& buffer, 
@@ -181,12 +181,12 @@ class VPBTechnique : public TerrainTechnique
 
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up);
 
-        // Vegetation constraints ensure that trees don't grow in roads.  Unlike the elevation constraints, 
+        // Random Objects constraints ensure that random objects like trees,
+        // lights, buildings etc do not appear on roads. Unlike the elevation constraints,
         // we only use these internally and during generation of this particular tile.
-        virtual void addVegetationConstraint(osg::ref_ptr<osg::Node> constraint);
-        virtual void removeVegetationConstraint(osg::ref_ptr<osg::Node> constraint);
-        virtual bool checkAgainstVegetationConstraints(osg::Vec3d origin, osg::Vec3d vertex);
-        virtual void clearVegetationConstraints();
+        virtual void addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
+        virtual void removeRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
+        virtual void clearRandomObjectsConstraints();
 
         OpenThreads::Mutex                  _writeBufferMutex;
         osg::ref_ptr<BufferData>            _currentBufferData;
@@ -199,7 +199,7 @@ class VPBTechnique : public TerrainTechnique
         osg::Matrix3                        _filterMatrix;
         osg::ref_ptr<osg::Uniform>          _filterMatrixUniform;
         osg::ref_ptr<SGReaderWriterOptions> _options;
-        osg::ref_ptr<osg::Group>            _vegetationConstraintGroup;
+        osg::ref_ptr<osg::Group>            _randomObjectsConstraintGroup;
 
         inline static osg::ref_ptr<osg::Group>  _elevationConstraintGroup = new osg::Group();
         inline static std::mutex _elevationConstraintMutex;  // protects the _elevationConstraintGroup;

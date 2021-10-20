@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <cmath>
-
+#include <tuple>
 
 #include <osgTerrain/TerrainTile>
 #include <osgTerrain/Terrain>
@@ -51,7 +51,7 @@
 #include <simgear/scene/util/SGSceneFeatures.hxx>
 
 #include "VPBTechnique.hxx"
-#include "TreeBin.hxx"
+#include "VPBMaterialHandler.hxx"
 
 using namespace osgTerrain;
 using namespace simgear;
@@ -61,7 +61,7 @@ VPBTechnique::VPBTechnique()
     setFilterBias(0);
     setFilterWidth(0.1);
     setFilterMatrixAs(GAUSSIAN);
-    _vegetationConstraintGroup = new osg::Group();
+    _randomObjectsConstraintGroup = new osg::Group();
 }
 
 VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options)
@@ -70,7 +70,7 @@ VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options)
     setFilterWidth(0.1);
     setFilterMatrixAs(GAUSSIAN);
     setOptions(options);
-    _vegetationConstraintGroup = new osg::Group();
+    _randomObjectsConstraintGroup = new osg::Group();
 }
 
 VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
@@ -80,7 +80,7 @@ VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
     setFilterWidth(gt._filterWidth);
     setFilterMatrix(gt._filterMatrix);
     setOptions(gt._options);
-    _vegetationConstraintGroup = new osg::Group();
+    _randomObjectsConstraintGroup = new osg::Group();
 }
 
 VPBTechnique::~VPBTechnique()
@@ -172,7 +172,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
             applyLineFeatures(*buffer, masterLocator);
             applyAreaFeatures(*buffer, masterLocator);
             applyCoastline(*buffer, masterLocator);
-            applyTrees(*buffer, masterLocator);
+            applyMaterials(*buffer, masterLocator);
         }
     }
     else
@@ -183,7 +183,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
         applyLineFeatures(*buffer, masterLocator);
         applyAreaFeatures(*buffer, masterLocator);
         applyCoastline(*buffer, masterLocator);
-        applyTrees(*buffer, masterLocator);
+        applyMaterials(*buffer, masterLocator);
     }
 
     if (buffer->_transform.valid()) buffer->_transform->setThreadSafeRefUnref(true);
@@ -1332,29 +1332,28 @@ double VPBTechnique::det2(const osg::Vec2d a, const osg::Vec2d b)
     return a.x() * b.y() - b.x() * a.y();
 }
 
-void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
+void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
 {
     pc_init(2718281);
 
-    bool use_random_vegetation = false;
-    float vegetation_density = 1.0; 
-    int vegetation_lod_level = 6;
+    // Define all possible handlers
+    VegetationHandler vegetationHandler;
+    RandomLightsHandler lightsHandler;
+    std::vector<VPBMaterialHandler *> all_handlers{&vegetationHandler,
+                                                   &lightsHandler};
 
-    SGPropertyNode* propertyNode = _options->getPropertyNode().get();
-
-    if (propertyNode) {
-        use_random_vegetation = propertyNode->getBoolValue("/sim/rendering/random-vegetation", use_random_vegetation);
-        vegetation_density = propertyNode->getFloatValue("/sim/rendering/vegetation-density", vegetation_density);
-        vegetation_lod_level = propertyNode->getIntValue("/sim/rendering/static-lod/vegetation-lod-level", vegetation_lod_level);
+    // Filter out handlers that do not apply to the current tile
+    std::vector<VPBMaterialHandler *> handlers;
+    for (const auto handler : all_handlers) {
+        if (handler->initialize(_options, _terrainTile)) {
+            handlers.push_back(handler);
+        }
     }
 
-    // Do not generate vegetation for tiles too far away or if we explicitly don't generate vegetation
-    if ((!use_random_vegetation) || (_terrainTile->getTileID().level < vegetation_lod_level)) {
+    // If no handlers are relevant to the current tile, return immediately
+    if (handlers.size() == 0) {
         return;
     }
-
-    // Determine tree spacing, assuming base density of 1 tree per 100m^2, though spacing
-    // is linear here, as is the /sim/rendering/vegetation-density property.
 
     SGMaterialLibPtr matlib  = _options->getMaterialLib();
     SGMaterial* mat = 0;
@@ -1387,8 +1386,6 @@ void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
         return;
     }
 
-    SGTreeBinList randomForest;
-
     const osg::Vec3* vertexPtr = static_cast<const osg::Vec3*>(vertices->getDataPointer());
     const osg::Vec2* texPtr = static_cast<const osg::Vec2*>(texture_coords->getDataPointer());
 
@@ -1405,8 +1402,6 @@ void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
     const double C            = r_E_lon * cos(lat);
     const double one_over_C   = (fabs(C) > 1.0e-4) ? (1.0 / C) : 0.0;
     const double one_over_r_E = 1.0 / r_E_lat;
-    const double delta_lat    = sqrt(1000.0 / vegetation_density) / r_E_lat;
-    const double delta_lon    = sqrt(1000.0 / vegetation_density) / (r_E_lon * cos(loc.getLatitudeRad()));
 
     const osg::Matrix rotation_vertices_c = osg::Matrix::rotate(
      M_PI / 2 - clat, osg::Vec3d(0.0, 1.0, 0.0),
@@ -1418,18 +1413,24 @@ void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
      lon, osg::Vec3d(0.0, 0.0, 1.0),
      0.0, osg::Vec3d(1.0, 0.0, 0.0));
 
-    // At the detailed tile level we are generating vegetation, and
+    // Compute lat/lon deltas for each handler
+    std::vector<std::pair<double, double>> deltas;
+    for (const auto handler : handlers) {
+        handler->setLocation(loc, r_E_lat, r_E_lon);
+        deltas.push_back(
+            std::make_pair(handler->get_delta_lat(), handler->get_delta_lon()));
+    }
+
+    // At the detailed tile level we are handling various materials, and
     // as we walk across the tile in a scanline, the landclass doesn't
     // change regularly from point to point.  Cache the required
     // material information for the current landclass to reduce the
     // number of lookups into the material cache.
     int current_land_class = -1;
     osg::Texture2D* object_mask = NULL;
-    osg::Image* img = NULL;
+    osg::Image* object_mask_image = NULL;
     float x_scale = 1000.0;
     float y_scale = 1000.0;
-    TreeBin* bin = NULL;
-    float wood_coverage = 0.0;
 
     for (unsigned int i = 0; i < triangle_count; i++)
     {
@@ -1460,12 +1461,40 @@ void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
         const osg::Vec2d ll_x = osg::Vec2d((v_1_g.y() - v_0_g.y()) * one_over_C, -(v_1_g.x() - v_0_g.x()) * one_over_r_E);
         const osg::Vec2d ll_y = osg::Vec2d((v_2_g.y() - v_0_g.y()) * one_over_C, -(v_2_g.x() - v_0_g.x()) * one_over_r_E);
 
-        const int off_x = ll_O.x() / delta_lon;
-        const int off_y = ll_O.y() / delta_lat;
-        const int min_lon = min(min(ll_0.x(), ll_1.x()), ll_2.x()) / delta_lon;
-        const int max_lon = max(max(ll_0.x(), ll_1.x()), ll_2.x()) / delta_lon;
-        const int min_lat = min(min(ll_0.y(), ll_1.y()), ll_2.y()) / delta_lat;
-        const int max_lat = max(max(ll_0.y(), ll_1.y()), ll_2.y()) / delta_lat;
+        // Each handler may have a different delta/granularity in the scanline.
+        // To take advantage of the material caching, we first collect all the
+        // scan points from all the handlers for the current tile, and then scan
+        // them in spatial order, calling the appropriate handler for each
+        // point.
+        //
+        // We will insert <lon, lat, handler*> elements in a vector, and sort
+        // all elements in increasing lon followed by increase lat, mimicking a
+        // scanline reading approach for efficient landclass caching
+        std::vector<std::tuple<double, double, VPBMaterialHandler *>>
+            scan_points;
+
+        for(auto iter=0; iter!=handlers.size(); iter++) {
+            const double delta_lat = deltas[iter].first;
+            const double delta_lon = deltas[iter].second;
+            const int off_x = ll_O.x() / delta_lon;
+            const int off_y = ll_O.y() / delta_lat;
+            const int min_lon = min(min(ll_0.x(), ll_1.x()), ll_2.x()) / delta_lon;
+            const int max_lon = max(max(ll_0.x(), ll_1.x()), ll_2.x()) / delta_lon;
+            const int min_lat = min(min(ll_0.y(), ll_1.y()), ll_2.y()) / delta_lat;
+            const int max_lat = max(max(ll_0.y(), ll_1.y()), ll_2.y()) / delta_lat;
+
+            for (int lat_int = min_lat - 1; lat_int <= max_lat + 1; lat_int++) {
+                const double lat = (lat_int - off_y) * delta_lat;
+                for (int lon_int = min_lon - 1; lon_int <= max_lon + 1;
+                     lon_int++) {
+                    const double lon = (lon_int - off_x) * delta_lon;
+                    scan_points.push_back(
+                        std::make_tuple(lon, lat, handlers[iter]));
+                }
+            }
+        }
+
+        std::sort(scan_points.begin(), scan_points.end());
 
         const osg::Vec2 t0 = texPtr[i0];
         const osg::Vec2 t1 = texPtr[i1];
@@ -1477,142 +1506,85 @@ void VPBTechnique::applyTrees(BufferData& buffer, Locator* masterLocator)
 
         const double D = det2(ll_x, ll_y);
 
-        for (int lat_int = min_lat - 1; lat_int <= max_lat + 1; lat_int++)
-        {
-            const double lat = (lat_int - off_y) * delta_lat;
+        for(auto const &point : scan_points) {
+            const double lon = get<0>(point);
+            const double lat = get<1>(point);
+            VPBMaterialHandler *handler = get<2>(point);
 
-            for (int lon_int = min_lon - 1; lon_int <= max_lon + 1; lon_int++)
-            {
-                const double lon = (lon_int - off_x) * delta_lon;
-                osg::Vec2d p(lon, lat);
-                double x = det2(ll_x, p) / D;
-                double y = det2(p, ll_y) / D;
+            osg::Vec2d p(lon, lat);
+            double x = det2(ll_x, p) / D;
+            double y = det2(p, ll_y) / D;
 
-                if ((x < 0.0) || (y < 0.0) || (x + y > 1.0)) continue;
+            if ((x < 0.0) || (y < 0.0) || (x + y > 1.0)) continue;
 
-                if (!image) {
-                    SG_LOG(SG_TERRAIN, SG_ALERT, "Image disappeared under my feet.");
+            if (!image) {
+                SG_LOG(SG_TERRAIN, SG_ALERT, "Image disappeared under my feet.");
+                continue;
+            }
+
+            osg::Vec2 t = osg::Vec2(t_0 + t_x * x + t_y * y);
+            unsigned int tx = (unsigned int) (image->s() * t.x()) % image->s();
+            unsigned int ty = (unsigned int) (image->t() * t.y()) % image->t();
+            const osg::Vec4 tc = image->getColor(tx, ty);
+            const int land_class = int(round(tc.x() * 255.0));
+
+            if (land_class != current_land_class) {
+                // Use temporal locality to reduce material lookup by caching
+                // some elements for future lookups against the same landclass.
+                mat = matcache->find(land_class);
+                if (!mat) continue;
+
+                current_land_class = land_class;
+
+                // We need to notify all handlers of material change, but
+                // only consider the current handler being processed for
+                // skipping the loop
+                bool current_handler_result = true;
+                for (const auto temp_handler : handlers) {
+                    bool result = temp_handler->handleNewMaterial(mat);
+
+                    if (temp_handler == handler) {
+                        current_handler_result = result;
+                    }
+                }
+
+                if (!current_handler_result) {
                     continue;
                 }
 
-                osg::Vec2 t = osg::Vec2(t_0 + t_x * x + t_y * y);
-                unsigned int tx = (unsigned int) (image->s() * t.x()) % image->s();
-                unsigned int ty = (unsigned int) (image->t() * t.y()) % image->t();
-                const osg::Vec4 tc = image->getColor(tx, ty);
-                const int land_class = int(round(tc.x() * 255.0));
-
-                if (land_class != current_land_class) {
-                    // Use temporal locality to reduce material lookup by caching
-                    // some elements for future lookups against the same landclass.
-                    mat = matcache->find(land_class);
-                    if (!mat) continue;
-
-                    current_land_class = land_class;
-
-                    if (mat->get_wood_coverage() <= 0) continue;
-
-                    wood_coverage = 2000.0 / mat->get_wood_coverage();
-                    object_mask = mat->get_one_object_mask(0);
-                    if (object_mask != NULL) {
-                        img = object_mask->getImage();
-                        if (!img || ! img->valid()) continue;
-
-                        // Texture coordinates run [0..1][0..1] across the entire tile whereas
-                        // the texure itself has defined dimensions in m.
-                        // We therefore need to use the tile width and height to determine the correct
-                        // texture coordinate transformation.
-                        x_scale = buffer._width / 1000.0;
-                        y_scale = buffer._height / 1000.0;
-
-                        if (mat->get_xsize() > 0.0) { x_scale = buffer._width / mat->get_xsize(); }
-                        if (mat->get_ysize() > 0.0) { y_scale = buffer._height / mat->get_ysize(); }
-                    }
-
-                    bool found = false;
-
-                    for (SGTreeBinList::iterator iter = randomForest.begin(); iter != randomForest.end(); iter++) {
-
-                        bin = *iter;
-
-                        if ((bin->texture           == mat->get_tree_texture()  ) &&
-                            (bin->teffect           == mat->get_tree_effect()   ) &&
-                            (bin->texture_varieties == mat->get_tree_varieties()) &&
-                            (bin->range             == mat->get_tree_range()    ) &&
-                            (bin->width             == mat->get_tree_width()    ) &&
-                            (bin->height            == mat->get_tree_height()   )   ) {
-                                found = true;
-                                break;
-                        }
-                    }
-                    
-                    if (!found) {
-                        bin = new TreeBin();
-                        bin->texture = mat->get_tree_texture();
-                        SG_LOG(SG_TERRAIN, SG_DEBUG, "Tree texture " << bin->texture);
-                        bin->teffect = mat->get_tree_effect();
-                        SG_LOG(SG_TERRAIN, SG_DEBUG, "Tree effect " << bin->teffect);
-                        bin->range   = mat->get_tree_range();
-                        bin->width   = mat->get_tree_width();
-                        bin->height  = mat->get_tree_height();
-                        bin->texture_varieties = mat->get_tree_varieties();
-                        randomForest.push_back(bin);
-                    }
-                }
-
-                if (!mat) continue;
-                if (mat->get_wood_coverage() <= 0) continue;
-                if (pc_map_rand(lon_int, lat_int, 2) > wood_coverage) continue;
-
-                if (mat->get_is_plantation()) {
-                    p = osg::Vec2d(lon + 0.1 * delta_lon * pc_map_norm(lon_int, lat_int, 0),
-                                   lat + 0.1 * delta_lat * pc_map_norm(lon_int, lat_int, 1));
-                } else {
-                    p = osg::Vec2d(lon + delta_lon * pc_map_rand(lon_int, lat_int, 0),
-                                   lat + delta_lat * pc_map_rand(lon_int, lat_int, 1));
-                }
-
-                x = det2(ll_x, p) / D;
-                y = det2(p, ll_y) / D;
-
-                // Check for invalid triangle coordinates.
-                if ((x < 0.0) || (y < 0.0) || (x + y > 1.0)) continue;
-
-                // Check against any object mask
+                object_mask = mat->get_one_object_mask(0);
+                object_mask_image = NULL;
                 if (object_mask != NULL) {
-                    t = osg::Vec2(t_0 + t_x * x + t_y * y);
-                    unsigned int x = (unsigned int) (img->s() * t.x() * x_scale) % img->s();
-                    unsigned int y = (unsigned int) (img->t() * t.y() * y_scale) % img->t();
+                    object_mask_image = object_mask->getImage();
+                    if (!object_mask_image || ! object_mask_image->valid()) {
+                        object_mask_image = NULL;
+                        continue;
+                    }
 
-                    // green (for trees) channel
-                    if (pc_map_rand(lon_int, lat_int, 3) > img->getColor(x, y).g()) continue;
+                    // Texture coordinates run [0..1][0..1] across the entire tile whereas
+                    // the texure itself has defined dimensions in m.
+                    // We therefore need to use the tile width and height to determine the correct
+                    // texture coordinate transformation.
+                    x_scale = buffer._width / 1000.0;
+                    y_scale = buffer._height / 1000.0;
+
+                    if (mat->get_xsize() > 0.0) { x_scale = buffer._width / mat->get_xsize(); }
+                    if (mat->get_ysize() > 0.0) { y_scale = buffer._height / mat->get_ysize(); }
                 }
-                
-                // Check against constraints to stop trees growing from roads;
-                const osg::Vec3 vp = v_x * x + v_y * y + v_0;
-                if (checkAgainstVegetationConstraints(vp - up*100, vp + up*100)) continue;
-
-                bin->insert(SGVec3f(vp.x(), vp.y(), vp.z()), SGVec3f(n.x(), n.y(), n.z()));
             }
+
+            if (!mat) continue;
+
+            handler->handleIteration(mat, object_mask_image,
+                                     _randomObjectsConstraintGroup, lon, lat, p,
+                                     D, ll_O, ll_x, ll_y, t_0, t_x, t_y, v_0,
+                                     v_x, v_y, x_scale, y_scale, n, up);
         }
     }
 
-    if (randomForest.size() > 0) {
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "Adding Random Forest " << randomForest.size());
-        for (auto iter = randomForest.begin(); iter != randomForest.end(); iter++) {
-            TreeBin* treeBin = *iter;
-            SG_LOG(SG_TERRAIN, SG_DEBUG, "  " << treeBin->texture << " " << treeBin->getNumTrees());
-        }
-
-        const osg::Matrixd R_vert = osg::Matrixd::rotate(
-        M_PI / 2.0 - loc.getLatitudeRad(), osg::Vec3d(0.0, 1.0, 0.0),
-        loc.getLongitudeRad(), osg::Vec3d(0.0, 0.0, 1.0),
-        0.0, osg::Vec3d(1.0, 0.0, 0.0));
-
-        osg::Group* trees = createForest(randomForest, R_vert, _options, 1);
-        trees->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
-        buffer._transform->addChild(trees);
+    for (const auto handler : handlers) {
+        handler->finish(_options, buffer._transform, loc);
     }
-
 }
 
 void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
@@ -1716,7 +1688,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
             geode->setEffect(mat->get_one_effect(0));
             geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
             buffer._transform->addChild(geode);
-            addVegetationConstraint(geode);
+            addRandomObjectsConstraint(geode);
 
             if (lights->size() > 0) {
                 const double size = mat->get_light_edge_size_cm();
@@ -2344,33 +2316,24 @@ osg::Vec3d VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg
     }
 }
 
-// Add an osg object representing a vegetation contraint on the terrain mesh.  The generated terrain mesh will not include any vegetation
-// intersection with the constraint model.
-void VPBTechnique::addVegetationConstraint(osg::ref_ptr<osg::Node> constraint)
+// Add an osg object representing a contraint on the terrain mesh. The generated
+// terrain mesh will not include any random objects intersecting with the
+// constraint model.
+void VPBTechnique::addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint)
 { 
-    _vegetationConstraintGroup->addChild(constraint.get()); 
+    _randomObjectsConstraintGroup->addChild(constraint.get());
 }
 
 // Remove a previously added constraint.  E.g on model unload.
-void VPBTechnique::removeVegetationConstraint(osg::ref_ptr<osg::Node> constraint)
+void VPBTechnique::removeRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint)
 { 
-    _vegetationConstraintGroup->removeChild(constraint.get()); 
+    _randomObjectsConstraintGroup->removeChild(constraint.get());
 }
 
 // Remove all the constraints, which will still be referenced by the terrain tile itself.
-void VPBTechnique::clearVegetationConstraints()
+void VPBTechnique::clearRandomObjectsConstraints()
 { 
-    _vegetationConstraintGroup->removeChildren(0, _vegetationConstraintGroup->getNumChildren());
-}
-
-// Check a given vertex against any vegetation constraints  E.g. to ensure we don't get trees sprouting from roads or runways.  
-bool VPBTechnique::checkAgainstVegetationConstraints(osg::Vec3d origin, osg::Vec3d vertex)
-{
-    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
-    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
-    osgUtil::IntersectionVisitor visitor(intersector.get());
-    _vegetationConstraintGroup->accept(visitor);
-    return intersector->containsIntersections();
+    _randomObjectsConstraintGroup->removeChildren(0, _randomObjectsConstraintGroup->getNumChildren());
 }
 
 void VPBTechnique::clearConstraints()

@@ -24,6 +24,7 @@ set(HEADERS
     ShaderGeometry.hxx
     TreeBin.hxx
     VPBElevationSlice.hxx
+    VPBMaterialHandler.hxx
     VPBTileBounds.hxx
     VPBTechnique.hxx
     apt_signs.hxx
@@ -47,6 +48,7 @@ set(SOURCES
     ShaderGeometry.cxx
     TreeBin.cxx
     VPBElevationSlice.cxx
+    VPBMaterialHandler.cxx
     VPBTileBounds.cxx
     VPBTechnique.cxx
     apt_signs.cxx
