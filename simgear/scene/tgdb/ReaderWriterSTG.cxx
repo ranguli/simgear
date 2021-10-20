@@ -765,7 +765,6 @@ struct ReaderWriterSTG::_ModelBin {
     osg::Node* load(const SGBucket& bucket, const osgDB::Options* opt)
     {
         osg::ref_ptr<SGReaderWriterOptions> options;
-        osg::ref_ptr<osg::Node> vpb_node;
         options = SGReaderWriterOptions::copyOrCreate(opt);
         float pagedLODExpiry = atoi(options->getPluginStringData("SimGear::PAGED_LOD_EXPIRY").c_str());
 
@@ -817,27 +816,6 @@ struct ReaderWriterSTG::_ModelBin {
                 }
 
                 VPBTechnique::addCoastlineList(bucket, coastFeatures);
-            }
-
-            std::string filename = "vpb/" + bucket.gen_vpb_base() + ".osgb";
-
-            // Lock for this scope
-            {
-                const std::lock_guard<std::mutex> lock(ReaderWriterSTG::_tileMapMutex); 
-
-                if (_tileMap.count(filename) == 0) {
-                    vpb_node = osgDB::readRefNodeFile(filename, options);
-                    if (!vpb_node.valid()) {
-                        SG_LOG(SG_TERRAIN, SG_WARN, "Failure to load: " <<filename);
-                    }
-                    else {
-                        terrainGroup->addChild(vpb_node);
-                        _tileMap[filename] = vpb_node;
-                        SG_LOG(SG_TERRAIN, SG_INFO, "Loading: " << filename);
-                    }
-                } else {
-                    vpb_node = _tileMap[filename];
-                }
             }
 
             // OBJECTs include airports

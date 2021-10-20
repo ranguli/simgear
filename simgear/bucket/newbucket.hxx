@@ -183,6 +183,20 @@ public:
     }
 
     /**
+     * Generate a tile index for this bucket shared with all other buckets with the same lat/lon.
+     * Used as an index for VPB tiles, which are 1x1 in size.
+     *
+     * The index is constructed as follows:
+     * 
+     * 9 bits - to represent 360 degrees of longitude (-180 to 179)
+     * 8 bits - to represent 180 degrees of latitude (-90 to 89)
+     * @return tile index
+     */
+    inline long int gen_vpb_index() const {
+	    return ((lon + 180) << 8) + (lat + 90);
+    }
+
+    /**
      * Generate the unique scenery tile index for this bucket in ascii
      * string form.
      * @return tile index in string form
