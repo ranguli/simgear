@@ -132,8 +132,6 @@ SGMetar::SGMetar(const string& m) :
         throw sg_io_exception("metar pressure data malformed or missing ", sg_location(_url));
     }
 
-    scanTemperature();
-	scanPressure();
 	while (scanSkyCondition()) ;
 	while (scanRunwayReport()) ;
 	scanWindShear();
