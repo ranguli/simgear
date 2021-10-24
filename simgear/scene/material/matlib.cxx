@@ -382,9 +382,6 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     atlas.image->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
     atlas.image->setResizeNonPowerOfTwoHint(false);
 
-    atlas.image->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-    atlas.image->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-
     atlas.image->setWrap(osg::Texture::WRAP_S,osg::Texture::REPEAT);
     atlas.image->setWrap(osg::Texture::WRAP_T,osg::Texture::REPEAT);
 
