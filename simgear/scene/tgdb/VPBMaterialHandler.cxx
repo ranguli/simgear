@@ -259,13 +259,18 @@ bool RandomLightsHandler::initialize(
 
 void RandomLightsHandler::setLocation(const SGGeod loc, double r_E_lat,
                                       double r_E_lon) {
-    // Approximately 1m x 1m
-    // latitudeDelta [degrees] = 360 [degrees] / (2 * PI * polarRadius)
-    delta_lat = 180.0 / (M_PI * r_E_lat);
+    // Approximately 31m x 31m (sqrt(1000) x sqrt(1000)), covering 1000m^2
+    //   defined as the minimum light coverage in the documentation
+    // 1m latitudeDelta [degrees] = 360 [degrees] / (2 * PI * polarRadius)
+    // 1m latitudeDelta [radians] = PI / 180 * latitudeDelta [degrees]
+    // 31m latitudeDelta [radians] = sqrt(1000) / latitudeDelta [radians]
+    delta_lat = sqrt(1000.0) / r_E_lat;
 
-    // longitudeDelta [degrees] = 360 [degrees] / (2 * PI * equitorialRadius *
-    // cos(latitude [radians]))
-    delta_lon = 180.0 / (M_PI * r_E_lon * cos(loc.getLatitudeRad()));
+    // 1m longitudeDelta [degrees] = 360 [degrees] / (2 * PI * equitorialRadius
+    //                                   * cos(latitude [radians]))
+    // 1m longitudeDelta [radians] = PI / 180 * longitudeDelta [degrees]
+    // 31m longitudeDelta [randians] = sqrt(1000) / longitudeDelta [radians]
+    delta_lon = sqrt(1000.0) / (r_E_lon * cos(loc.getLatitudeRad()));
 }
 
 bool RandomLightsHandler::handleNewMaterial(SGMaterial *mat) {
@@ -294,14 +299,13 @@ bool RandomLightsHandler::handleIteration(
     if (mat->get_light_coverage() <= 0)
         return false;
 
-    // Since we are scanning 1mx1m chunks, 1/lightCoverage gives the probability
-    //  of a particular 1x1 chunk having a light
-    //  e.g. if lightCoverage = 10m^2 (i.e. every light point must cover around
-    //  10m^2),
-    //   this roughly equates to sqrt(10) * sqrt(10) chunks, and hence we need
-    //   to have a light in only one in 10 chunks (sqrt(10) * sqrt(10)), giving
-    //   us a probability of 1/10.
-    if (pc_map_rand(lon_int, lat_int, 4) > (1.0 / lightCoverage))
+    // Since we are scanning 31mx31m chunks, 1000/lightCoverage gives the
+    //  probability of a particular 31x31 chunk having a light
+    //  e.g. if lightCoverage = 10000m^2 (i.e. every light point must
+    //  cover around 10000m^2), this roughly equates to
+    //  sqrt(10000) * sqrt(10000) 1mx1m chunks, i.e. 100m x 100m, which
+    //  translates to ~10 31mx31m chunks, giving us a probability of 1/10.
+    if (pc_map_rand(lon_int, lat_int, 4) > (1000.0 / lightCoverage))
         return false;
 
     p = osg::Vec2d(lon + delta_lon * pc_map_rand(lon_int, lat_int, 0),
