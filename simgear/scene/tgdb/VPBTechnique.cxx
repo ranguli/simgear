@@ -112,6 +112,7 @@ void VPBTechnique::setOptions(const SGReaderWriterOptions* options)
 {
     _options = simgear::SGReaderWriterOptions::copyOrCreate(options);
     _options->setLoadOriginHint(simgear::SGReaderWriterOptions::LoadOriginHint::ORIGIN_EFFECTS);
+    _options->setInstantiateMaterialEffects(true);
 }
 
 void VPBTechnique::setFilterMatrixAs(FilterType filterType)
@@ -1222,6 +1223,8 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     buffer._landGeometry->setUseVertexBufferObjects(true);
     buffer._waterGeometry->setUseDisplayList(false);
     buffer._waterGeometry->setUseVertexBufferObjects(true);
+    buffer._landGeode->runGenerators(buffer._landGeometry);
+    buffer._waterGeode->runGenerators(buffer._waterGeometry);
 
     // Tile-specific information for the shaders
     osg::StateSet *landStateSet = buffer._landGeode->getOrCreateStateSet();
@@ -1241,18 +1244,16 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     bool got_tl = VNG.vertex(VNG._numColumns - 1, 0, top_left);
     bool got_tr = VNG.vertex(VNG._numColumns - 1, VNG._numRows -1, top_right);
 
-    float tile_width = 1.0;
-    float tile_height = 1.0;
     if (got_bl && got_br && got_tl && got_tr) {
-        auto s = bottom_right - bottom_left;
-        auto t = top_left - bottom_left;
-        auto u = top_right - top_left;
-        auto v = top_right - bottom_right;
+        osg::Vec3f s = bottom_right - bottom_left;
+        osg::Vec3f t = top_left - bottom_left;
+        osg::Vec3f u = top_right - top_left;
+        osg::Vec3f v = top_right - bottom_right;
         buffer._width = 0.5 * (s.length() + u.length());
         buffer._height = 0.5 * (t.length() + v.length());
     }
 
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Tile Level " << _terrainTile->getTileID().level << " width " << tile_width << " height " << tile_height);
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Tile Level " << _terrainTile->getTileID().level << " width " << buffer._width << " height " << buffer._height);
 
     osg::ref_ptr<osg::Uniform> twu = new osg::Uniform("tile_width", buffer._width);
     landStateSet->addUniform(twu);
@@ -1628,7 +1629,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
 
     if (roads == _lineFeatureLists.end()) return;
 
-    SGMaterialCache* matcache = _options->getMaterialLib()->generateMatCache(loc, _options);
+    SGMaterialCache* matcache = matlib->generateMatCache(loc, _options);
 
     for (; roads != _lineFeatureLists.end(); ++roads) {
         const LineFeatureBinList roadBins = roads->second;
@@ -1686,6 +1687,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
 
             geode->setMaterial(mat);
             geode->setEffect(mat->get_one_effect(0));
+            geode->runGenerators(geometry);
             geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
             buffer._transform->addChild(geode);
             addRandomObjectsConstraint(geode);
