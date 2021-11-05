@@ -1314,7 +1314,9 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
     texture2D->setMaxAnisotropy(16.0f);
     texture2D->setResizeNonPowerOfTwoHint(false);
 
-    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    // Use mipmaps only in the minimization case because on magnification this results
+    // in bad interpolation of boundaries between landclasses
+    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
     texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
 
     texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
