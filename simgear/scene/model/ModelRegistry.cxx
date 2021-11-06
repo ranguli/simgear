@@ -1027,9 +1027,9 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
                 // Top level.  This is likely to have the default GeometryTechnique already assigned which we need to replace with our own
                 terrain->setSampleRatio(features->getVPBSampleRatio());
                 terrain->setVerticalScale(features->getVPBVerticalScale());
-                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt));
+                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt, fileName));
                 if (terrainTile != NULL) {
-                    terrainTile->setTerrainTechnique(new VPBTechnique(sgopt));
+                    terrainTile->setTerrainTechnique(new VPBTechnique(sgopt, fileName));
                     terrainTile->setDirty(true);
                 } else {
                     SG_LOG(SG_TERRAIN, SG_ALERT, "VPB TerrainTile not found");
@@ -1039,7 +1039,7 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
                 terrain = new osgTerrain::Terrain;
                 terrain->setSampleRatio(features->getVPBSampleRatio());
                 terrain->setVerticalScale(features->getVPBVerticalScale());
-                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt));
+                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt, fileName));
 
                 // if CoordinateSystemNode is present copy it's contents into the Terrain, and discard it.
                 osg::CoordinateSystemNode* csn = findTopMostNodeOfType<osg::CoordinateSystemNode>(optimized.get());

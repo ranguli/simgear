@@ -56,7 +56,8 @@
 using namespace osgTerrain;
 using namespace simgear;
 
-VPBTechnique::VPBTechnique()
+VPBTechnique::VPBTechnique():
+  _fileName("")
 {
     setFilterBias(0);
     setFilterWidth(0.1);
@@ -64,17 +65,20 @@ VPBTechnique::VPBTechnique()
     _randomObjectsConstraintGroup = new osg::Group();
 }
 
-VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options)
+VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string& fileName):
+    _fileName(fileName)
 {
     setFilterBias(0);
     setFilterWidth(0.1);
     setFilterMatrixAs(GAUSSIAN);
     setOptions(options);
     _randomObjectsConstraintGroup = new osg::Group();
+    SG_LOG(SG_TERRAIN, SG_ALERT, "VPBTechnique for " << _fileName);
 }
 
 VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
-    TerrainTechnique(gt,copyop)
+    TerrainTechnique(gt,copyop),
+    _fileName(gt._fileName)
 {
     setFilterBias(gt._filterBias);
     setFilterWidth(gt._filterWidth);
@@ -1279,55 +1283,91 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
 void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
 {   
-    SGMaterialLibPtr matlib  = _options->getMaterialLib();
-    if (!matlib) return;
 
-    osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
-    if (!colorLayer) return;
+    const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
+    bool photoScenery = false;
 
-    osg::Image* image = colorLayer->getImage();
-    if (!image || ! image->valid()) return;
-
-    // First time generating this texture, so process to change landclass IDs to texure indexes.
-    SGPropertyNode_ptr landEffectProp;
-
-    const SGGeod loc = computeCenterGeod(buffer, masterLocator);
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
-
-    SGMaterialCache::Atlas atlas = matlib->generateMatCache(loc, _options)->getAtlas();
-    SGMaterialCache::AtlasIndex atlasIndex = atlas.index;
-
-    // Set the "g" color channel to an index into the atlas index.
-    for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
-        for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
-            osg::Vec4d c = image->getColor(s, t);
-            int i = int(round(c.x() * 255.0));
-            c.set(c.x(), (double) (atlasIndex[i] / 255.0), c.z(), c.w() );
-            image->setColor(c, s, t);
-        }
+    if (propertyNode) {
+        photoScenery = _options->getPropertyNode()->getBoolValue("/sim/rendering/photoscenery/enabled");
     }
 
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "VPB Image level:" << _terrainTile->getTileID().level << " " << image->s() << "x" << image->t() << " mipmaps:" << image->getNumMipmapLevels() << " format:" << image->getInternalTextureFormat());
+    if (photoScenery) {
 
-    osg::ref_ptr<osg::Texture2D> texture2D  = new osg::Texture2D;
-    texture2D->setImage(image);
-    texture2D->setMaxAnisotropy(16.0f);
-    texture2D->setResizeNonPowerOfTwoHint(false);
+        // Firstly, we need to work out the texture file we want to load.  Fortunately this follows the same
+        // naming convention as the VPB scenery itself.
+        auto tileID = _terrainTile->getTileID();
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Using Photoscenery for " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
 
-    // Use mipmaps only in the minimization case because on magnification this results
-    // in bad interpolation of boundaries between landclasses
-    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-    texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+        const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
+        const SGGeod loc = SGGeod::fromCart(toSG(world));
+        const SGBucket bucket = SGBucket(loc);
 
-    texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-    texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+        // Bit of a hack - we assume the Orthophotos are in the same FG_SCENERY top level as the .osgb tiles.
+        string base = _fileName.substr(0, _fileName.find("vpb"));
+        SGPath orthotexture = SGPath(base);
+        orthotexture.append("Orthophotos");
+        orthotexture.append(bucket.gen_vpb_subtile(tileID.level, tileID.x, tileID.y) + ".dds");
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Using " << orthotexture);
 
-    osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
-    stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
-    stateset->setTextureAttributeAndModes(2, atlas.dimensions, osg::StateAttribute::ON);
-    stateset->setTextureAttributeAndModes(3, atlas.diffuse, osg::StateAttribute::ON);
-    stateset->setTextureAttributeAndModes(4, atlas.specular, osg::StateAttribute::ON);
+        if (orthotexture.exists()) {
+            osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, false, false);
+            osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
+            stateset->setTextureAttributeAndModes(0, texture);
+        } else {
+            SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find " << orthotexture);
+        }
+
+    } else {
+        SGMaterialLibPtr matlib  = _options->getMaterialLib();
+        if (!matlib) return;
+
+        osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
+        if (!colorLayer) return;
+
+        osg::Image* image = colorLayer->getImage();
+        if (!image || ! image->valid()) return;
+
+        // First time generating this texture, so process to change landclass IDs to texure indexes.
+        SGPropertyNode_ptr landEffectProp;
+
+        const SGGeod loc = computeCenterGeod(buffer, masterLocator);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
+
+        SGMaterialCache::Atlas atlas = matlib->generateMatCache(loc, _options)->getAtlas();
+        SGMaterialCache::AtlasIndex atlasIndex = atlas.index;
+
+        // Set the "g" color channel to an index into the atlas index.
+        for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
+            for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
+                osg::Vec4d c = image->getColor(s, t);
+                int i = int(round(c.x() * 255.0));
+                c.set(c.x(), (double) (atlasIndex[i] / 255.0), c.z(), c.w() );
+                image->setColor(c, s, t);
+            }
+        }
+
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "VPB Image level:" << _terrainTile->getTileID().level << " " << image->s() << "x" << image->t() << " mipmaps:" << image->getNumMipmapLevels() << " format:" << image->getInternalTextureFormat());
+
+        osg::ref_ptr<osg::Texture2D> texture2D  = new osg::Texture2D;
+        texture2D->setImage(image);
+        texture2D->setMaxAnisotropy(16.0f);
+        texture2D->setResizeNonPowerOfTwoHint(false);
+
+        // Use mipmaps only in the minimization case because on magnification this results
+        // in bad interpolation of boundaries between landclasses
+        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+
+        texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+
+        osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
+        stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(2, atlas.dimensions, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(3, atlas.diffuse, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(4, atlas.specular, osg::StateAttribute::ON);
+    }
 }
 
 double VPBTechnique::det2(const osg::Vec2d a, const osg::Vec2d b)
