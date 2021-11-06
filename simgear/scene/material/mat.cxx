@@ -431,9 +431,8 @@ SGMaterial::read_properties(const SGReaderWriterOptions* options,
     // read glyph table for taxi-/runway-signs
     std::vector<SGPropertyNode_ptr> glyph_nodes = props->getChildren("glyph");
     for (unsigned int i = 0; i < glyph_nodes.size(); i++) {
-        const char *name = glyph_nodes[i]->getStringValue("name");
-        if (name)
-            glyphs[name] = new SGMaterialGlyph(glyph_nodes[i]);
+        std::string name = glyph_nodes[i]->getStringValue("name");
+        glyphs[name] = new SGMaterialGlyph(glyph_nodes[i]);
     }
 
     // Read parameters entry, which is passed into the effect

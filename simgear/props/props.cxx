@@ -810,7 +810,7 @@ find_child(SGPropertyLock& lock, Itr begin, Itr end, int index, const PropertyLi
 #if PROPS_STANDALONE
   for (int i = 0; i < nNodes; i++) {
     SGPropertyNode * node = nodes[i];
-    if (node->getIndex() == index && strings_equal(node->getName(), begin))
+    if (node->getIndex() == index && strings_equal(node->getNameString(), begin))
       return i;
   }
 #else
@@ -820,7 +820,7 @@ find_child(SGPropertyLock& lock, Itr begin, Itr end, int index, const PropertyLi
 
     // searching for a matching index is a lot less time consuming than
     // comparing two strings so do that first.
-    if (node->getIndex() == index && boost::equals(node->getName(), name))
+    if (node->getIndex() == index && boost::equals(node->getNameString(), name))
       return static_cast<int>(i);
   }
 #endif
@@ -838,7 +838,7 @@ find_last_child (SGPropertyLockExclusive& exclusive, const char * name, const Pr
 
   for (size_t i = 0; i < nNodes; i++) {
     SGPropertyNode * node = nodes[i];
-    if (strings_equal(node->getName(), name))
+    if (node->getNameString() == string(name))
     {
       int idx = node->getIndex();
       if (idx > index) index = idx;
@@ -1161,7 +1161,7 @@ struct SGPropertyNodeImpl
     }
     
     /* Get the value as a string. */
-    static const char *
+    static std::string
     make_string(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (!getAttribute(lock, node, SGPropertyNode::READ))
@@ -1171,7 +1171,7 @@ struct SGPropertyNodeImpl
             {
                 SGPropertyNode* p = node._value.alias;
                 lock.release();
-                const char* ret = p->getStringValue();
+                std::string ret = p->getStringValue();
                 lock.acquire();
                 return ret;
             }
@@ -1211,8 +1211,7 @@ struct SGPropertyNodeImpl
         default:
             return "";
         }
-        node._buffer = sstr.str();
-        return node._buffer.c_str();
+        return sstr.str();
     }
 
     /**
@@ -1221,7 +1220,7 @@ struct SGPropertyNodeImpl
     static void
     trace_write (SGPropertyLockExclusive& exclusive, const SGPropertyNode& node)
     {
-        const char* value = SGPropertyNodeImpl::make_string(exclusive, node);
+        std::string value = SGPropertyNodeImpl::make_string(exclusive, node);
         bool own = exclusive.m_own;
         if (own) exclusive.release();
         {
@@ -1248,7 +1247,7 @@ struct SGPropertyNodeImpl
         //
         // Hopefully we are only called for specific debugging purposes.
         //
-        const char* value = SGPropertyNodeImpl::make_string(lock, node);
+        std::string value = SGPropertyNodeImpl::make_string(lock, node);
         lock.release();
         SG_LOG(SG_GENERAL, SG_ALERT, "TRACE: Read node " << node.getPath()
                 << ", value \"" << value << '"');
@@ -1343,18 +1342,18 @@ struct SGPropertyNodeImpl
         node._type = props::NONE;
     }
 
-    static const char *
+    static std::string
     getStringValue(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         // This is inherantly unsafe.
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::STRING)
-            return get_string(lock, node);
+            return std::string(get_string(lock, node));
 
         if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
             trace_read(lock, node);
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return SGRawValue<const char *>::DefaultValue();
+            return std::string(SGRawValue<const char *>::DefaultValue());
         return make_string(lock, node);
     }
 
@@ -1972,25 +1971,18 @@ struct SGPropertyNodeImpl
     }
 
     static PropertyList
-    getChildren(SGPropertyLock& lock, const SGPropertyNode& node, const char* name)
+    getChildren(SGPropertyLock& lock, const SGPropertyNode& node, const std::string& name)
     {
         PropertyList children;
         size_t max = node._children.size();
 
         for (size_t i = 0; i < max; i++)
-            if (strings_equal(node._children[i]->getName(), name))
+            if (node._children[i]->getNameString() == name)
                 children.push_back(node._children[i]);
 
         sort(children.begin(), children.end(), CompareIndices());
         return children;
     }
-
-    static simgear::PropertyList
-    getChildren(SGPropertyLock& lock, const SGPropertyNode& node, const std::string& name)
-    {
-        return getChildren(lock, node, name.c_str());
-    }
-
 };
 
 
@@ -2017,7 +2009,7 @@ find_node_aux(SGPropertyNode * current, SplitItr& itr, bool create, int last_ind
   if (equals(name, "..")) {
     SGPropertyNode* parent = current->getParent();
     if (!parent) {
-        SG_LOG(SG_GENERAL, SG_ALERT, "attempt to move past root with '..' node " << current->getName());
+        SG_LOG(SG_GENERAL, SG_ALERT, "attempt to move past root with '..' node " << current->getNameString());
         return nullptr;
     }
     return find_node_aux(parent, ++itr, create, last_index);
@@ -2521,13 +2513,6 @@ bool SGPropertyNode::hasValue() const
     return SGPropertyNodeImpl::hasValue(shared, *this);
 }
 
-
-const char * SGPropertyNode::getName () const
-{
-    SGPropertyLockShared shared(*this);
-    return _name.c_str();
-}
-
 const std::string& SGPropertyNode::getNameString () const
 {
     SGPropertyLockShared shared(*this);
@@ -2744,14 +2729,14 @@ SGPropertyNode_ptr SGPropertyNode::removeChild(const std::string& name, int inde
   * Remove all children with the specified name.
   */
 PropertyList
-SGPropertyNode::removeChildren(const char * name)
+SGPropertyNode::removeChildren(const std::string& name)
 {
   PropertyList children;
   {
     SGPropertyLockShared shared(*this);
 
     for (int pos = static_cast<int>(_children.size() - 1); pos >= 0; pos--) {
-      if (strings_equal(_children[pos]->getName(), name)) {
+      if (_children[pos]->getNameString() == name) {
         children.push_back(_children[pos]);
       }
     }
@@ -2762,11 +2747,6 @@ SGPropertyNode::removeChildren(const char * name)
     removeChild(child);
   }
   return children;
-}
-
-simgear::PropertyList SGPropertyNode::removeChildren(const std::string& name)
-{
-    return removeChildren(name.c_str());
 }
 
 void
@@ -2891,7 +2871,7 @@ SGPropertyNode::getDoubleValue() const
 }
 
 
-const char *
+std::string
 SGPropertyNode::getStringValue() const
 {
     SGPropertyLockShared shared(*this);
@@ -2899,7 +2879,7 @@ SGPropertyNode::getStringValue() const
 }
 
 bool
-SGPropertyNode::setUnspecifiedValue (const char * value)
+SGPropertyNode::setUnspecifiedValue (const std::string &value)
 {
   SGPropertyLockExclusive exclusive(*this);
   bool result = false;
@@ -2921,24 +2901,24 @@ SGPropertyNode::setUnspecifiedValue (const char * value)
       break;
     }
   case props::BOOL:
-    result = SGPropertyNodeImpl::set_bool(exclusive, *this, (strings_equal(value, "true")
-		       || atoi(value)) ? true : false);
+    result = SGPropertyNodeImpl::set_bool(exclusive, *this, value == "true"
+		       || atoi(value.c_str()) ? true : false);
     break;
   case props::INT:
-    result = SGPropertyNodeImpl::set_int(exclusive, *this, atoi(value));
+    result = SGPropertyNodeImpl::set_int(exclusive, *this, atoi(value.c_str()));
     break;
   case props::LONG:
-    result = SGPropertyNodeImpl::set_long(exclusive, *this, strtol(value, 0, 0));
+    result = SGPropertyNodeImpl::set_long(exclusive, *this, strtol(value.c_str(), 0, 0));
     break;
   case props::FLOAT:
-    result = SGPropertyNodeImpl::set_float(exclusive, *this, atof(value));
+    result = SGPropertyNodeImpl::set_float(exclusive, *this, atof(value.c_str()));
     break;
   case props::DOUBLE:
-    result = SGPropertyNodeImpl::set_double(exclusive, *this, strtod(value, 0));
+    result = SGPropertyNodeImpl::set_double(exclusive, *this, strtod(value.c_str(), 0));
     break;
   case props::STRING:
   case props::UNSPECIFIED:
-    result = SGPropertyNodeImpl::set_string(exclusive, *this, value);
+    result = SGPropertyNodeImpl::set_string(exclusive, *this, value.c_str());
     break;
 #if !PROPS_STANDALONE
   case props::VEC3D:
@@ -3431,16 +3411,18 @@ double SGPropertyNode::getDoubleValue (const std::string& relative_path, double 
 /**
  * Get a string value for another node.
  */
-const char *
+std::string
 SGPropertyNode::getStringValue (const char * relative_path,
 				const char * defaultValue) const
 {
+    // TODO Check defaultValue != null
   const SGPropertyNode * node = getNode(relative_path);
   return (node) ? node->getStringValue() : defaultValue;
 }
 
-const char * SGPropertyNode::getStringValue (const std::string& relative_path, const char * defaultValue) const
+std::string SGPropertyNode::getStringValue (const std::string& relative_path, const char * defaultValue) const
 {
+    // TODO Check defaultValue != null
     return getStringValue(relative_path.c_str(), defaultValue);
 }
 
@@ -3994,7 +3976,7 @@ namespace simgear
                 return lhs.getValue<double>() == rhs.getValue<double>();
             case props::STRING:
             case props::UNSPECIFIED:
-                return !strcmp(lhs.getStringValue(), rhs.getStringValue());
+                return lhs.getStringValue() == rhs.getStringValue();
 #if !PROPS_STANDALONE
             case props::VEC3D:
                 return lhs.getValue<SGVec3d>() == rhs.getValue<SGVec3d>();
@@ -4040,21 +4022,21 @@ void SGPropertyNode::copy(SGPropertyNode *to) const
         for (int i = 0; i < nChildren(); i++) {
             const SGPropertyNode *child = getChild(i);
             if (!child) break;  // We don't lock child, so getChild() could return 0;
-            SGPropertyNode* to_child = to->getChild(child->getName());
+            SGPropertyNode* to_child = to->getChild(child->getNameString());
             if (!to_child)
-                to_child = to->addChild(child->getName());
+                to_child = to->addChild(child->getNameString());
             if (child->nChildren())
             {
                 child->copy(to_child);
             }
             else
             {
-                to_child->setValue(child->getStringValue());
+                to_child->setValue(child->getStringValue().c_str());
             }
         }
     }
     else
-        to->setValue(getStringValue());
+        to->setValue(getStringValue().c_str());
 }
 
 SGPropertyNode * SGPropertyNode::getNode (const std::string& relative_path, bool create)
@@ -4333,7 +4315,6 @@ template int SGPropertyNode::getValue<int>(void*) const;
 template long SGPropertyNode::getValue<long>(void*) const;
 template float SGPropertyNode::getValue<float>(void*) const;
 template double SGPropertyNode::getValue<double>(void*) const;
-template const char* SGPropertyNode::getValue<const char*>(void*) const;
 template SGVec3<double> SGPropertyNode::getValue<SGVec3<double>>(void*) const;
 template SGVec4<double> SGPropertyNode::getValue<SGVec4<double>>(void*) const;
 
@@ -4365,12 +4346,6 @@ template<>
 double SGPropertyNode::getValue<double>(SGPropertyLock& lock, void* dummy) const
 {
     return SGPropertyNodeImpl::getDoubleValue(lock, *this);
-}
-
-template<>
-const char* SGPropertyNode::getValue<const char*>(SGPropertyLock& lock, void* dummy) const
-{
-    return SGPropertyNodeImpl::getStringValue(lock, *this);
 }
 
 template bool SGPropertyNode::setValue(const bool&, void*);
@@ -4417,8 +4392,8 @@ size_t hash_value(const SGPropertyNode& node)
             case props::STRING:
             case props::UNSPECIFIED:
             {
-                const char *val = SGPropertyNodeImpl::getStringValue(shared, node);
-                return boost::hash_range(val, val + strlen(val));
+                std::string val = SGPropertyNodeImpl::getStringValue(shared, node);
+                return boost::hash_range(val.begin(), val.end());
             }
             case props::VEC3D:
             {

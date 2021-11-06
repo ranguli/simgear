@@ -134,7 +134,7 @@ ref_ptr<Uniform> UniformFactoryImpl::getUniform( Effect * effect,
 				val = getGlobalProperty(prop, options);
 			}
 		} else {
-			SG_LOG(SG_GL,SG_DEBUG,"Invalid parameter " << valProp->getName() << " for uniform " << name << " in Effect ");
+			SG_LOG(SG_GL,SG_DEBUG,"Invalid parameter " << valProp->getNameString() << " for uniform " << name << " in Effect ");
 		}
 	}
 
@@ -312,7 +312,7 @@ void buildPass(Effect* effect, Technique* tniq, const SGPropertyNode* prop,
             builder->buildAttribute(effect, pass, attrProp, options);
         else
             SG_LOG(SG_INPUT, SG_ALERT,
-                   "skipping unknown pass attribute " << attrProp->getName());
+                   "skipping unknown pass attribute " << attrProp->getNameString());
     }
 }
 
@@ -325,7 +325,7 @@ osg::Vec4f getColor(const SGPropertyNode* prop)
             return osg::Vec4f(toOsg(prop->getValue<SGVec3d>()), 1.0f);
         } else {
             SG_LOG(SG_INPUT, SG_ALERT,
-                   "invalid color property " << prop->getName() << " "
+                   "invalid color property " << prop->getNameString() << " "
                    << prop->getStringValue());
             return osg::Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
         }

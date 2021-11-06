@@ -482,7 +482,7 @@ static SGCondition *
 readPropertyCondition( SGPropertyNode *prop_root,
                        const SGPropertyNode *node )
 {
-  return new SGPropertyCondition( prop_root, node->getStringValue() );
+  return new SGPropertyCondition( prop_root, node->getStringValue().c_str() );
 }
 
 static SGCondition *
@@ -545,9 +545,9 @@ readComparison( SGPropertyNode *prop_root,
     *right = node->getChild(1);
 
   {
-    string leftName(left->getName());
+    string leftName(left->getNameString());
     if (leftName == "property") {
-      condition->setLeftProperty(prop_root, left->getStringValue());
+      condition->setLeftProperty(prop_root, left->getStringValue().c_str());
     } else if (leftName == "value") {
       condition->setLeftValue(left);
     } else if (leftName == "expression") {
@@ -560,9 +560,9 @@ readComparison( SGPropertyNode *prop_root,
   }
     
   {
-    string rightName(right->getName());
+    string rightName(right->getNameString());
     if (rightName == "property") {
-      condition->setRightProperty(prop_root, right->getStringValue());
+      condition->setRightProperty(prop_root, right->getStringValue().c_str());
     } else if (rightName == "value") {
       condition->setRightValue(right);
     } else if (rightName == "expression") {
@@ -576,9 +576,9 @@ readComparison( SGPropertyNode *prop_root,
   
   if( node->nChildren() == 3 ) {
     const SGPropertyNode *n = node->getChild(2);
-    string name(n->getName());
+    string name(n->getNameString());
     if (name == "precision-property") {
-      condition->setPrecisionProperty(prop_root, n->getStringValue());
+      condition->setPrecisionProperty(prop_root, n->getStringValue().c_str());
     } else if (name == "precision-value") {
       condition->setPrecisionValue(n);
     } else if (name == "precision-expression") {
@@ -596,7 +596,7 @@ readComparison( SGPropertyNode *prop_root,
 static SGCondition *
 readCondition( SGPropertyNode *prop_root, const SGPropertyNode *node )
 {
-  const string &name = node->getName();
+  const string &name = node->getNameString();
   if (name == "property")
     return readPropertyCondition(prop_root, node);
   else if (name == "not")

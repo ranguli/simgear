@@ -77,12 +77,12 @@ void mergePropertyTrees(SGPropertyNode* resultNode,
         const SGPropertyNode* node = right->getChild(i);
         auto litr = find_if(leftChildren.begin(), leftChildren.end(),
                             [node](const SGPropertyNode* arg) {
-                                if (strcmp(node->getName(), arg->getName()))
+                                if (node->getNameString() != arg->getNameString())
                                     return false;
                                 return node->getIndex() == arg->getIndex();
                             });
         SGPropertyNode* newChild
-            = resultNode->getChild(node->getName(), node->getIndex(), true);
+            = resultNode->getChild(node->getNameString(), node->getIndex(), true);
         if (litr != leftChildren.end()) {
             mergePropertyTrees(newChild, *litr, node);
             leftChildren.erase(litr);
@@ -96,7 +96,7 @@ void mergePropertyTrees(SGPropertyNode* resultNode,
          itr != e;
          ++itr) {
         SGPropertyNode* newChild
-            = resultNode->getChild((*itr)->getName(), (*itr)->getIndex(), true);
+            = resultNode->getChild((*itr)->getNameString(), (*itr)->getIndex(), true);
         copyProperties(*itr, newChild);
     }
 }

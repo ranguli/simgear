@@ -120,7 +120,7 @@ namespace canvas
         SG_GENERAL,
         SG_WARN,
         "Group::getOrCreateChild: type missmatch! "
-        "('" << type << "' != '" << child->getProps()->getName() << "', "
+        "('" << type << "' != '" << child->getProps()->getNameString() << "', "
         "id = '" << id << "')"
       );
 

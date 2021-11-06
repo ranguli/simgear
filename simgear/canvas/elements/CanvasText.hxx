@@ -44,9 +44,9 @@ namespace canvas
             ElementWeakPtr parent = 0 );
       ~Text();
 
-      void setText(const char* text);
-      void setFont(const char* name);
-      void setAlignment(const char* align);
+      void setText(const std::string& text);
+      void setFont(const std::string& name);
+      void setAlignment(const std::string& align_string);
 
       int heightForWidth(int w) const;
       int maxWidth() const;

@@ -53,7 +53,7 @@ namespace simgear
     // TODO check if really not in use anymore
     if( _node->getParent() )
       _node->getParent()
-           ->removeChild(_node->getName(), _node->getIndex());
+           ->removeChild(_node->getNameString(), _node->getIndex());
   }
 
   //----------------------------------------------------------------------------

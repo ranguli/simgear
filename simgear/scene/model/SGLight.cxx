@@ -75,7 +75,7 @@ public:
 
     void valueChanged(SGPropertyNode* node) override
     {
-        while (strcmp(node->getName(), "light") && node->getParent()) {
+        while (node->getNameString() != "light" && node->getParent()) {
             node = node->getParent();
         }
         _light->configure(node);

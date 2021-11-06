@@ -385,7 +385,7 @@ void Catalog::parseProps(const SGPropertyNode* aProps)
     int nChildren = aProps->nChildren();
     for (int i = 0; i < nChildren; i++) {
         const SGPropertyNode* pkgProps = aProps->getChild(i);
-        if (strcmp(pkgProps->getName(), "package") == 0) {
+        if (pkgProps->getNameString() == "package") {
             // can't use getPackageById here becuase the variant dict isn't
             // built yet. Instead we need to look at m_packages directly.
 
@@ -408,7 +408,7 @@ void Catalog::parseProps(const SGPropertyNode* aProps)
                 m_variantDict[*it] = p.ptr();
             }
         } else {
-            SGPropertyNode* c = m_props->getChild(pkgProps->getName(), pkgProps->getIndex(), true);
+            SGPropertyNode* c = m_props->getChild(pkgProps->getNameString().c_str(), pkgProps->getIndex(), true);
             copyProperties(pkgProps, c);
         }
     } // of children iteration
@@ -633,17 +633,9 @@ void Catalog::setUserEnabled(bool b)
 void Catalog::processAlternate(SGPropertyNode_ptr alt)
 {
     m_refreshRequest.reset();
+    std::string altId = alt->getStringValue("id");
 
-    std::string altId;
-    const auto idPtr = alt->getStringValue("id");
-    if (idPtr) {
-        altId = std::string(idPtr);
-    }
-
-    std::string altUrl;
-    if (alt->getStringValue("url")) {
-        altUrl = std::string(alt->getStringValue("url"));
-    }
+    std::string altUrl = alt->getStringValue("url");
 
     CatalogRef existing;
     if (!altId.empty()) {

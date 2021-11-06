@@ -89,12 +89,12 @@ namespace canvas
         }
       }
 
-      const char* getLat() const
+      std::string getLat() const
       {
         return _node_lat ? _node_lat->getStringValue() : "";
       }
 
-      const char* getLon() const
+      std::string getLon() const
       {
         return _node_lon ? _node_lon->getStringValue() : "";
       }

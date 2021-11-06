@@ -1124,7 +1124,7 @@ TexGen* buildTexGen(Effect* effect, const SGPropertyNode* tgenProp)
         for (int i = 0; i < planesNode->nChildren(); ++i) {
             const SGPropertyNode* planeNode = planesNode->getChild(i);
             TexGen::Coord coord;
-            findAttr(tgenCoords, planeNode->getName(), coord);
+            findAttr(tgenCoords, planeNode->getNameString(), coord);
             const SGPropertyNode* realNode
                 = getEffectPropertyNode(effect, planeNode);
             SGVec4d plane = realNode->getValue<SGVec4d>();

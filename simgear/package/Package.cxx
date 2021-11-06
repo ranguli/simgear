@@ -121,7 +121,7 @@ bool Package::matches(const SGPropertyNode* aFilter) const
 
     if (strutils::starts_with(filter_name, "rating-")) {
         int minRating = aFilter->getIntValue();
-        std::string rname = aFilter->getName() + 7;
+        std::string rname = aFilter->getNameString().c_str() + 7;
         int ourRating = m_props->getChild("rating")->getIntValue(rname, 0);
         return (ourRating >= minRating);
     }

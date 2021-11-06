@@ -40,7 +40,7 @@ using std::string;
 
 class SGText::UpdateCallback : public osg::NodeCallback {
 public:
-  UpdateCallback( osgText::Text * aText, SGConstPropertyNode_ptr aProperty, double aScale, double aOffset, bool aTruncate, bool aNumeric, const char * aFormat ) :
+  UpdateCallback( osgText::Text * aText, SGConstPropertyNode_ptr aProperty, double aScale, double aOffset, bool aTruncate, bool aNumeric, const std::string &aFormat ) :
     text( aText ),
     property( aProperty ),
     scale( aScale ),
@@ -77,7 +77,7 @@ void SGText::UpdateCallback::operator()(osg::Node * node, osg::NodeVisitor *nv )
     if (truncate)  d = (d < 0) ? -floor(-d) : floor(d);
     snprintf( buf, sizeof(buf)-1, format.c_str(), d );
   } else {
-    snprintf( buf, sizeof(buf)-1, format.c_str(), property->getStringValue() );
+    snprintf( buf, sizeof(buf)-1, format.c_str(), property->getStringValue().c_str() );
   }
   if( text->getText().createUTF8EncodedString().compare( buf )  ) {
     // be lazy and set the text only if the property has changed.
@@ -219,7 +219,7 @@ osg::Node * SGText::appendText(const SGPropertyNode* configNode,
     text->setText( configNode->getStringValue( "text", "" ) );
   } else {
     SGConstPropertyNode_ptr property = modelRoot->getNode( configNode->getStringValue( "property", "foo" ), true );
-    const char * format = configNode->getStringValue( "format", "" );
+    std::string format = configNode->getStringValue( "format", "" );
     double scale = configNode->getDoubleValue( "scale", 1.0 );
     double offset = configNode->getDoubleValue( "offset", 0.0 );
     bool   truncate = configNode->getBoolValue( "truncate", false );

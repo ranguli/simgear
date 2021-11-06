@@ -414,7 +414,7 @@ namespace canvas
                 void (Derived::*setter)(const std::string&),
                 bool inheritable = true )
       {
-        return addStyle<const char*, const std::string&>
+        return addStyle<std::string, const std::string&>
         (
           name,
           type,
@@ -507,7 +507,7 @@ namespace canvas
                 OtherRef Derived::*instance_ref,
                 bool inheritable = true )
       {
-        return addStyle<const char*, const std::string&>
+        return addStyle<std::string, const std::string&>
         (
           name,
           type,

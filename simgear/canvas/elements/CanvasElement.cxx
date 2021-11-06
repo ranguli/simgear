@@ -737,7 +737,7 @@ namespace canvas
       return true;
 
     // Parent values do not override if element has own value
-    return isStyleEmpty( _node->getChild(child->getName()) );
+    return isStyleEmpty( _node->getChild(child->getNameString()) );
   }
 
   //----------------------------------------------------------------------------

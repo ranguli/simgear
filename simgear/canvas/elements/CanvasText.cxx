@@ -783,21 +783,20 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
-  void Text::setText(const char* text)
+  void Text::setText(const std::string &text)
   {
     _text->setText(text, osgText::String::ENCODING_UTF8);
   }
 
   //----------------------------------------------------------------------------
-  void Text::setFont(const char* name)
+  void Text::setFont(const std::string& name)
   {
     _text->setFont( Canvas::getSystemAdapter()->getFont(name) );
   }
 
   //----------------------------------------------------------------------------
-  void Text::setAlignment(const char* align)
+  void Text::setAlignment(const std::string& align_string)
   {
-    const std::string align_string(align);
     if( 0 ) return;
 #define ENUM_MAPPING(enum_val, string_val) \
     else if( align_string == string_val )\

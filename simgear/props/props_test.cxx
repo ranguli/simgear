@@ -341,7 +341,7 @@ test_property_nodes ()
   std::vector<SGPropertyNode_ptr> bar = child->getChildren("bar");
   cout << "There are " << bar.size() << " matches" << endl;
   for (int i = 0; i < (int)bar.size(); i++)
-    cout << bar[i]->getName() << '[' << bar[i]->getIndex() << ']' << endl;
+    cout << bar[i]->getNameString() << '[' << bar[i]->getIndex() << ']' << endl;
   cout << endl;
 
   cout << "Testing addition of a totally empty node" << endl;

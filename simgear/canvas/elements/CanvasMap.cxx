@@ -142,7 +142,7 @@ namespace canvas
     if( strutils::ends_with(child->getNameString(), GEO) )
       // TODO remove from other node
       _geo_nodes.erase(child);
-    else if( parent != _node && child->getName() == HDG )
+    else if( parent != _node && child->getNameString() == HDG )
     {
       _hdg_nodes.erase(child);
 

@@ -1043,7 +1043,7 @@ void SGTerraSync::WorkerThread::initCompletedTilesPersistentCache() {
 
   for (int i = 0; i < cacheRoot->nChildren(); ++i) {
     SGPropertyNode *entry = cacheRoot->getChild(i);
-    bool isNotFound = (strcmp(entry->getName(), "not-found") == 0);
+    bool isNotFound = (entry->getNameString() == "not-found");
     string tileName = entry->getStringValue("path");
     time_t stamp = entry->getIntValue("stamp");
     SG_LOG(SG_TERRASYNC, SG_DEBUG, "tileName=" << tileName

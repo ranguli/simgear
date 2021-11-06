@@ -1,6 +1,6 @@
 /* -*-c++-*-
  *
- * Copyright (C) 2006-2007 Mathias Froehlich 
+ * Copyright (C) 2006-2007 Mathias Froehlich
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -70,14 +70,10 @@ const expression::Value eval(const Expression* exp,
 
 template<typename T>
 static bool
-SGReadValueFromString(const char* str, T& value)
+SGReadValueFromString(const std::string& str, T& value)
 {
-    if (!str) {
-        SG_LOG(SG_IO, SG_ALERT, "Cannot read string content.");
-        return false;
-    }
     std::stringstream s;
-    s.str(std::string(str));
+    s.str(str);
     s >> value;
     if (s.fail()) {
         SG_LOG(SG_IO, SG_ALERT, "Cannot read string content.");
@@ -141,7 +137,7 @@ SGReadExpression(SGPropertyNode *inputRoot, const SGPropertyNode *expression)
     if (!expression)
         return 0;
 
-    std::string name = expression->getName();
+    std::string name = expression->getNameString();
 
     if (name == "value") {
         T value;
@@ -158,10 +154,7 @@ SGReadExpression(SGPropertyNode *inputRoot, const SGPropertyNode *expression)
                    "No inputRoot argument given!");
             return 0;
         }
-        if (!expression->getStringValue()) {
-            SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
-            return 0;
-        }
+
         SGPropertyNode* inputNode;
         inputNode = inputRoot->getNode(expression->getStringValue(), true);
         return new SGPropertyExpression<T>(inputNode);
@@ -329,7 +322,7 @@ SGReadExpression(SGPropertyNode *inputRoot, const SGPropertyNode *expression)
         // find input expression - i.e a child not named 'entry'
         const SGPropertyNode* inputNode = NULL;
         for (int i=0; (i<expression->nChildren()) && !inputNode; ++i) {
-            if (strcmp(expression->getChild(i)->getName(), "entry") == 0) {
+            if (expression->getChild(i)->getNameString() == "entry") {
                 continue;
             }
             

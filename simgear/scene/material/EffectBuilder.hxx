@@ -218,9 +218,7 @@ void findAttr(const effect::EffectPropertyMap<T>& pMap,
 {
     if (!prop)
         throw effect::BuilderException("findAttr: empty property");
-    const char* name = prop->getStringValue();
-    if (!name)
-        throw effect::BuilderException("findAttr: no name for lookup");
+    std::string name = prop->getStringValue();
     findAttr(pMap, name, result);
 }
 

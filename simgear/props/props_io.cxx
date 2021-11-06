@@ -377,13 +377,13 @@ PropsVisitor::endElement (const char * name)
     int nChildren = st.node->nChildren();
     for (int i = 0; i < nChildren; i++) {
       SGPropertyNode *src = st.node->getChild(i);
-      const char *name = src->getName();
+      string name = src->getNameString();
       int index = parent.counters[name];
       parent.counters[name]++;
       SGPropertyNode *dst = parent.node->getChild(name, index, true);
       copyProperties(src, dst);
     }
-    parent.node->removeChild(st.node->getName(), st.node->getIndex());
+    parent.node->removeChild(st.node->getNameString(), st.node->getIndex());
   }
   pop_state();
 }
@@ -555,7 +555,7 @@ writeAtts( std::ostream &output,
   if( attr )
     for(int i = 0; i < attr->nChildren(); ++i)
     {
-      output << ' ' << attr->getChild(i)->getName() << "=\"";
+      output << ' ' << attr->getChild(i)->getNameString() << "=\"";
 
       const std::string data = attr->getChild(i)->getStringValue();
       for(int j = 0; j < (int)data.size(); ++j)
@@ -623,7 +623,7 @@ writeNode( std::ostream &output,
   if (!write_all && !isArchivable(node, archive_flag))
     return true; // Everything's OK, but we won't write.
 
-  const string name = node->getName();
+  const string name = node->getNameString();
   int nChildren = node->nChildren();
   const SGPropertyNode* attr_node = node->getChild(ATTR, 0);
   bool attr_written = false,

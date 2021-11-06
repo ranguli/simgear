@@ -80,7 +80,7 @@ void testString()
   assert(sp == "aaaa"); // read
 
   sp = "xxxx"; // assignment from char* literal
-  assert(!strcmp(testRoot->getStringValue("a/alice"), "xxxx"));
+  assert(testRoot->getStringValue("a/alice") == "xxxx");
 
   std::string d = "yyyy";
   sp = d; // assignment from std::string
@@ -200,7 +200,7 @@ void testCreate()
 // check overloads for string version
   SGPropertyNode* n = testRoot->getNode("b", true);
   PropertyObject<std::string> d(PropertyObject<std::string>::create(n, "grape", "xyz"));
-  assert(!strcmp(testRoot->getStringValue("b/grape"), "xyz"));
+  assert(testRoot->getStringValue("b/grape") == "xyz");
   
   
 }

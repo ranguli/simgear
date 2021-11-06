@@ -1,6 +1,6 @@
 /* -*-c++-*-
  *
- * Copyright (C) 2006-2007 Mathias Froehlich 
+ * Copyright (C) 2006-2007 Mathias Froehlich
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1029,9 +1029,9 @@ namespace simgear
       Expression* read(const SGPropertyNode* exp)
       {
           ParserMap& map = getParserMap();
-          ParserMap::iterator itr = map.find(exp->getName());
+          ParserMap::iterator itr = map.find(exp->getNameString());
           if (itr == map.end())
-              throw ParseError(std::string("unknown expression ") + exp->getName());
+              throw ParseError(std::string("unknown expression ") + exp->getNameString());
           exp_parser parser = itr->second;
           return (*parser)(exp, this);
       }

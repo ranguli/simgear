@@ -915,9 +915,6 @@ public:
     /** Test whether this node contains a primitive leaf value. */
     bool hasValue() const;
 
-    /** Get the node's simple (XML) name. Return value is not thread-safe. */
-    const char* getName() const;
-
     /** Get the node's simple name as a string. Return value is not thread-safe. */
     const std::string& getNameString() const;
 
@@ -997,7 +994,6 @@ public:
     SGPropertyNode_ptr removeChild(const std::string& name, int index = 0);
 
     /** Remove all children with the specified name. */
-    simgear::PropertyList removeChildren(const char* name);
     simgear::PropertyList removeChildren(const std::string& name);
 
     /** Remove all children (does not change the value of the node) */
@@ -1084,7 +1080,7 @@ public:
     long getLongValue() const;
     float getFloatValue() const;
     double getDoubleValue() const;
-    const char* getStringValue() const;
+    std::string getStringValue() const;
 
     /** Set value of this node. */
     bool setBoolValue(bool value);
@@ -1096,7 +1092,7 @@ public:
     bool setStringValue(const std::string& value);
 
     /** Set a value of unspecified type for this node. */
-    bool setUnspecifiedValue(const char* value);
+    bool setUnspecifiedValue(const std::string &value);
 
     //
     // Template methods for get/set value.
@@ -1236,14 +1232,14 @@ public:
     long getLongValue(const char* relative_path, long defaultValue = 0L) const;
     float getFloatValue(const char* relative_path, float defaultValue = 0.0f) const;
     double getDoubleValue(const char* relative_path, double defaultValue = 0.0) const;
-    const char* getStringValue(const char* relative_path, const char* defaultValue = "") const;
+    std::string getStringValue(const char* relative_path, const char* defaultValue = "") const;
 
     bool getBoolValue(const std::string& relative_path, bool defaultValue = false) const;
     int getIntValue(const std::string& relative_path, int defaultValue = 0) const;
     long getLongValue(const std::string& relative_path, long defaultValue = 0L) const;
     float getFloatValue(const std::string& relative_path, float defaultValue = 0.0f) const;
     double getDoubleValue(const std::string& relative_path, double defaultValue = 0.0) const;
-    const char* getStringValue(const std::string& relative_path, const char* defaultValue = "") const;
+    std::string getStringValue(const std::string& relative_path, const char* defaultValue = "") const;
 
     /** Set another node's value. */
     bool setBoolValue(const char* relative_path, bool value);
@@ -1463,12 +1459,6 @@ template<>
 inline double getValue<double>(const SGPropertyNode* node)
 {
     return node->getDoubleValue();
-}
-
-template<>
-inline const char* getValue<const char*>(const SGPropertyNode* node)
-{
-    return node->getStringValue();
 }
 
 template<>

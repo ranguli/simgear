@@ -164,14 +164,14 @@ void makeEffectAnimations(PropertyList& animation_nodes,
         if (!typeProp)
             continue;
 
-        const char* typeString = typeProp->getStringValue();
-        if (!strcmp(typeString, "material")) {
+        std::string typeString = typeProp->getStringValue();
+        if (typeString == "material") {
             effectProp
                 = SGMaterialAnimation::makeEffectProperties(animProp);
-        } else if (!strcmp(typeString, "shader")) {
+        } else if (typeString == "shader") {
 
             SGPropertyNode* shaderProp = animProp->getChild("shader");
-            if (!shaderProp || strcmp(shaderProp->getStringValue(), "chrome"))
+            if (!shaderProp || shaderProp->getStringValue() != "chrome")
                 continue;
             *itr = 0;           // effect replaces animation
             SGPropertyNode* textureProp = animProp->getChild("texture");
@@ -182,7 +182,7 @@ void makeEffectAnimations(PropertyList& animation_nodes,
                 ->setValue("Effects/chrome");
             SGPropertyNode* paramsProp = makeChild(effectProp.get(), "parameters");
             makeChild(paramsProp, "chrome-texture")
-                ->setValue(textureProp->getStringValue());
+                ->setValue(textureProp->getStringValue().c_str());
         }
         if (effectProp.valid()) {
             PropertyList objectNameNodes = animProp->getChildren("object-name");
@@ -376,7 +376,7 @@ void addTooltipAnimations(const SGPath& path, SGPropertyNode_ptr props, osg::ref
 
         SGPropertyNode* animation = animations[i];
 
-        if (!strcmp(animation->getStringValue("type"), "pick")) {
+        if (animation->getStringValue("type") == "pick") {
             /* There appear to be many of these, and we end up consuming
             GB's of memory if we install a tooltip for each one, so ignore.
             */
