@@ -73,7 +73,6 @@ VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string& f
     setFilterMatrixAs(GAUSSIAN);
     setOptions(options);
     _randomObjectsConstraintGroup = new osg::Group();
-    SG_LOG(SG_TERRAIN, SG_ALERT, "VPBTechnique for " << _fileName);
 }
 
 VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
@@ -1292,11 +1291,12 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
     }
 
     if (photoScenery) {
+        // Photoscenery is enabled, so we need to find and assign the orthophoto texture
 
         // Firstly, we need to work out the texture file we want to load.  Fortunately this follows the same
         // naming convention as the VPB scenery itself.
         auto tileID = _terrainTile->getTileID();
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Using Photoscenery for " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Using Photoscenery for " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
 
         const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
         const SGGeod loc = SGGeod::fromCart(toSG(world));
@@ -1307,17 +1307,21 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         SGPath orthotexture = SGPath(base);
         orthotexture.append("Orthophotos");
         orthotexture.append(bucket.gen_vpb_subtile(tileID.level, tileID.x, tileID.y) + ".dds");
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Using " << orthotexture);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Using phototexture " << orthotexture);
 
         if (orthotexture.exists()) {
-            osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, false, false);
+            // Set up the texture with wrapping of UV to reduce black edges at tile boundaries.
+            osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
             osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
             stateset->setTextureAttributeAndModes(0, texture);
         } else {
-            SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find " << orthotexture);
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Unable to find " << orthotexture);
+            photoScenery = false;
         }
+    }
 
-    } else {
+    if (!photoScenery) {
+        // Either photoscenery is turned off, or we failed to find a suitable texture.
         SGMaterialLibPtr matlib  = _options->getMaterialLib();
         if (!matlib) return;
 
@@ -2122,8 +2126,6 @@ void VPBTechnique::applyCoastline(BufferData& buffer, Locator* masterLocator)
     }
 
     if (v->size() == 0) return;
-
-    //SG_LOG(SG_TERRAIN, SG_ALERT, "Generating coastline of " << v->size() << " vertices."); 
 
     c->push_back(osg::Vec4(1.0,1.0,1.0,1.0));
 
