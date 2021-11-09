@@ -1314,6 +1314,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
             osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
             osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
             stateset->setTextureAttributeAndModes(0, texture);
+            stateset->addUniform(new osg::Uniform("photoScenery", true));
         } else {
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Unable to find " << orthotexture);
             photoScenery = false;
@@ -1371,6 +1372,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         stateset->setTextureAttributeAndModes(2, atlas.dimensions, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(3, atlas.diffuse, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(4, atlas.specular, osg::StateAttribute::ON);
+        stateset->addUniform(new osg::Uniform("photoScenery", false));
     }
 }
 
