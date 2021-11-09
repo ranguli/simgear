@@ -56,8 +56,7 @@
 using namespace osgTerrain;
 using namespace simgear;
 
-VPBTechnique::VPBTechnique():
-  _fileName("")
+VPBTechnique::VPBTechnique()
 {
     setFilterBias(0);
     setFilterWidth(0.1);
@@ -1532,7 +1531,7 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
         std::vector<std::tuple<double, double, VPBMaterialHandler *>>
             scan_points;
 
-        for(auto iter=0; iter!=handlers.size(); iter++) {
+        for(auto iter=0u; iter!=handlers.size(); iter++) {
             const double delta_lat = deltas[iter].first;
             const double delta_lon = deltas[iter].second;
             const int off_x = ll_O.x() / delta_lon;
