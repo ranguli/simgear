@@ -199,7 +199,7 @@ class VPBTechnique : public TerrainTechnique
         osg::Matrix3                        _filterMatrix;
         osg::ref_ptr<osg::Uniform>          _filterMatrixUniform;
         osg::ref_ptr<SGReaderWriterOptions> _options;
-        const string&                       _fileName;
+        const string                        _fileName;
         osg::ref_ptr<osg::Group>            _randomObjectsConstraintGroup;
 
         inline static osg::ref_ptr<osg::Group>  _elevationConstraintGroup = new osg::Group();
