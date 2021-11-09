@@ -201,6 +201,7 @@ namespace simgear {
             case StraddlingPm:
                 expandToInclude(bounds._minNegLon, bounds._minLat);
                 expandToInclude(bounds._maxPosLon, bounds._maxLat);
+                break;
             case StraddlingIdl:
                 expandToInclude(bounds._minPosLon, bounds._minLat);
                 expandToInclude(bounds._maxNegLon, bounds._maxLat);
