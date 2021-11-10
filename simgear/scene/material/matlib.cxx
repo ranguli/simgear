@@ -354,30 +354,12 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
 
     atlas.image = new osg::Texture2DArray();
 
-    osg::ref_ptr<osg::Image> dimensionImage = new osg::Image();
-    dimensionImage->allocateImage(512, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-    atlas.dimensions = new osg::Texture1D(dimensionImage.get());
-    atlas.dimensions->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
-    atlas.dimensions->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
-    atlas.dimensions->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP);
-    atlas.dimensions->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP);
-
-
-    osg::ref_ptr<osg::Image> diffuseImage = new osg::Image();
-    diffuseImage->allocateImage(512, 1, 1,  GL_RGBA, GL_UNSIGNED_BYTE);
-    atlas.diffuse = new osg::Texture1D(diffuseImage.get());
-    atlas.diffuse->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
-    atlas.diffuse->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
-    atlas.diffuse->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP);
-    atlas.diffuse->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP);
-
-    osg::ref_ptr<osg::Image> specularImage = new osg::Image();
-    specularImage->allocateImage(512, 1, 1,  GL_RGBA, GL_UNSIGNED_BYTE);
-    atlas.specular = new osg::Texture1D(specularImage.get());
-    atlas.specular->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
-    atlas.specular->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
-    atlas.specular->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP);
-    atlas.specular->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP);
+    if (landclasslib.size() > 128) SG_LOG(SG_TERRAIN, SG_ALERT, "Too many landclass entries for uniform arrays");
+    
+    atlas.dimensions = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "dimensionsArray", 128);
+    atlas.ambient = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "ambientArray", 128);
+    atlas.diffuse = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "diffuseArray", 128);
+    atlas.specular = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "specularArray", 128);
 
     atlas.image->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
     atlas.image->setResizeNonPowerOfTwoHint(false);
@@ -385,57 +367,53 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     atlas.image->setWrap(osg::Texture::WRAP_S,osg::Texture::REPEAT);
     atlas.image->setWrap(osg::Texture::WRAP_T,osg::Texture::REPEAT);
 
-    int index = -1; 
+    unsigned int index = 0; 
     lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
-        // index is incremented at the start of the loop so that we have a valid
-        // mapping based on the lanclassList, even if we fail to process the texture.
-        ++index;
         int i = lc_iter->first;
         SGMaterial* mat = find(lc_iter->second.first, center);
         atlas.index[i] = index;
         atlas.waterAtlas[i] = lc_iter->second.second;
 
-        if (mat == NULL) continue;
+        if (mat != NULL) {
 
-        // Just get the first texture in the first texture-set for the moment.
-        // Should add some variability in texture-set in the future.
-        const std::string texture = mat->get_one_texture(0,0);
-        if (texture.empty()) continue;
+            // Just get the first texture in the first texture-set for the moment.
+            // Should add some variability in texture-set in the future.
+            const std::string texture = mat->get_one_texture(0,0);
+            if (! texture.empty()) {
+                if (texture.empty()) continue;
 
-        SGPath texturePath = SGPath("Textures");
-        //texturePath.append(texture);
-        std::string fullPath = SGModelLib::findDataFile(texture, options, texturePath);
+                SGPath texturePath = SGPath("Textures");
+                //texturePath.append(texture);
+                std::string fullPath = SGModelLib::findDataFile(texture, options, texturePath);
 
-        if (fullPath.empty()) {
-            SG_LOG(SG_GENERAL, SG_ALERT, "Cannot find texture \""
-                    << texture << "\" in Textures folders when creating texture atlas");
-        }
-        else
-        {
-            // Copy the texture into the atlas in the appropriate place
-            osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(fullPath, options);
-
-            if (subtexture && subtexture->valid()) {
-
-                if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
-                    subtexture->scaleImage(2048,2048,1);
+                if (fullPath.empty()) {
+                    SG_LOG(SG_GENERAL, SG_ALERT, "Cannot find texture \""
+                            << texture << "\" in Textures folders when creating texture atlas");
                 }
+                else
+                {
+                    // Copy the texture into the atlas in the appropriate place
+                    osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(fullPath, options);
 
-                // Add other useful information, such as the texture size in m.
-                // As we pack the texture size into a texture, we need to scale to [0..1.0]
-                float x_size = (0 < mat->get_xsize()) ? mat->get_xsize()/10000.0 : 0.1f;
-                float y_size = (0 < mat->get_ysize()) ? mat->get_ysize()/10000.0 : 0.1f;
+                    if (subtexture && subtexture->valid()) {
 
-                SG_LOG(SG_TERRAIN, SG_DEBUG, "Adding image " << fullPath << " to texture atlas " << x_size << " " << y_size);
-                atlas.image->setImage(index,subtexture);
+                        if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
+                            subtexture->scaleImage(2048,2048,1);
+                        }
 
-                atlas.dimensions->getImage()->setColor(osg::Vec4(x_size, y_size, mat->get_shininess(), 1.0f), index);
-                atlas.diffuse->getImage()->setColor(mat->get_diffuse(), index);
-                atlas.specular->getImage()->setColor(mat->get_specular(), index);
+                        atlas.image->setImage(index,subtexture);
+                        atlas.dimensions->setElement(index, osg::Vec4f(mat->get_xsize(), mat->get_ysize(), mat->get_shininess(), 1.0f));
+                        atlas.ambient->setElement(index, mat->get_ambient());
+                        atlas.diffuse->setElement(index, mat->get_diffuse());
+                        atlas.specular->setElement(index, mat->get_specular());
+                    }
+
+                }
             }
-
         }
+
+        ++index;
     }
 
     // Cache for future lookups

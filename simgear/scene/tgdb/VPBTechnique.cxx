@@ -65,7 +65,7 @@ VPBTechnique::VPBTechnique():
     _randomObjectsConstraintGroup = new osg::Group();
 }
 
-VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string& fileName):
+VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string fileName):
     _fileName(fileName)
 {
     setFilterBias(0);
@@ -1296,20 +1296,29 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         // Firstly, we need to work out the texture file we want to load.  Fortunately this follows the same
         // naming convention as the VPB scenery itself.
         auto tileID = _terrainTile->getTileID();
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "Using Photoscenery for " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Using Photoscenery for " << _fileName << " " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
 
         const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
         const SGGeod loc = SGGeod::fromCart(toSG(world));
         const SGBucket bucket = SGBucket(loc);
+        SGPath orthotexture;
 
-        // Bit of a hack - we assume the Orthophotos are in the same FG_SCENERY top level as the .osgb tiles.
-        string base = _fileName.substr(0, _fileName.find("vpb"));
-        SGPath orthotexture = SGPath(base);
-        orthotexture.append("Orthophotos");
-        orthotexture.append(bucket.gen_vpb_subtile(tileID.level, tileID.x, tileID.y) + ".dds");
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "Using phototexture " << orthotexture);
+        osgDB::FilePathList& pathList = _options->getDatabasePathList();
+        bool found = false;
 
-        if (orthotexture.exists()) {
+        for (auto iter = pathList.begin(); !found && iter != pathList.end(); ++iter) {
+            orthotexture = SGPath(*iter);
+            orthotexture.append("Orthophotos");
+            orthotexture.append(bucket.gen_vpb_subtile(tileID.level, tileID.x, tileID.y) + ".dds");
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Looking for phototexture " << orthotexture);
+
+            if (orthotexture.exists()) {
+                found = true;
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Found phototexture " << orthotexture);
+            }
+        }
+
+        if (found) {
             // Set up the texture with wrapping of UV to reduce black edges at tile boundaries.
             osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
             osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
@@ -1369,10 +1378,11 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(2, atlas.dimensions, osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(3, atlas.diffuse, osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(4, atlas.specular, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform("photoScenery", false));
+        stateset->addUniform(atlas.dimensions);
+        stateset->addUniform(atlas.ambient);
+        stateset->addUniform(atlas.diffuse);
+        stateset->addUniform(atlas.specular);
     }
 }
 

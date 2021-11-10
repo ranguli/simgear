@@ -59,9 +59,10 @@ public:
     typedef struct {
         AtlasIndex index;
         AtlasImage image;
-        osg::ref_ptr<osg::Texture1D> dimensions;
-        osg::ref_ptr<osg::Texture1D> diffuse;
-        osg::ref_ptr<osg::Texture1D> specular;
+        osg::ref_ptr<osg::Uniform> dimensions;
+        osg::ref_ptr<osg::Uniform> ambient;
+        osg::ref_ptr<osg::Uniform> diffuse;
+        osg::ref_ptr<osg::Uniform> specular;
         WaterAtlas waterAtlas;
     } Atlas;
 

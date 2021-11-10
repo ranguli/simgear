@@ -45,7 +45,7 @@ class VPBTechnique : public TerrainTechnique
     public:
 
         VPBTechnique();
-        VPBTechnique(const SGReaderWriterOptions* options, const string& fileName);
+        VPBTechnique(const SGReaderWriterOptions* options, const string fileName);
 
         /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
         VPBTechnique(const VPBTechnique&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
