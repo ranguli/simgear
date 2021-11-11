@@ -1396,8 +1396,6 @@ private:
     // Support for thread-safety.
     //
     mutable std::shared_mutex _mutex;
-    int _mutex_debug_shared = 0;
-    int _mutex_debug_exclusive = 0;
     
     // Core data.
     //
