@@ -381,6 +381,9 @@ struct SGPropertyLock
         if (shared) node._mutex.unlock_shared();
         else node._mutex.unlock();
     }
+    
+    const SGPropertyNode*   m_node = nullptr;
+    bool                    m_own = false;
 };
 
 /* Scoped exclusive lock of a SGPropertyNode. */
@@ -424,9 +427,6 @@ struct SGPropertyLockExclusive : SGPropertyLock
     {
         if (m_own) release();
     }
-    
-    const SGPropertyNode*   m_node = nullptr;
-    bool                    m_own = false;
 
     private:
         SGPropertyLockExclusive(const SGPropertyLockExclusive&);
@@ -437,8 +437,7 @@ struct SGPropertyLockShared : SGPropertyLock
 {
     SGPropertyLockShared()
     :
-    SGPropertyLock(),
-    m_node(nullptr)
+    SGPropertyLock()
     {
     }
     
@@ -477,9 +476,6 @@ struct SGPropertyLockShared : SGPropertyLock
     {
         if (m_own) release();
     }
-    
-    const SGPropertyNode*   m_node = nullptr;
-    bool                    m_own = false;
 
     private:
         SGPropertyLockShared(const SGPropertyLockShared&);
