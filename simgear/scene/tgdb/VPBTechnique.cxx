@@ -1382,6 +1382,8 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         stateset->addUniform(atlas.ambient);
         stateset->addUniform(atlas.diffuse);
         stateset->addUniform(atlas.specular);
+        stateset->addUniform(new osg::Uniform("zUpTransform", osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
+        stateset->addUniform(new osg::Uniform("modelOffset", buffer._transform->getMatrix().getTrans()));
     }
 }
 
