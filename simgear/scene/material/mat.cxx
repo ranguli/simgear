@@ -546,6 +546,17 @@ std::string SGMaterial::get_one_texture(int setIndex, int texIndex)
     return texturePath;
 }
 
+std::size_t SGMaterial::get_num_textures(int setIndex)
+{
+    if (_status.empty()) {
+        SG_LOG( SG_GENERAL, SG_WARN, "No material available.");
+        return 0;
+    }
+
+    SGMaterial::_internal_state st = _status[setIndex % _status.size()];
+    return st.texture_paths.size();
+}
+
 void SGMaterial::buildEffectProperties(const SGReaderWriterOptions* options)
 {
     using namespace osg;

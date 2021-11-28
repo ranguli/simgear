@@ -147,11 +147,15 @@ public:
    */
   std::string get_one_texture(int setIndex, int texIndex);
 
+  /**
+   * Get the number of textures defined in this set
+   */
+  std::size_t get_num_textures(int setIndex);
 
   /**
    * Get the number of textures assigned to this material.
    */
-  inline int get_num() const { return _status.size(); }
+  inline int get_num_texture_sets() const { return _status.size(); }
 
 
   /**

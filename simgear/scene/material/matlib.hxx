@@ -50,20 +50,38 @@ class SGMaterialCache : public osg::Referenced
 {
 public:
 
-    // An atlas, consisting of a landclass index, an atlas image and set 
-    // of texture1D containing further data
+    // A texture Atlas with multiple levels of indirection:
+
+    // - A given landclass maps to an index in the materialLookup.
+    // - The materialLookup results in a set of texture indexes that
+    //   represent the textures referenced by the texture-set in the material
+    // - the texture indexes index into the Atlas itself.
+ 
+    // Mapping of landclass numbers to indexes within the atlas
+    // materialLookup
     typedef std::map<int, int> AtlasIndex;
+
+    // Mapping of texture filenames to their index in the Atlas image itself.
+    typedef std::map<std::string, unsigned int> TextureMap;
+
+    // The Texture array itself
     typedef osg::ref_ptr<osg::Texture2DArray> AtlasImage;
     typedef std::map<int, bool> WaterAtlas;
+
+    // Maximum number of textures per texture-set for the Atlas.
+    static const unsigned int MAX_TEXTURES = 16;
 
     typedef struct {
         AtlasIndex index;
         AtlasImage image;
+        osg::ref_ptr<osg::Uniform> textureLookup1;
+        osg::ref_ptr<osg::Uniform> textureLookup2;
         osg::ref_ptr<osg::Uniform> dimensions;
         osg::ref_ptr<osg::Uniform> ambient;
         osg::ref_ptr<osg::Uniform> diffuse;
         osg::ref_ptr<osg::Uniform> specular;
         WaterAtlas waterAtlas;
+        TextureMap textureMap;
     } Atlas;
 
     // Constructor

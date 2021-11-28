@@ -1257,10 +1257,10 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Tile Level " << _terrainTile->getTileID().level << " width " << buffer._width << " height " << buffer._height);
 
-    osg::ref_ptr<osg::Uniform> twu = new osg::Uniform("tile_width", buffer._width);
+    osg::ref_ptr<osg::Uniform> twu = new osg::Uniform("fg_tileWidth", buffer._width);
     landStateSet->addUniform(twu);
     waterStateSet->addUniform(twu);
-    osg::ref_ptr<osg::Uniform> thu = new osg::Uniform("tile_height", buffer._height);
+    osg::ref_ptr<osg::Uniform> thu = new osg::Uniform("fg_tileHeight", buffer._height);
     landStateSet->addUniform(thu);
     waterStateSet->addUniform(thu);
 
@@ -1322,7 +1322,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
             osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
             osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
             stateset->setTextureAttributeAndModes(0, texture);
-            stateset->addUniform(new osg::Uniform("photoScenery", true));
+            stateset->addUniform(new osg::Uniform("fg_photoScenery", true));
         } else {
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Unable to find " << orthotexture);
             photoScenery = false;
@@ -1354,7 +1354,14 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
             for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
                 osg::Vec4d c = image->getColor(s, t);
                 int i = int(round(c.x() * 255.0));
-                c.set(c.x(), (double) (atlasIndex[i] / 255.0), c.z(), c.w() );
+
+                // Get texture 0 for this material to save a Uniform lookup in the shader for
+                // maximal performance on single-texture shaders
+                osg::Vec4f texture1;
+                if (! atlas.textureLookup1->getElement(atlasIndex[i], texture1)) {
+                    SG_LOG(SG_TERRAIN, SG_ALERT, "Failed to do texture lookup for landclass: " << atlasIndex[i]);
+                }
+                c.set((double) (atlasIndex[i] / 255.0), texture1.r(), texture1.g(), texture1.b());
                 image->setColor(c, s, t);
             }
         }
@@ -1377,13 +1384,16 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
-        stateset->addUniform(new osg::Uniform("photoScenery", false));
+        stateset->addUniform(new osg::Uniform("fg_photoScenery", false));
         stateset->addUniform(atlas.dimensions);
         stateset->addUniform(atlas.ambient);
         stateset->addUniform(atlas.diffuse);
         stateset->addUniform(atlas.specular);
-        stateset->addUniform(new osg::Uniform("zUpTransform", osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
-        stateset->addUniform(new osg::Uniform("modelOffset", buffer._transform->getMatrix().getTrans()));
+        stateset->addUniform(atlas.textureLookup1);
+        stateset->addUniform(atlas.textureLookup2);
+        stateset->addUniform(new osg::Uniform("fg_zUpTransform", osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
+        stateset->addUniform(new osg::Uniform("fg_modelOffset", (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+        //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
     }
 }
 

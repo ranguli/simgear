@@ -331,9 +331,10 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
 {
     SGMaterialCache::Atlas atlas;
     
-    // Non-VPB does not use the Atlas, so save some both and return
+    // Non-VPB does not use the Atlas, so save some effort and return
     if (! SGSceneFeatures::instance()->getVPBActive()) return atlas;
 
+    // A simple key to the atlas is just the list of textures.
     std::string id;
     const_landclass_map_iterator lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
@@ -347,7 +348,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
 
     if (atlas_iter != _atlasCache.end()) return atlas_iter->second;
 
-    // Cache lookup failure - generate a new atlas, but only if we have a change of reading any textures
+    // Cache lookup failure - generate a new atlas, but only if we have a chance of reading any textures
     if (options == 0) {
         return atlas;
     }
@@ -356,10 +357,12 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
 
     if (landclasslib.size() > 128) SG_LOG(SG_TERRAIN, SG_ALERT, "Too many landclass entries for uniform arrays");
     
-    atlas.dimensions = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "dimensionsArray", 128);
-    atlas.ambient = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "ambientArray", 128);
-    atlas.diffuse = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "diffuseArray", 128);
-    atlas.specular = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "specularArray", 128);
+    atlas.textureLookup1 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_textureLookup1", 128);
+    atlas.textureLookup2 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_textureLookup2", 128);
+    atlas.dimensions = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_dimensionsArray", 128);
+    atlas.ambient = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_ambientArray", 128);
+    atlas.diffuse = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_diffuseArray", 128);
+    atlas.specular = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_specularArray", 128);
 
     atlas.image->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
     atlas.image->setResizeNonPowerOfTwoHint(false);
@@ -367,53 +370,85 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     atlas.image->setWrap(osg::Texture::WRAP_S,osg::Texture::REPEAT);
     atlas.image->setWrap(osg::Texture::WRAP_T,osg::Texture::REPEAT);
 
-    unsigned int index = 0; 
+    unsigned int imageIndex = 0u; // Index into the image
+    unsigned int materialLookupIndex = 0u; // Index into the material lookup
     lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
-        int i = lc_iter->first;
+
+        int landclass = lc_iter->first;
         SGMaterial* mat = find(lc_iter->second.first, center);
-        atlas.index[i] = index;
-        atlas.waterAtlas[i] = lc_iter->second.second;
+        atlas.index[landclass] = materialLookupIndex;
+        atlas.waterAtlas[landclass] = lc_iter->second.second;
+        unsigned int textureList[SGMaterialCache::MAX_TEXTURES];
 
         if (mat != NULL) {
 
-            // Just get the first texture in the first texture-set for the moment.
-            // Should add some variability in texture-set in the future.
-            const std::string texture = mat->get_one_texture(0,0);
-            if (! texture.empty()) {
-                if (texture.empty()) continue;
+            if (mat->get_num_textures(0) > SGMaterialCache::MAX_TEXTURES) {
+                SG_LOG(SG_GENERAL, SG_ALERT, "Unable to build texture atlas for landclass " 
+                    << landclass << " aka " << mat->get_names()[0] 
+                    << " too many textures: " << mat->get_num_textures(0) 
+                    << " (maximum " << SGMaterialCache::MAX_TEXTURES << ")");
+                continue;
+            }
 
-                SGPath texturePath = SGPath("Textures");
-                //texturePath.append(texture);
-                std::string fullPath = SGModelLib::findDataFile(texture, options, texturePath);
+            atlas.dimensions->setElement(materialLookupIndex, osg::Vec4f(mat->get_xsize(), mat->get_ysize(), mat->get_shininess(), 1.0f));
+            atlas.ambient->setElement(materialLookupIndex, mat->get_ambient());
+            atlas.diffuse->setElement(materialLookupIndex, mat->get_diffuse());
+            atlas.specular->setElement(materialLookupIndex, mat->get_specular());
 
-                if (fullPath.empty()) {
-                    SG_LOG(SG_GENERAL, SG_ALERT, "Cannot find texture \""
-                            << texture << "\" in Textures folders when creating texture atlas");
-                }
-                else
-                {
-                    // Copy the texture into the atlas in the appropriate place
-                    osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(fullPath, options);
+            // Add any missing textures into the atlas image
+            for (std::size_t i = 0; i < mat->get_num_textures(0); ++i) {
+                const std::string texture = mat->get_one_texture(0,i);
+                if (! texture.empty()) {
 
-                    if (subtexture && subtexture->valid()) {
+                    SGPath texturePath = SGPath("Textures");
+                    std::string fullPath = SGModelLib::findDataFile(texture, options, texturePath);
 
-                        if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
-                            subtexture->scaleImage(2048,2048,1);
-                        }
-
-                        atlas.image->setImage(index,subtexture);
-                        atlas.dimensions->setElement(index, osg::Vec4f(mat->get_xsize(), mat->get_ysize(), mat->get_shininess(), 1.0f));
-                        atlas.ambient->setElement(index, mat->get_ambient());
-                        atlas.diffuse->setElement(index, mat->get_diffuse());
-                        atlas.specular->setElement(index, mat->get_specular());
+                    if (fullPath.empty()) {
+                        SG_LOG(SG_GENERAL, SG_ALERT, "Cannot find texture \""
+                                << texture << "\" in Textures folders when creating texture atlas");
+                        textureList[i] = -2;
+                        continue;
                     }
 
+                    if (atlas.textureMap.find(fullPath) == atlas.textureMap.end()) {
+                        // Copy the texture into the atlas in the appropriate place
+                        osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(fullPath, options);
+
+                        if (subtexture && subtexture->valid()) {
+
+                            if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
+                                subtexture->scaleImage(2048,2048,1);
+                            }
+
+                            atlas.image->setImage(imageIndex,subtexture);
+                            atlas.textureMap[fullPath] = imageIndex;
+                            ++imageIndex;
+                        }
+                    }
+
+                    // At this point we know that the texture is present in the
+                    // atlas and referenced in the textureMap, so add it to the materialLookup
+                    textureList[i] = atlas.textureMap[fullPath];
+                    //SG_LOG(SG_TERRAIN, SG_ALERT, "materialLookup Index: " << (materialLookupIndex * SGMaterialCache::MAX_TEXTURES + i) << " " << atlas.textureMap[fullPath] << " " << fullPath);
+                } else {
+                    textureList[i] = -2;
                 }
             }
+
+            // Fill out the rest of the array
+            for (std::size_t i = mat->get_num_textures(0); i < SGMaterialCache::MAX_TEXTURES; ++i) {
+                textureList[i] = -2;
+            }
+
+            // We now have a textureList containing the full set of textures.  Pack the relevant ones into the Vec4 of the index Uniform.
+            // This is a bit of a hack to maintain compatibility with the WS2.0 material definitions, as the material definitions use the 
+            // 11-15th textures for the various overlay textures for terrain-default.eff, we do the same for ws30.eff
+            atlas.textureLookup1->setElement(materialLookupIndex, osg::Vec4f( (float) (textureList[0] / 255.0), (float) (textureList[11] / 255.0), (float) (textureList[12] / 255.0), (float) (textureList[13] / 255.0)));
+            atlas.textureLookup2->setElement(materialLookupIndex, osg::Vec4f( (float) (textureList[14] / 255.0), (float) (textureList[15] / 255.0), 0.0,0.0));
         }
 
-        ++index;
+        ++materialLookupIndex;
     }
 
     // Cache for future lookups
