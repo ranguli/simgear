@@ -30,7 +30,7 @@
 
 #if defined(_MSC_VER)
 # include <intrin.h>
-#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__) || defined(__e2k__))
 # include <x86intrin.h>
 #elif defined(__GNUC__) && defined(__ARM_NEON__)
 # include <arm_neon.h>
