@@ -69,7 +69,10 @@ public:
     typedef std::map<int, bool> WaterAtlas;
 
     // Maximum number of textures per texture-set for the Atlas.
-    static const unsigned int MAX_TEXTURES = 16;
+    static const unsigned int MAX_TEXTURES = 22;
+
+    // Maximum number of material entries in the atlas
+    static const unsigned int MAX_MATERIALS = 64;
 
     typedef struct {
         AtlasIndex index;
@@ -80,6 +83,10 @@ public:
         osg::ref_ptr<osg::Uniform> ambient;
         osg::ref_ptr<osg::Uniform> diffuse;
         osg::ref_ptr<osg::Uniform> specular;
+
+        osg::ref_ptr<osg::Uniform> materialParams1;
+        osg::ref_ptr<osg::Uniform> materialParams2;
+
         WaterAtlas waterAtlas;
         TextureMap textureMap;
     } Atlas;
@@ -96,6 +103,8 @@ public:
     SGMaterial *find( int material ) const;
 
     Atlas getAtlas() { return _atlas; };
+
+    void addAtlasUniforms(osg::StateSet* stateset);
 
     // Destructor
     ~SGMaterialCache ( void );

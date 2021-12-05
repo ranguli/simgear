@@ -1346,7 +1346,8 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         const SGGeod loc = computeCenterGeod(buffer, masterLocator);
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
 
-        SGMaterialCache::Atlas atlas = matlib->generateMatCache(loc, _options)->getAtlas();
+        SGMaterialCache* matCache = matlib->generateMatCache(loc, _options);
+        SGMaterialCache::Atlas atlas = matCache->getAtlas();
         SGMaterialCache::AtlasIndex atlasIndex = atlas.index;
 
         // Set the "g" color channel to an index into the atlas index.
@@ -1385,14 +1386,9 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform("fg_photoScenery", false));
-        stateset->addUniform(atlas.dimensions);
-        stateset->addUniform(atlas.ambient);
-        stateset->addUniform(atlas.diffuse);
-        stateset->addUniform(atlas.specular);
-        stateset->addUniform(atlas.textureLookup1);
-        stateset->addUniform(atlas.textureLookup2);
         stateset->addUniform(new osg::Uniform("fg_zUpTransform", osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
         stateset->addUniform(new osg::Uniform("fg_modelOffset", (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+        matCache->addAtlasUniforms(stateset);
         //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
     }
 }
