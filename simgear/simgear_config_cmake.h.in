@@ -29,3 +29,5 @@
 #cmakedefine ENABLE_SIMD
 #cmakedefine ENABLE_SIMD_CODE
 #cmakedefine ENABLE_GDAL
+
+#cmakedefine SG_FFMPEG

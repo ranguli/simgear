@@ -170,6 +170,7 @@ if(NOT SIMGEAR_HEADLESS)
         ZLIB::ZLIB
         ${OPENGL_LIBRARY}
         ${JPEG_LIBRARY}
+        ${FFMPEG_LIBRARIES}
         FGTinyGLTF)
 
     # ToDo: define an ALIAS target for the sound backend, to get
@@ -190,6 +191,7 @@ if(NOT SIMGEAR_HEADLESS)
 
     # only actually needed by canvas/KeyboardEvent.cxx
     target_include_directories(SimGearScene PRIVATE ${PROJECT_SOURCE_DIR}/3rdparty/utf8/source)
+    target_include_directories(SimGearScene PRIVATE ${FFMPEG_INCLUDE_DIRS})
 
     install(TARGETS SimGearScene
         EXPORT SimGearTargets

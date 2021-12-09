@@ -1,3 +1,5 @@
+#include "simgear_config.h"
+
 #include "video-encoder.hxx"
 
 #ifdef SG_FFMPEG
