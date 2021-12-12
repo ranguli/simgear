@@ -226,12 +226,12 @@ endif(ENABLE_GDAL)
 
 
 if (ENABLE_VIDEO_RECORD)
-  find_package(FFmpeg)
+  find_package(FFmpeg COMPONENTS AVCODEC AVFORMAT AVUTIL SWSCALE)
   if (FFmpeg_FOUND)
   # set this so it's picked up in simgear_config.h
     set(SG_FFMPEG 1)
   else()
-    message(STATUS "Video recording was requested, but required FFmpeg/avcoded libaries not found")
+    message(STATUS "Video recording was requested, but required FFmpeg/avcodec libaries not found")
   endif()
 endif()
 
