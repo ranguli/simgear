@@ -1,5 +1,6 @@
-#include "simgear_config.h"
+/* SPDX-License-Identifier: GPL-3.0-only */
 
+#include "simgear_config.h"
 #include "video-encoder.hxx"
 
 #ifdef SG_FFMPEG

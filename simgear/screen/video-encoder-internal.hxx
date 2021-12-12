@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+
 #pragma once
 
 #ifndef SG_VIDEO_ENCODER_STANDALONE
