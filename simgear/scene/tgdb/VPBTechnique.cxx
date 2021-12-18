@@ -1355,14 +1355,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
             for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
                 osg::Vec4d c = image->getColor(s, t);
                 int i = int(round(c.x() * 255.0));
-
-                // Get texture 0 for this material to save a Uniform lookup in the shader for
-                // maximal performance on single-texture shaders
-                osg::Vec4f texture1;
-                if (! atlas.textureLookup1->getElement(atlasIndex[i], texture1)) {
-                    SG_LOG(SG_TERRAIN, SG_ALERT, "Failed to do texture lookup for landclass: " << atlasIndex[i]);
-                }
-                c.set((double) (atlasIndex[i] / 255.0), texture1.r(), texture1.g(), texture1.b());
+                c.set(c.x(), (double) (atlasIndex[i] / 255.0), c.z(), c.w() );
                 image->setColor(c, s, t);
             }
         }
