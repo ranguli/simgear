@@ -19,19 +19,24 @@
 #define BVHMaterial_hxx
 
 #include <simgear/structure/SGReferenced.hxx>
+#include <simgear/props/props.hxx>
+
+#include <cstdio>
 
 namespace simgear {
 
 class BVHMaterial : public SGReferenced {
 public:
-    BVHMaterial();
-    virtual ~BVHMaterial();
+    BVHMaterial() = default;
+    virtual ~BVHMaterial() = default;
 
     /**
      * Return if the surface material is solid, if it is not solid, a fluid
      * can be assumed, that is usually water.
      */
-    bool get_solid () const { return _solid; }
+    bool get_solid () const {
+      return _solid_is_prop ? _solid_property->getBoolValue() : _solid;
+    }
     
     /**
      * Get the friction factor for that material
@@ -55,21 +60,26 @@ public:
 
 protected:    
     // True if the material is solid, false if it is a fluid
-    bool _solid;
+    bool _solid = true;
     
     // the friction factor of that surface material
-    double _friction_factor;
+    double _friction_factor = 1.0;
     
     // the rolling friction of that surface material
-    double _rolling_friction;
+    double _rolling_friction = 0.02;
     
     // the bumpiness of that surface material
-    double _bumpiness;
+    double _bumpiness = 0.0;
     
     // the load resistance of that surface material
-    double _load_resistance;
+    double _load_resistance = 1e30;
+
+    // Placeholder for the solid property, if defined
+    SGPropertyNode_ptr _solid_property;
+    bool _solid_is_prop = false;
 };
+
 
 }
 
-#endif
+#,endif

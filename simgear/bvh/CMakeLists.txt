@@ -39,7 +39,6 @@ set(SOURCES
     BVHStaticNode.cxx
     BVHStaticTriangle.cxx
     BVHSubTreeCollector.cxx
-    BVHMaterial.cxx
     BVHTransform.cxx
 )
 

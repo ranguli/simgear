@@ -385,7 +385,13 @@ SGMaterial::read_properties(const SGReaderWriterOptions* options,
     }
 
     // surface values for use with ground reactions
-    _solid = props->getBoolValue("solid", _solid);
+    string propval = props->getStringValue("solid/property", "");
+    if (propval != "") {
+        _solid_property = prop_root->getNode(propval, true);
+        _solid_is_prop  =true;
+    } else {
+        _solid = props->getBoolValue("solid", _solid);
+    }
     _friction_factor = props->getDoubleValue("friction-factor", _friction_factor);
     _rolling_friction = props->getDoubleValue("rolling-friction", _rolling_friction);
     _bumpiness = props->getDoubleValue("bumpiness", _bumpiness);
