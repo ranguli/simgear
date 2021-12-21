@@ -37,11 +37,20 @@ public:
     bool get_solid () const {
       return _solid_is_prop ? _solid_property->getBoolValue() : _solid;
     }
+
+    /**
+     * Return the solid factor for when the lakes are frozen over or not.
+     */
+    double get_frozen_fact () const {
+      return _solid_is_prop ? (_solid_property->getBoolValue() ? 0.1 : 1.) : 1.;
+    }
     
     /**
      * Get the friction factor for that material
      */
-    double get_friction_factor () const { return _friction_factor; }
+    double get_friction_factor () const {
+      return _friction_factor * get_frozen_fact();
+    }
     
     /**
      * Get the rolling friction for that material
@@ -51,12 +60,16 @@ public:
     /**
      * Get the bumpines for that material
      */
-    double get_bumpiness () const { return _bumpiness; }
+    double get_bumpiness () const {
+      return _bumpiness * get_frozen_fact();
+    }
     
     /**
      * Get the load resistance
      */
-    double get_load_resistance () const { return _load_resistance; }
+    double get_load_resistance () const {
+      return _load_resistance / get_frozen_fact();
+    }
 
 protected:    
     // True if the material is solid, false if it is a fluid
