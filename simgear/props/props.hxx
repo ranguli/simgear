@@ -1074,12 +1074,14 @@ public:
     /** Get the type of leaf value, if any, for this node. */
     simgear::props::Type getType() const;
 
-    /** Get a value of this node. */
-    bool getBoolValue() const;
-    int getIntValue() const;
-    long getLongValue() const;
-    float getFloatValue() const;
-    double getDoubleValue() const;
+    /** Get a value of this node. We return <defaultValue> if node is not
+    readable or not the requested (or comaptible) type and its string value is
+    not convertible to the requested type. */
+    bool getBoolValue(bool defaultValue=false) const;
+    int getIntValue(int defaultValue=0) const;
+    long getLongValue(long defaultValue=0) const;
+    float getFloatValue(float defaultValue=0) const;
+    double getDoubleValue(double defaultValue=0) const;
     std::string getStringValue() const;
 
     /** Set value of this node. */

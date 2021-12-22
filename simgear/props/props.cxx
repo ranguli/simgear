@@ -1162,10 +1162,10 @@ struct SGPropertyNodeImpl
     
     /* Get the value as a string. */
     static std::string
-    make_string(SGPropertyLock& lock, const SGPropertyNode& node)
+    make_string(SGPropertyLock& lock, const SGPropertyNode& node, const char* defaultValue="")
     {
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return "";
+            return defaultValue;
         switch (node._type) {
         case props::ALIAS:
             {
@@ -1181,7 +1181,7 @@ struct SGPropertyNodeImpl
         case props::UNSPECIFIED:
             return get_string(lock, node);
         case props::NONE:
-            return "";
+            return defaultValue;
         default:
             break;
         }
@@ -1209,7 +1209,7 @@ struct SGPropertyNodeImpl
         }
             break;
         default:
-            return "";
+            return defaultValue;
         }
         return sstr.str();
     }
@@ -1345,7 +1345,6 @@ struct SGPropertyNodeImpl
     static std::string
     getStringValue(SGPropertyLock& lock, const SGPropertyNode& node)
     {
-        // This is inherantly unsafe.
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::STRING)
             return std::string(get_string(lock, node));
@@ -1358,7 +1357,7 @@ struct SGPropertyNodeImpl
     }
 
     static bool
-    getBoolValue(SGPropertyLock& lock, const SGPropertyNode& node)
+    getBoolValue(SGPropertyLock& lock, const SGPropertyNode& node, bool defaultValue=false)
     {
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::BOOL)
@@ -1367,13 +1366,13 @@ struct SGPropertyNodeImpl
         if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
             trace_read(lock, node);   // Releases+acquire <lock>.
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return SGRawValue<bool>::DefaultValue();
+            return defaultValue;
         switch (node._type) {
         case props::ALIAS:
             {
                 SGPropertyNode* p = node._value.alias;
                 lock.release();
-                return p->getBoolValue();
+                return p->getBoolValue(defaultValue);
             }
         case props::BOOL:
             return get_bool(lock, node);
@@ -1387,7 +1386,7 @@ struct SGPropertyNodeImpl
             return get_double(lock, node) == 0.0L ? false : true;
         case props::STRING:
         case props::UNSPECIFIED:
-            return (strings_equal(get_string(lock, node), "true") || getDoubleValue(lock, node) != 0.0L);
+            return (strings_equal(get_string(lock, node), "true") || getDoubleValue(lock, node, 0) != 0.0L);
         case props::NONE:
         default:
             return SGRawValue<bool>::DefaultValue();
@@ -1395,7 +1394,7 @@ struct SGPropertyNodeImpl
     }
 
     static int
-    getIntValue(SGPropertyLock& lock, const SGPropertyNode& node)
+    getIntValue(SGPropertyLock& lock, const SGPropertyNode& node, int defaultValue=0)
     {
          // Shortcut for common case
          if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::INT)
@@ -1404,13 +1403,13 @@ struct SGPropertyNodeImpl
          if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
              trace_read(lock, node);
          if (!getAttribute(lock, node, SGPropertyNode::READ))
-             return SGRawValue<int>::DefaultValue();
+             return defaultValue;
          switch (node._type) {
          case props::ALIAS:
              {
                  SGPropertyNode* p = node._value.alias;
                  lock.release();
-                 return p->getIntValue();
+                 return p->getIntValue(defaultValue);
              }
          case props::BOOL:
              return int(get_bool(lock, node));
@@ -1424,6 +1423,7 @@ struct SGPropertyNodeImpl
              return int(get_double(lock, node));
          case props::STRING:
          case props::UNSPECIFIED:
+             /* fixme: use strtol*/
              return atoi(get_string(lock, node));
          case props::NONE:
          default:
@@ -1432,7 +1432,7 @@ struct SGPropertyNodeImpl
     }
 
     static long
-    getLongValue(SGPropertyLock& lock, const SGPropertyNode& node)
+    getLongValue(SGPropertyLock& lock, const SGPropertyNode& node, long defaultValue=0)
     {
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::LONG)
@@ -1441,7 +1441,7 @@ struct SGPropertyNodeImpl
         if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
             trace_read(lock, node);
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return SGRawValue<long>::DefaultValue();
+            return defaultValue;
         switch (node._type) {
         case props::ALIAS:
             {
@@ -1461,6 +1461,7 @@ struct SGPropertyNodeImpl
             return long(get_double(lock, node));
         case props::STRING:
         case props::UNSPECIFIED:
+            /* fixme: check for error. */
             return strtol(get_string(lock, node), 0, 0);
         case props::NONE:
         default:
@@ -1469,7 +1470,7 @@ struct SGPropertyNodeImpl
     }
 
     static float
-    getFloatValue(SGPropertyLock& lock, const SGPropertyNode& node)
+    getFloatValue(SGPropertyLock& lock, const SGPropertyNode& node, float defaultValue=0)
     {
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::FLOAT)
@@ -1478,7 +1479,7 @@ struct SGPropertyNodeImpl
         if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
             trace_read(lock, node);
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return SGRawValue<float>::DefaultValue();
+            return defaultValue;
         switch (node._type) {
         case props::ALIAS:
             {
@@ -1498,6 +1499,7 @@ struct SGPropertyNodeImpl
             return float(get_double(lock, node));
         case props::STRING:
         case props::UNSPECIFIED:
+            /* fixme: check for error. */
             return atof(get_string(lock, node));
         case props::NONE:
         default:
@@ -1506,7 +1508,7 @@ struct SGPropertyNodeImpl
     }
 
     static double
-    getDoubleValue(SGPropertyLock& lock, const SGPropertyNode& node)
+    getDoubleValue(SGPropertyLock& lock, const SGPropertyNode& node, double defaultValue=0)
     {
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::DOUBLE)
@@ -1515,14 +1517,14 @@ struct SGPropertyNodeImpl
         if (getAttribute(lock, node, SGPropertyNode::TRACE_READ))
             trace_read(lock, node);
         if (!getAttribute(lock, node, SGPropertyNode::READ))
-            return SGRawValue<double>::DefaultValue();
+            return defaultValue;
 
         switch (node._type) {
             case props::ALIAS:
                 {
                     SGPropertyNode* p = node._value.alias;
                     lock.release();
-                    return p->getDoubleValue();
+                    return p->getDoubleValue(defaultValue);
                 }
             case props::BOOL:
                 return double(get_bool(lock, node));
@@ -1536,7 +1538,19 @@ struct SGPropertyNodeImpl
                 return get_double(lock, node);
             case props::STRING:
             case props::UNSPECIFIED:
-                return strtod(get_string(lock, node), 0);
+            {
+                char* end;
+                const char* s = get_string(lock, node);
+                double ret = strtod(s, &end);
+                if (end == s)
+                {
+                    /* Unable to convert. Would prefer 'if (*end) ...' so
+                    we don't return partial string conversion, but this is
+                    backwards compatible. */
+                    return defaultValue;
+                }
+                return ret;
+            }
             case props::NONE:
             default:
                 return SGRawValue<double>::DefaultValue();
@@ -1544,7 +1558,7 @@ struct SGPropertyNodeImpl
     }
 
     static bool
-    setBoolValue(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, bool value)
+    setBoolValue(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, bool value=false)
     {
         // Shortcut for common case
         if (node._attr == (SGPropertyNode::READ|SGPropertyNode::WRITE) && node._type == props::BOOL)
@@ -2836,38 +2850,38 @@ SGPropertyNode::getType() const
 
 
 bool
-SGPropertyNode::getBoolValue() const
+SGPropertyNode::getBoolValue(bool defaultValue) const
 {
   SGPropertyLockShared shared(*this);
-  return SGPropertyNodeImpl::getBoolValue(shared, *this);
+  return SGPropertyNodeImpl::getBoolValue(shared, *this, defaultValue);
 }
 
 int
-SGPropertyNode::getIntValue() const
+SGPropertyNode::getIntValue(int defaultValue) const
 {
     SGPropertyLockShared shared(*this);
-    return SGPropertyNodeImpl::getIntValue(shared, *this);
+    return SGPropertyNodeImpl::getIntValue(shared, *this, defaultValue);
 }
 
 long
-SGPropertyNode::getLongValue() const
+SGPropertyNode::getLongValue(long defaultValue) const
 {
     SGPropertyLockShared shared(*this);
-    return SGPropertyNodeImpl::getLongValue(shared, *this);
+    return SGPropertyNodeImpl::getLongValue(shared, *this, defaultValue);
 }
 
 float
-SGPropertyNode::getFloatValue () const
+SGPropertyNode::getFloatValue(float defaultValue) const
 {
     SGPropertyLockShared shared(*this);
-    return SGPropertyNodeImpl::getFloatValue(shared, *this);
+    return SGPropertyNodeImpl::getFloatValue(shared, *this, defaultValue);
 }
 
 double
-SGPropertyNode::getDoubleValue() const
+SGPropertyNode::getDoubleValue(double defaultValue) const
 {
     SGPropertyLockShared shared(*this);
-    return SGPropertyNodeImpl::getDoubleValue(shared, *this);
+    return SGPropertyNodeImpl::getDoubleValue(shared, *this, defaultValue);
 }
 
 
