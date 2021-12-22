@@ -117,8 +117,9 @@ SGLight::appendLight(const SGPropertyNode* configNode,
     //-- copy config to prop tree --
     const std::string propPath {"/scenery/lights"};
     const std::string propName {"light"};
-    SGPropertyNode_ptr _pConfig = simgear::getPropertyRoot()->getNode(propPath, true)
-        ->addChild(propName);
+    SGPropertyNode_ptr _pConfig = simgear::getPropertyRoot()->getNode(propPath, true);
+    _pConfig->setAttribute(SGPropertyNode::VALUE_CHANGED_DOWN, true);
+    _pConfig = _pConfig->addChild(propName);
 
     copyProperties(configNode, _pConfig);
     
