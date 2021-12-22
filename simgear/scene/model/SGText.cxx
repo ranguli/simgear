@@ -16,25 +16,26 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifdef HAVE_CONFIG_H
-#  include <simgear_config.h>
-#endif
+#include <simgear_config.h>
 
 #include <cstdio>
 
 #include "SGText.hxx"
 
+
+#include <osg/Geode>
+#include <osg/MatrixTransform>
+#include <osgText/Text>
+#include <osgText/Font>
+
+#include <simgear/misc/ResourceManager.hxx>
 #include <simgear/math/SGMath.hxx>
 #include <simgear/misc/sg_path.hxx>
 #include <simgear/misc/strutils.hxx>
 #include <simgear/scene/material/Effect.hxx>
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
-
-#include <osg/Geode>
-#include <osg/MatrixTransform>
-#include <osgText/Text>
-#include <osgText/Font>
+#include <simgear/debug/ErrorReportingCallback.hxx>
 
 using std::string;
 
@@ -105,9 +106,15 @@ osg::Node * SGText::appendText(const SGPropertyNode* configNode,
   if (effect)
     g->setEffect(effect);
 
-  SGPath path("Fonts" );
-  path.append( configNode->getStringValue( "font", "Helvetica" ));
-  text->setFont( path.utf8Str() );
+  const auto requestedFont = configNode->getStringValue("font","Helvetica");
+  const SGPath fontPath = simgear::ResourceManager::instance()->findPath("Fonts/" + requestedFont);
+  if ( !fontPath.isNull() ) {
+    text->setFont( fontPath.utf8Str() );
+  } else {
+    simgear::reportFailure(simgear::LoadFailure::NotFound,
+                          simgear::ErrorCode::LoadingTexture,
+                                   "SGText: couldn;t find font:" + requestedFont);
+  }
 
   text->setCharacterSize(configNode->getDoubleValue("character-size", 1.0 ), 
                          configNode->getDoubleValue("character-aspect-ratio", 1.0 ));
