@@ -1,4 +1,4 @@
-// Copyright (C) 2008 - 2012  Mathias Froehlich - Mathias.Froehlich@web.de
+// Copyright (C) 2008 - 2021  Mathias Froehlich - Mathias.Froehlich@web.de
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -39,18 +39,14 @@ public:
     }
 
     /**
-     * Return the solid factor for when the lakes are frozen over or not.
+     * Return whether the solid factor is a propery.
      */
-    double get_frozen_fact () const {
-      return _solid_is_prop ? (_solid_property->getBoolValue() ? 0.1 : 1.) : 1.;
-    }
+    bool solid_is_prop () const { return _solid_is_prop; }
     
     /**
      * Get the friction factor for that material
      */
-    double get_friction_factor () const {
-      return _friction_factor * get_frozen_fact();
-    }
+    double get_friction_factor () const { return _friction_factor; }
     
     /**
      * Get the rolling friction for that material
@@ -60,16 +56,12 @@ public:
     /**
      * Get the bumpines for that material
      */
-    double get_bumpiness () const {
-      return _bumpiness * get_frozen_fact();
-    }
+    double get_bumpiness () const { return _bumpiness; }
     
     /**
      * Get the load resistance
      */
-    double get_load_resistance () const {
-      return _load_resistance / get_frozen_fact();
-    }
+    double get_load_resistance () const { return _load_resistance; }
 
 protected:    
     // True if the material is solid, false if it is a fluid
