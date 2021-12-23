@@ -334,7 +334,7 @@ void AirportSignBuilder::addSign(const SGGeod& pos, double heading, const std::s
             }
 
             if (!*s) {
-                SG_LOG(SG_TERRAIN, SG_INFO, SIGN "unclosed { in sign contents");
+                SG_LOG(SG_TERRAIN, SG_INFO, SIGN "unclosed { in sign '" << content << "'.");
             } else if (s[1] == '=') {
                 for (s += 2; *s; s++) {
                     value += *s;
@@ -342,7 +342,7 @@ void AirportSignBuilder::addSign(const SGGeod& pos, double heading, const std::s
                         break;
                 }
                 if (!*s)
-                    SG_LOG(SG_TERRAIN, SG_INFO, SIGN "unclosed { in sign contents");
+                    SG_LOG(SG_TERRAIN, SG_INFO, SIGN "unclosed { in sign '" << content << "'.");
             }
 
             if (name == "no-entry") {
@@ -430,7 +430,7 @@ void AirportSignBuilder::addSign(const SGGeod& pos, double heading, const std::s
             }
 
             if (name[0] == '@') {
-                SG_LOG(SG_TERRAIN, SG_INFO, SIGN "ignoring unknown command `" << name << '\'');
+                SG_LOG(SG_TERRAIN, SG_INFO, SIGN "ignoring unknown command '" << name << "' in '" << content << "'.");
                 continue;
             }
         }
@@ -442,7 +442,7 @@ void AirportSignBuilder::addSign(const SGGeod& pos, double heading, const std::s
 
         SGMaterialGlyph *glyph = material->get_glyph(name);
         if (!glyph) {
-            SG_LOG( SG_TERRAIN, SG_INFO, SIGN "unsupported glyph '" << *s << '\'');
+            SG_LOG( SG_TERRAIN, SG_INFO, SIGN "unsupported glyph '" << *s << "' in '" << content << "'.");
             continue;
         }
 
