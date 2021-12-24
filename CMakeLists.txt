@@ -135,6 +135,8 @@ find_package(Boost REQUIRED)
 set (BOOST_CXX_FLAGS "-DBOOST_BIMAP_DISABLE_SERIALIZATION -DBOOST_NO_STDLIB_CONFIG -DBOOST_NO_AUTO_PTR -DBOOST_NO_CXX98_BINDERS")
 include(BoostTestTargets)
 
+set(SG_SOUND_USES_OPENALSOFT OFF) # default to off
+
 if(SIMGEAR_HEADLESS)
     message(STATUS "SimGear mode: HEADLESS")
     set(ENABLE_SOUND 0)
@@ -153,7 +155,7 @@ else()
                 message(STATUS "Sound requested to use OpenAL-soft: ensure Config.cmake files are in CMAKE_PREFIX_PATH")
                find_package(OpenAL REQUIRED CONFIG)
                if (TARGET OpenAL::OpenAL)
-                set(SG_SOUND_USES_OPENALSOFT 1)
+                set(SG_SOUND_USES_OPENALSOFT ON)
                endif()
             else()
               # regular OpenAL is found via the CMake distro-suppling FindOpenAL
