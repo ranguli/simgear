@@ -10,6 +10,8 @@ find_dependency(CURL)
 set(SIMGEAR_HEADLESS @SIMGEAR_HEADLESS@)
 set(SIMGEAR_SOUND @ENABLE_SOUND@)
 set(USE_AEONWAVE @USE_AEONWAVE@)
+set(SG_SOUND_USES_OPENALSOFT @SG_SOUND_USES_OPENALSOFT@)
+
 set(ENABLE_ASAN @ENABLE_ASAN@)
 set(SIMGEAR_SHARED @SIMGEAR_SHARED@)
 
@@ -21,6 +23,21 @@ set(ENABLE_SIMD @ENABLE_SIMD@)
 set(SG_HAVE_DDS @SG_HAVE_DDS@)
 if(SG_HAVE_DDS)
     find_dependency(CycloneDDS)
+endif()
+
+
+if (SIMGEAR_SOUND)
+  # find the sound dependency
+  if (USE_AEONWAVE)
+    find_dependency(AAX)
+  elseif(SG_SOUND_USES_OPENALSOFT)
+    # must force CONFIG mode when using OpenAL soft, to avoid picking
+    # the CMake supplied FindOpenAL and hence defaults to the system
+    # framework on macOS
+    find_dependency(OpenAL CONFIG)
+  else()
+    find_dependency(OpenAL)
+  endif()
 endif()
 
 # OpenRTI support
