@@ -327,9 +327,9 @@ SGMaterial *SGMaterialCache::find(int lc) const
 }
 
 // Generate a texture atlas for this location
-SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, const simgear::SGReaderWriterOptions* options)
+SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, const simgear::SGReaderWriterOptions* const_options)
 {
-    SGMaterialCache::Atlas atlas;
+    SGMaterialCache::Atlas atlas;    
     
     // Non-VPB does not use the Atlas, so save some effort and return
     if (! SGSceneFeatures::instance()->getVPBActive()) return atlas;
@@ -349,10 +349,13 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     if (atlas_iter != _atlasCache.end()) return atlas_iter->second;
 
     // Cache lookup failure - generate a new atlas, but only if we have a chance of reading any textures
-    if (options == 0) {
+    if (const_options == 0) {
         return atlas;
     }
 
+    osg::ref_ptr<SGReaderWriterOptions> options = SGReaderWriterOptions::copyOrCreate(const_options);
+    options->setLoadOriginHint(SGReaderWriterOptions::LoadOriginHint::ORIGIN_MATERIAL_ATLAS);
+    
     atlas.image = new osg::Texture2DArray();
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Generating atlas of size " << landclasslib.size());

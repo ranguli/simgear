@@ -299,7 +299,7 @@ ModelRegistry::readImage(const string& fileName,
         ec.addFromMap(sgoptC->getModelData()->getErrorContext());
     }
 
-    if (cache_active && (!sgoptC || sgoptC->getLoadOriginHint() != SGReaderWriterOptions::LoadOriginHint::ORIGIN_SPLASH_SCREEN)) {
+    if (cache_active && (!sgoptC || (sgoptC->getLoadOriginHint() != SGReaderWriterOptions::LoadOriginHint::ORIGIN_SPLASH_SCREEN && sgoptC->getLoadOriginHint() != SGReaderWriterOptions::LoadOriginHint::ORIGIN_MATERIAL_ATLAS))) {
         if (fileExtension != "dds" && fileExtension != "gz") {
 
             std::string root = getPathRoot(absFileName);
