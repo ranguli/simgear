@@ -541,7 +541,7 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
                 _masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), -1000), origin);
                 _masterLocator->convertLocalToModel(ndc, model);
 
-                model = VPBTechnique::checkAgainstElevationConstraints(origin, model, _constraint_vtx_gap);
+                model = VPBTechnique::checkAndDisplaceAgainstElevationConstraints(origin, model, _constraint_vtx_gap);
 
                 texcoords->push_back(osg::Vec2(ndc.x(), ndc.y()));
 
@@ -1641,7 +1641,13 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
                                          D, ll_O, ll_x, ll_y, t_0, t_x, t_y, x_scale, y_scale, pointInTriangle)) {
                 // Check against constraints to stop lights on roads
                 const osg::Vec3 vp = v_x * pointInTriangle.x() + v_y * pointInTriangle.y() + v_0;
-                if (checkAgainstRandomObjectsConstraints(_randomObjectsConstraintGroup, vp - up * 100, vp + up * 100))
+                const osg::Vec3 upperPoint = vp + up * 100;
+                const osg::Vec3 lowerPoint = vp - up * 100;
+                if (checkAgainstRandomObjectsConstraints(_randomObjectsConstraintGroup, lowerPoint, upperPoint))
+                    continue;
+
+                const osg::Matrixd localToGeocentricTransform = buffer._transform->getMatrix();
+                if (checkAgainstElevationConstraints(lowerPoint * localToGeocentricTransform, upperPoint * localToGeocentricTransform))
                     continue;
 
                 handler->placeObject(vp, up, n);
@@ -2364,7 +2370,7 @@ void VPBTechnique::removeElevationConstraint(osg::ref_ptr<osg::Node> constraint)
 // Check a given vertex against any elevation constraints  E.g. to ensure the terrain mesh doesn't
 // poke through any airport meshes.  If such a constraint exists, the function will return a replacement
 // vertex displaces such that it lies 1m below the contraint relative to the passed in origin.  
-osg::Vec3d VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex, float vtx_gap)
+osg::Vec3d VPBTechnique::checkAndDisplaceAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex, float vtx_gap)
 {
     const std::lock_guard<std::mutex> lock(VPBTechnique::_elevationConstraintMutex); // Lock the _elevationConstraintGroup for this scope
     osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
@@ -2381,6 +2387,17 @@ osg::Vec3d VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg
         return vertex;
     }
 }
+
+bool VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex)
+{
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_elevationConstraintMutex); // Lock the _elevationConstraintGroup for this scope
+    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
+    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
+    osgUtil::IntersectionVisitor visitor(intersector.get());
+    _elevationConstraintGroup->accept(visitor);
+    return intersector->containsIntersections();
+}
+
 
 // Add an osg object representing a contraint on the terrain mesh. The generated
 // terrain mesh will not include any random objects intersecting with the
