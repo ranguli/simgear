@@ -1634,10 +1634,18 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
 
             if (!mat) continue;
 
-            handler->handleIteration(mat, object_mask_image,
-                                     _randomObjectsConstraintGroup, lon, lat, p,
-                                     D, ll_O, ll_x, ll_y, t_0, t_x, t_y, v_0,
-                                     v_x, v_y, x_scale, y_scale, n, up);
+            osg::Vec2f pointInTriangle;
+
+            if (handler->handleIteration(mat, object_mask_image,
+                                         lon, lat, p,
+                                         D, ll_O, ll_x, ll_y, t_0, t_x, t_y, x_scale, y_scale, pointInTriangle)) {
+                // Check against constraints to stop lights on roads
+                const osg::Vec3 vp = v_x * pointInTriangle.x() + v_y * pointInTriangle.y() + v_0;
+                if (checkAgainstRandomObjectsConstraints(_randomObjectsConstraintGroup, vp - up * 100, vp + up * 100))
+                    continue;
+
+                handler->placeObject(vp, up, n);
+            }
         }
     }
 
@@ -2380,6 +2388,17 @@ osg::Vec3d VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg
 void VPBTechnique::addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint)
 { 
     _randomObjectsConstraintGroup->addChild(constraint.get());
+}
+
+bool VPBTechnique::checkAgainstRandomObjectsConstraints(
+    osg::ref_ptr<osg::Group> constraintGroup, osg::Vec3d origin,
+    osg::Vec3d vertex)
+{
+    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
+    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
+    osgUtil::IntersectionVisitor visitor(intersector.get());
+    constraintGroup->accept(visitor);
+    return intersector->containsIntersections();
 }
 
 // Remove a previously added constraint.  E.g on model unload.

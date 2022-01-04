@@ -186,6 +186,10 @@ class VPBTechnique : public TerrainTechnique
         // we only use these internally and during generation of this particular tile.
         virtual void addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
         virtual void removeRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
+        // Check a given vertex against any constraints  E.g. to ensure we
+        // don't get objects like trees sprouting from roads or runways.
+        bool checkAgainstRandomObjectsConstraints(osg::ref_ptr<osg::Group> constraintGroup,
+                                                  osg::Vec3d origin, osg::Vec3d vertex);
         virtual void clearRandomObjectsConstraints();
 
         OpenThreads::Mutex                  _writeBufferMutex;

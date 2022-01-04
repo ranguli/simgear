@@ -58,16 +58,6 @@ bool VPBMaterialHandler::checkAgainstObjectMask(
     return false;
 }
 
-bool VPBMaterialHandler::checkAgainstConstraints(
-    osg::ref_ptr<osg::Group> constraintGroup, osg::Vec3d origin,
-    osg::Vec3d vertex) {
-    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
-    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
-    osgUtil::IntersectionVisitor visitor(intersector.get());
-    constraintGroup->accept(visitor);
-    return intersector->containsIntersections();
-}
-
 double VPBMaterialHandler::det2(const osg::Vec2d a, const osg::Vec2d b) {
     return a.x() * b.y() - b.x() * a.y();
 }
@@ -160,12 +150,13 @@ bool VegetationHandler::handleNewMaterial(SGMaterial *mat) {
 }
 
 bool VegetationHandler::handleIteration(
-    SGMaterial *mat, osg::Image *objectMaskImage,
-    osg::ref_ptr<osg::Group> constraintGroup, const double lon,
-    const double lat, osg::Vec2d p, const double D, const osg::Vec2d ll_O,
-    const osg::Vec2d ll_x, const osg::Vec2d ll_y, const osg::Vec2d t_0,
-    osg::Vec2d t_x, osg::Vec2d t_y, const osg::Vec3d v_0, osg::Vec3d v_x,
-    osg::Vec3d v_y, float x_scale, float y_scale, osg::Vec3 n, osg::Vec3d up) {
+    SGMaterial* mat, osg::Image* objectMaskImage,
+    const double lon, const double lat,
+    osg::Vec2d p, const double D,
+    const osg::Vec2d ll_O, const osg::Vec2d ll_x, const osg::Vec2d ll_y,
+    const osg::Vec2d t_0, osg::Vec2d t_x, osg::Vec2d t_y,
+    float x_scale, float y_scale, osg::Vec2f& pointInTriangle)
+{
     const int lat_int = (lat + ll_O.y()) / delta_lat;
     const int lon_int = (lon + ll_O.x()) / delta_lon;
 
@@ -195,14 +186,12 @@ bool VegetationHandler::handleIteration(
         return false;
     }
 
-    // Check against constraints to stop trees growing from roads;
-    const osg::Vec3 vp = v_x * x + v_y * y + v_0;
-    if (checkAgainstConstraints(constraintGroup, vp - up * 100, vp + up * 100))
-        return false;
-
-    bin->insert(SGVec3f(vp.x(), vp.y(), vp.z()), SGVec3f(n.x(), n.y(), n.z()));
-
+    pointInTriangle.set(x, y);
     return true;
+}
+
+void VegetationHandler::placeObject(const osg::Vec3 vp, const osg::Vec3d up, const osg::Vec3 n) {
+    bin->insert(SGVec3f(vp.x(), vp.y(), vp.z()), SGVec3f(n.x(), n.y(), n.z()));
 }
 
 void VegetationHandler::finish(osg::ref_ptr<SGReaderWriterOptions> options,
@@ -287,12 +276,13 @@ bool RandomLightsHandler::handleNewMaterial(SGMaterial *mat) {
 }
 
 bool RandomLightsHandler::handleIteration(
-    SGMaterial *mat, osg::Image *objectMaskImage,
-    osg::ref_ptr<osg::Group> constraintGroup, const double lon,
-    const double lat, osg::Vec2d p, const double D, const osg::Vec2d ll_O,
-    const osg::Vec2d ll_x, const osg::Vec2d ll_y, const osg::Vec2d t_0,
-    osg::Vec2d t_x, osg::Vec2d t_y, const osg::Vec3d v_0, osg::Vec3d v_x,
-    osg::Vec3d v_y, float x_scale, float y_scale, osg::Vec3 n, osg::Vec3d up) {
+    SGMaterial* mat, osg::Image* objectMaskImage,
+    const double lon, const double lat,
+    osg::Vec2d p, const double D,
+    const osg::Vec2d ll_O, const osg::Vec2d ll_x, const osg::Vec2d ll_y,
+    const osg::Vec2d t_0, osg::Vec2d t_x, osg::Vec2d t_y,
+    float x_scale, float y_scale, osg::Vec2f& pointInTriangle)
+{
     const int lat_int = (lat + ll_O.y()) / delta_lat;
     const int lon_int = (lon + ll_O.x()) / delta_lon;
 
@@ -325,13 +315,15 @@ bool RandomLightsHandler::handleIteration(
         return false;
     }
 
-    // Check against constraints to stop lights on roads
-    const osg::Vec3 vp = v_x * x + v_y * y + v_0;
-    if (checkAgainstConstraints(constraintGroup, vp - up * 100, vp + up * 100))
-        return false;
+    pointInTriangle.set(x, y);
 
-    float zombie = pc_map_rand(lon_int, lat_int, 6);
-    float factor = pc_map_rand(lon_int, lat_int, 7);
+    return true;
+}
+
+void RandomLightsHandler::placeObject(const osg::Vec3 vp, const osg::Vec3d up, const osg::Vec3 n)
+{
+    float zombie = pc_map_rand(vp.x(), vp.y() + vp.z(), 6);
+    float factor = pc_map_rand(vp.x(), vp.y() + vp.z(), 7);
     factor *= factor;
 
     float bright = 1;
@@ -364,8 +356,6 @@ bool RandomLightsHandler::handleIteration(
     bin->insert(
         SGVec3f(finalPosition.x(), finalPosition.y(), finalPosition.z()),
         size, intensity, onPeriod, color);
-
-    return true;
 }
 
 void RandomLightsHandler::finish(osg::ref_ptr<SGReaderWriterOptions> options,

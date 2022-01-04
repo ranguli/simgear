@@ -56,11 +56,6 @@ class VPBMaterialHandler {
                                 float y_scale, const osg::Vec2d t_0,
                                 osg::Vec2d t_x, osg::Vec2d t_y);
 
-    // Check a given vertex against any constraints  E.g. to ensure we
-    // don't get objects like trees sprouting from roads or runways.
-    bool checkAgainstConstraints(osg::ref_ptr<osg::Group> constraintGroup,
-                                 osg::Vec3d origin, osg::Vec3d vertex);
-
     double det2(const osg::Vec2d a, const osg::Vec2d b);
 
   public:
@@ -80,16 +75,20 @@ class VPBMaterialHandler {
 
     // Function that is called for each point in the scanline reading process
     // Return false if the material is irrelevant to the handler
-    virtual bool handleIteration(SGMaterial *mat, osg::Image *objectMaskImage,
-                                 osg::ref_ptr<osg::Group> constraintGroup,
+    // Return true if the point should be used to place an object, updating
+    //  the pointInTriangle variable with the x and y location within the
+    //  current triangle
+    virtual bool handleIteration(SGMaterial* mat, osg::Image* objectMaskImage,
                                  const double lon, const double lat,
                                  osg::Vec2d p, const double D,
                                  const osg::Vec2d ll_O, const osg::Vec2d ll_x,
                                  const osg::Vec2d ll_y, const osg::Vec2d t_0,
                                  osg::Vec2d t_x, osg::Vec2d t_y,
-                                 const osg::Vec3d v_0, osg::Vec3d v_x,
-                                 osg::Vec3d v_y, float x_scale, float y_scale,
-                                 osg::Vec3 n, osg::Vec3d up) = 0;
+                                 float x_scale, float y_scale,
+                                 osg::Vec2f& pointInTriangle) = 0;
+
+    // Place an object at the point given by vp
+    virtual void placeObject(const osg::Vec3 vp, const osg::Vec3d up, const osg::Vec3 n) = 0;
 
     // Function that is called after the scanline is complete
     virtual void finish(osg::ref_ptr<SGReaderWriterOptions> options,
@@ -116,15 +115,13 @@ class VegetationHandler : public VPBMaterialHandler {
                     osg::ref_ptr<TerrainTile> terrainTile);
     void setLocation(const SGGeod loc, double r_E_lat, double r_E_lon);
     bool handleNewMaterial(SGMaterial *mat);
-    bool handleIteration(SGMaterial *mat, osg::Image *objectMaskImage,
-                         osg::ref_ptr<osg::Group> constraintGroup,
+    bool handleIteration(SGMaterial* mat, osg::Image* objectMaskImage,
                          const double lon, const double lat, osg::Vec2d p,
                          const double D, const osg::Vec2d ll_O,
                          const osg::Vec2d ll_x, const osg::Vec2d ll_y,
                          const osg::Vec2d t_0, osg::Vec2d t_x, osg::Vec2d t_y,
-                         const osg::Vec3d v_0, osg::Vec3d v_x, osg::Vec3d v_y,
-                         float x_scale, float y_scale, osg::Vec3 n,
-                         osg::Vec3d up);
+                         float x_scale, float y_scale, osg::Vec2f& pointInTriangle);
+    void placeObject(const osg::Vec3 vp, const osg::Vec3d up, const osg::Vec3 n);
     void finish(osg::ref_ptr<SGReaderWriterOptions> options,
                 osg::ref_ptr<osg::MatrixTransform> transform, const SGGeod loc);
 
@@ -151,15 +148,13 @@ class RandomLightsHandler : public VPBMaterialHandler {
                     osg::ref_ptr<TerrainTile> terrainTile);
     void setLocation(const SGGeod loc, double r_E_lat, double r_E_lon);
     bool handleNewMaterial(SGMaterial *mat);
-    bool handleIteration(SGMaterial *mat, osg::Image *objectMaskImage,
-                         osg::ref_ptr<osg::Group> constraintGroup,
+    bool handleIteration(SGMaterial* mat, osg::Image* objectMaskImage,
                          const double lon, const double lat, osg::Vec2d p,
                          const double D, const osg::Vec2d ll_O,
                          const osg::Vec2d ll_x, const osg::Vec2d ll_y,
                          const osg::Vec2d t_0, osg::Vec2d t_x, osg::Vec2d t_y,
-                         const osg::Vec3d v_0, osg::Vec3d v_x, osg::Vec3d v_y,
-                         float x_scale, float y_scale, osg::Vec3 n,
-                         osg::Vec3d up);
+                         float x_scale, float y_scale, osg::Vec2f& pointInTriangle);
+    void placeObject(const osg::Vec3 vp, const osg::Vec3d up, const osg::Vec3 n);
     void finish(osg::ref_ptr<SGReaderWriterOptions> options,
                 osg::ref_ptr<osg::MatrixTransform> transform, const SGGeod loc);
 
