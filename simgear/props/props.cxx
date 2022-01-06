@@ -4325,6 +4325,7 @@ template int SGPropertyNode::getValue<int>(void*) const;
 template long SGPropertyNode::getValue<long>(void*) const;
 template float SGPropertyNode::getValue<float>(void*) const;
 template double SGPropertyNode::getValue<double>(void*) const;
+template std::string SGPropertyNode::getValue<std::string>(void*) const;
 template SGVec3<double> SGPropertyNode::getValue<SGVec3<double>>(void*) const;
 template SGVec4<double> SGPropertyNode::getValue<SGVec4<double>>(void*) const;
 
@@ -4356,6 +4357,12 @@ template<>
 double SGPropertyNode::getValue<double>(SGPropertyLock& lock, void* dummy) const
 {
     return SGPropertyNodeImpl::getDoubleValue(lock, *this);
+}
+
+template<>
+std::string SGPropertyNode::getValue<std::string>(SGPropertyLock& lock, void* dummy) const
+{
+    return SGPropertyNodeImpl::getStringValue(lock, *this);
 }
 
 template bool SGPropertyNode::setValue(const bool&, void*);
