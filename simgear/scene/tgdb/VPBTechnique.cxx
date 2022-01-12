@@ -1322,7 +1322,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
             osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
             osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
             stateset->setTextureAttributeAndModes(0, texture);
-            stateset->addUniform(new osg::Uniform("fg_photoScenery", true));
+            stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, true));
         } else {
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Unable to find " << orthotexture);
             photoScenery = false;
@@ -1378,9 +1378,9 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
-        stateset->addUniform(new osg::Uniform("fg_photoScenery", false));
-        stateset->addUniform(new osg::Uniform("fg_zUpTransform", osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
-        stateset->addUniform(new osg::Uniform("fg_modelOffset", (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+        stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
+        stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
+        stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
         matCache->addAtlasUniforms(stateset);
         //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
     }
@@ -1761,6 +1761,11 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
             geode->setEffect(mat->get_one_effect(0));
             geode->runGenerators(geometry);
             geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
+
+            osg::StateSet* stateset = geode->getOrCreateStateSet();
+            stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
+            stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+
             buffer._transform->addChild(geode);
             addRandomObjectsConstraint(geode);
 

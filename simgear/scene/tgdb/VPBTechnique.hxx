@@ -223,6 +223,10 @@ class VPBTechnique : public TerrainTechnique
 
         inline static std::list<BucketCoastlineBinList>  _coastFeatureLists;
         inline static std::mutex _coastFeatureLists_mutex;  // protects the _areaFeatureLists;
+
+        inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
+        inline static const char* MODEL_OFFSET   = "fg_modelOffset";
+        inline static const char* PHOTO_SCENERY  = "fg_photoScenery";
 };
 
 };
