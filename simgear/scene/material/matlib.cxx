@@ -397,7 +397,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
                 continue;
             }
 
-            atlas.dimensions->setElement(materialLookupIndex, osg::Vec4f(mat->get_xsize(), mat->get_ysize(), mat->get_shininess(), 1.0f));
+            atlas.dimensions->setElement(materialLookupIndex, osg::Vec4f(mat->get_xsize(), mat->get_ysize(), mat->get_shininess(), mat->get_parameter("edge-hardness")));
             atlas.ambient->setElement(materialLookupIndex, mat->get_ambient());
             atlas.diffuse->setElement(materialLookupIndex, mat->get_diffuse());
             atlas.specular->setElement(materialLookupIndex, mat->get_specular());

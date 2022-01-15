@@ -1438,6 +1438,12 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
     const osg::Array* vertices = buffer._landGeometry->getVertexArray();
     const osg::Array* texture_coords = buffer._landGeometry->getTexCoordArray(0);
     osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
+
+    if (!colorLayer) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "No landclass image for " << _terrainTile->getTileID().x << " " << _terrainTile->getTileID().y << " " << _terrainTile->getTileID().level);
+        return;
+    }
+
     osg::Image* image = colorLayer->getImage();
 
     if (!image || ! image->valid()) {
