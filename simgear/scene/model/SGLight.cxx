@@ -265,6 +265,11 @@ void SGLight::configure(const SGPropertyNode *configNode)
                              dirNode->getFloatValue("lookat-z-m"));
             osg::Vec3 dir = lookAt - pos;
             r.makeRotate(osg::Vec3(0, 0, -1), dir);
+        } else if (dirNode->hasValue("pointing_x")) { // ALS compatible
+            r.makeRotate(osg::Vec3(0, 0, -1),
+                         osg::Vec3(-dirNode->getFloatValue("pointing_x"),
+                                   -dirNode->getFloatValue("pointing_y"),
+                                   -dirNode->getFloatValue("pointing_z")));
         } else {
             r.makeRotate(osg::Vec3(0, 0, -1),
                          osg::Vec3(dirNode->getFloatValue("x"),
