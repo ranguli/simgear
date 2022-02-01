@@ -74,6 +74,23 @@ public:
     // Maximum number of material entries in the atlas
     static const unsigned int MAX_MATERIALS = 64;
 
+    // Standard textures, used by water shader in particular.
+    // Indexes are hardcoded in Shaders/ws30-water.frag
+    inline static const std::string STANDARD_TEXTURES[] = {
+        "Textures/Terrain/water.png",
+        "Textures/Water/water-reflection-ws30.png",
+        "Textures/Water/waves-ver10-nm-ws30.png",
+        "Textures/Water/water_sine_nmap-ws30.png",
+        "Textures/Water/water-reflection-grey-ws30.png",
+        "Textures/Water/sea_foam-ws30.png",
+        "Textures/Water/perlin-noise-nm.png",
+
+        // The following two textures are large and don't have an alpha channel.  Ignoring for now.
+        //"Textures/Globe/ocean_depth_1.png",
+        //"Textures/Globe/globe_colors.jpg",
+        "Textures/Terrain/packice-overlay.png"
+    };
+
     typedef struct {
         AtlasIndex index;
         AtlasImage image;
@@ -86,6 +103,7 @@ public:
 
         osg::ref_ptr<osg::Uniform> materialParams1;
         osg::ref_ptr<osg::Uniform> materialParams2;
+        osg::ref_ptr<osg::Uniform> materialParams3;
 
         WaterAtlas waterAtlas;
         TextureMap textureMap;

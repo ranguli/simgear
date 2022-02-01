@@ -834,6 +834,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     double scaleHeight = SGSceneFeatures::instance()->getVPBVerticalScale();
     double sampleRatio = SGSceneFeatures::instance()->getVPBSampleRatio();
     double constraint_gap = SGSceneFeatures::instance()->getVPBConstraintGap();
+    bool   separateWaterMesh = SGSceneFeatures::instance()->getVPBSeparateWaterMesh();
 
     unsigned int minimumNumColumns = 16u;
     unsigned int minimumNumRows = 16u;
@@ -994,7 +995,8 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
             bool w10 = false;
             bool w11 = false;
             
-            if (landclassImage && matlib) {
+            if (separateWaterMesh && landclassImage && matlib) {
+                // If we are generating a separate water mesh, the work out which of the vertices are in appropriate watery materials.
                 if (i00>=0) w00 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i00]).r() * 255.0))];
                 if (i01>=0) w01 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i01]).r() * 255.0))];
                 if (i10>=0) w10 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i10]).r() * 255.0))];

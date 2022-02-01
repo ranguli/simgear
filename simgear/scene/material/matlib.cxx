@@ -367,8 +367,9 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     atlas.ambient = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_ambientArray", SGMaterialCache::MAX_MATERIALS);
     atlas.diffuse = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_diffuseArray", SGMaterialCache::MAX_MATERIALS);
     atlas.specular = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_specularArray", SGMaterialCache::MAX_MATERIALS);
-    atlas.materialParams1= new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams1", SGMaterialCache::MAX_MATERIALS);
-    atlas.materialParams2= new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams2", SGMaterialCache::MAX_MATERIALS);
+    atlas.materialParams1 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams1", SGMaterialCache::MAX_MATERIALS);
+    atlas.materialParams2 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams2", SGMaterialCache::MAX_MATERIALS);
+    atlas.materialParams3 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams3", SGMaterialCache::MAX_MATERIALS);
 
     atlas.image->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
     atlas.image->setResizeNonPowerOfTwoHint(false);
@@ -377,6 +378,23 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
     atlas.image->setWrap(osg::Texture::WRAP_T,osg::Texture::REPEAT);
 
     unsigned int imageIndex = 0u; // Index into the image
+
+    // Add hardcoded atlas images first.
+    unsigned int standardTextureCount = size(SGMaterialCache::STANDARD_TEXTURES);
+    for (; imageIndex < standardTextureCount; imageIndex++) {
+        // Copy the texture into the atlas in the appropriate place
+        osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(SGMaterialCache::STANDARD_TEXTURES[imageIndex], options);
+
+        if (subtexture && subtexture->valid()) {
+            if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
+                subtexture->scaleImage(2048,2048,1);
+            }
+
+            atlas.image->setImage(imageIndex,subtexture);
+            atlas.textureMap[SGMaterialCache::STANDARD_TEXTURES[imageIndex]] = imageIndex;
+        }
+    }
+
     unsigned int materialLookupIndex = 0u; // Index into the material lookup
     lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
@@ -406,6 +424,14 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
             // case we need to pass them as an array, indexed against the material.
             atlas.materialParams1->setElement(materialLookupIndex, osg::Vec4f(mat->get_parameter("transition_model"), mat->get_parameter("hires_overlay_bias"), mat->get_parameter("grain_strength"), mat->get_parameter("intrinsic_wetness")));
             atlas.materialParams2->setElement(materialLookupIndex, osg::Vec4f(mat->get_parameter("dot_density"), mat->get_parameter("dot_size"), mat->get_parameter("dust_resistance"), mat->get_parameter("rock_strata")));
+            
+            float water = 0.0;
+            if (mat->get_effect_name() == "Effects/water") {
+                SG_LOG(SG_GENERAL, SG_ALERT, " Found water effect " << mat->get_names()[0]);
+                water = 1.0;
+            }
+
+            atlas.materialParams3->setElement(materialLookupIndex, osg::Vec4f(water, 0.0, 0.0, 0.0));
 
             // Similarly, there are specifically 7 textures that are defined in the materials that need to be passed into
             // the shader as an array based on the material lookup.
@@ -491,6 +517,7 @@ void SGMaterialCache::addAtlasUniforms(osg::StateSet* stateset) {
     stateset->addUniform(_atlas.textureLookup2);
     stateset->addUniform(_atlas.materialParams1);
     stateset->addUniform(_atlas.materialParams2);
+    stateset->addUniform(_atlas.materialParams3);
 }
 
 // Destructor
