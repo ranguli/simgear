@@ -786,6 +786,9 @@ public:
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_DIRECTION]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_DIRECTION_WORLD]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_ZENITH_COSTHETA]);
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_MOON_DIRECTION]);
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_MOON_DIRECTION_WORLD]);
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_MOON_ZENITH_COSTHETA]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_EARTH_RADIUS]);
 
         osg::ref_ptr<osg::Uniform> clustered_shading_enabled =

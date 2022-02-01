@@ -23,9 +23,10 @@
 
 
 #include <osg/Node>
+#include <simgear/scene/material/EffectGeode.hxx>
 
 // return a sphere object as an ssgBranch (and connect in the
 // specified ssgSimpleState
-osg::Node* SGMakeSphere(double radius, int slices, int stacks);
+simgear::EffectGeode* SGMakeSphere(double radius, int slices, int stacks);
 
 

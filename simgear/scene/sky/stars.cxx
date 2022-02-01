@@ -7,6 +7,11 @@
 //
 // Separated out rendering pieces and converted to ssg by Curt Olson,
 // March 2000
+//
+// Switch to sky brightness as a mean to sort visible stars to be
+// consistent with Milky Way visibility, can be modified from the
+// property tree from local lighting environment
+
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
@@ -58,9 +63,9 @@ SGStars::SGStars( SGPropertyNode* props ) :
     old_phase(-1)
 {
     if (props) {
-        // don't create here - if it's not defined, we won't use the cutoff
+        // don't create here - if it's not defined, we won't use the value
         // from a property
-        _cutoffProperty = props->getNode("star-magnitude-cutoff");
+      _magDarkSkyProperty = props->getNode("darksky-brightness-magnitude");
     }
 }
 
@@ -136,89 +141,155 @@ SGStars::build( int num, const SGVec3d star_data[], double star_dist,
 // 0 degrees = high noon
 // 90 degrees = sun rise/set
 // 180 degrees = darkest midnight
-
-bool SGStars::repaint( double sun_angle, int num, const SGVec3d star_data[] )
+bool SGStars::repaint( double sun_angle, double altitude_m, int num, const SGVec3d star_data[] )
 {
-    double mag, nmag, alpha, factor, cutoff;
+  
+  double mag, nmag, alpha, factor, cutoff;
 
-    /*
-    maximal magnitudes under dark sky on Earth, from Eq.(90) and (91) of astro-ph/1405.4209
-	For (18 < musky < 20)
-	mmax = 0.27 musky + 0.8 - 2.5 * log(F)
+  double magmax;
+  double sundeg, mindeg;
+  double musky, mudarksky;
 
-	For (19.5  µsky  22)
-	mmax = 0.383 musky - 1.44 - 2.5 * log(F)
+  //observer visual acuity in the model used below (F=2)
+  const double logF = 0.30;
 
+  // same as moon.cxx
+  const double earth_radius_in_meters = 6371000.0;
+ 
+  //sundeg is elevation above the horizon
+  sundeg = 90.0 - sun_angle * SGD_RADIANS_TO_DEGREES;
+
+  // mindeg is the elevation above the horizon at which the sun is
+  // no longer obstructed by the Earth (mindeg <= 0)
+  mindeg = 0.0;
+  if (altitude_m >=0) {
+    mindeg = -90.0 + SGD_RADIANS_TO_DEGREES * asin(earth_radius_in_meters/(altitude_m + earth_radius_in_meters));
+  }
+  // if the prop exists, let's use its value, can be real time changed
+  // due to lighting conditions. Otherwise, we use the default
+  if (_magDarkSkyProperty) {
+    mudarksky = _magDarkSkyProperty->getDoubleValue();
+  }
+  else {
+    mudarksky = _magDarkSkyDefault;
+  }
+  
+  // initializing sky brightness to a lot
+  musky = 0.0;
+
+  // same as in galaxy.cxx
+  // in space, we either have the sun in the face or not. If sundeg >= mindeg,
+  // the sun is visible, we see nothing. Otherwise we have:
+  if (sundeg <= mindeg) {
+
+    // same little model as galaxy.cxx, sun illumination of the
+    // atmosphere at zenith (fit to SQM zenital measurements) from
+    // http://www.hnsky.org/sqm_twilight.htm, slightly modified to be
+    // continuous at 0deg, -12deg and -18deg musky is in magV /
+    // arcsec^2
     
-	Let's take F = 1.4 for healthy young pilot
-	mudarksky ~ 22 mag/arcsec^2 => mmax=6.2
-	muastrotwilight ~ 20 mag/arsec^2 => mmax=5.4
-	mu99deg ~ 17.5 mag/arcsec^2 => mmax=4.7
-	mu97.5deg ~ 16 mag/arcsec^2 => ? let's keep it rough
-    */
+    if ( (sundeg >= -12.0) && (sundeg < 0.0) ) {
+      musky =  - 1.057*sundeg + mudarksky - 14.7528;
+    }
+      
+    if ( (sundeg >= -18.0 ) && (sundeg < -12.0) ) {
+      musky = -0.0744*sundeg*sundeg - 2.5768*sundeg + mudarksky - 22.2768;
+      musky = min(musky,mudarksky);
+    }
 
-    double mag_nakedeye = 6.2;
-    double mag_twilight_astro = 5.4;
-    double mag_twilight_nautic = 4.7;
+    if ( sundeg < -18.0) {
+      musky = mudarksky;
+    }
 
+  }
+
+  //  Simple relation between maximal star magnitudes visible by the
+  //  naked eye on Earth, from Eq.(90) and (91) of astro-ph/1405.4209
+  //
+  // For 19.5 < musky < 22
+  // mmax = 0.3834 musky - 1.4400 - 2.5 * log(F)
+  //
+  // For 18 <  musky < 20
+  // mmax = 0.270 musky _0.8 - 2.5 * log(F)
+  //
+  // Typical values, let's take F = 2 for healthy pilot. With mudarksky ~ 22
+  // mag/arcsec^2 => mmax=6.2
+  //
+  // We use these linear formulae and switch from one to the other at
+  // their intersection point
+      
+    if (musky >= 19.823) {
+      magmax = 0.383 * musky - 1.44 - 2.5 * logF;
+    }
+    else {
+      //extrapolated to all bright (small) musky values 
+      magmax = 0.270 * musky + 0.80 - 2.5 * logF;
+    }
+    
     // sirius, brightest star (not brightest object)
     double mag_min = -1.46;
     
     int phase;
 
-    // determine which star structure to draw
-    if ( sun_angle > (SGD_PI_2 + 18.0 * SGD_DEGREES_TO_RADIANS ) ) {
+    //continously changed at each call to repaint, but we use "phase"
+    //to actually check for repainting, not magmax
+    
+    cutoff = magmax;
+        
+    // determine which star structure to draw when the sun is not
+    // directly visible
+    if (sundeg <= mindeg) {
+      if ( sun_angle > (SGD_PI_2 + 18.0 * SGD_DEGREES_TO_RADIANS ) ) {
         // deep night, atmosphere is not lighten by the sun
         factor = 1.0;
-        cutoff = mag_nakedeye;
         phase = 0;
-    } else if ( sun_angle > (SGD_PI_2 + 12.0 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 12.0 * SGD_DEGREES_TO_RADIANS ) ) {
         // less than 18deg and more than 12deg is astronomical twilight
         factor = 1.0;
-        cutoff = mag_twilight_astro;
         phase = 1;
-    } else if ( sun_angle > (SGD_PI_2 + 9.0 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 9.0 * SGD_DEGREES_TO_RADIANS ) ) {
         // less 12deg and more than 6deg is is nautical twilight 
         factor = 1.0;
-        cutoff = mag_twilight_nautic;
         phase = 2;
-    } else if ( sun_angle > (SGD_PI_2 + 7.5 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 7.5 * SGD_DEGREES_TO_RADIANS ) ) {
         factor = 0.95;
-        cutoff = 3.1;
         phase = 3;
-    } else if ( sun_angle > (SGD_PI_2 + 7.0 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 7.0 * SGD_DEGREES_TO_RADIANS ) ) {
         factor = 0.9;
-        cutoff = 2.4;
         phase = 4;
-    } else if ( sun_angle > (SGD_PI_2 + 6.5 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 6.5 * SGD_DEGREES_TO_RADIANS ) ) {
         factor = 0.85;
-        cutoff = 1.8;
         phase = 5;
-    } else if ( sun_angle > (SGD_PI_2 + 6.0 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 6.0 * SGD_DEGREES_TO_RADIANS ) ) {
         factor = 0.8;
-        cutoff = 1.2;
         phase = 6;
-    } else if ( sun_angle > (SGD_PI_2 + 5.5 * SGD_DEGREES_TO_RADIANS ) ) {
+      } else if ( sun_angle > (SGD_PI_2 + 5.5 * SGD_DEGREES_TO_RADIANS ) ) {
         factor = 0.75;
-        cutoff = 0.6;
         phase = 7;
-    } else {
+      } else {
         // early dusk or late dawn
         factor = 0.7;
         cutoff = 0.0;
         phase = 8;
+      }
+    } else {
+      // at large altitudes (in space), this conditional is triggered
+      // for sun >=mindeg, the sun is directly visible, let's call it
+      // phase 9
+        factor = 1.0;
+        cutoff = 0.0;
+	phase = 9;
     }
     
-    if (_cutoffProperty) {
-        double propCutoff = _cutoffProperty->getDoubleValue();
-        cutoff = std::min(propCutoff, cutoff);
-    }
+    // repaint only for change of phase or if darksky property has been changed
     
-    if ((phase != old_phase) || (cutoff != _cachedCutoff)) {
-	// cout << "  phase change, repainting stars, num = " << num << endl;
+    if ((phase != old_phase) || (mudarksky != _cachedMagDarkSky)) {
         old_phase = phase;
-        _cachedCutoff = cutoff;
+        _cachedMagDarkSky = mudarksky;
 
+	//cout << "  phase change -> repainting stars, num = " << num << endl;
+	//cout << "mudarksky= musky= cutoff= " << mudarksky << " " << musky << " " << cutoff << endl;
+	
         for ( int i = 0; i < num; ++i ) {
             // if ( star_data[i][2] < min ) { min = star_data[i][2]; }
             // if ( star_data[i][2] > max ) { max = star_data[i][2]; }
@@ -232,7 +303,14 @@ bool SGStars::repaint( double sun_angle, int num, const SGVec3d star_data[] )
             mag = star_data[i][2];
             if ( mag < cutoff ) {
                 nmag = ( cutoff - mag ) / (cutoff - mag_min); // translate to 0 ... 1.0 scale
-                alpha = nmag * 0.85 + 0.15; // translate to a 0.15 ... 1.0 scale
+		//with Milky Way on, it is more realistic to make the
+		//stars fainting to total darkness when matching the
+		//background sky brightness
+		//
+		//alpha = nmag * 0.85 + 0.15; //
+		//translate to a 0.15 ... 1.0 scale
+		//
+		alpha = nmag;
                 alpha *= factor;          // dim when the sun is brighter
             } else {
                 alpha = 0.0;

@@ -48,6 +48,7 @@
 #include <simgear/scene/sky/moon.hxx>
 #include <simgear/scene/sky/oursun.hxx>
 #include <simgear/scene/sky/stars.hxx>
+#include <simgear/scene/sky/galaxy.hxx>
 
 namespace simgear {
 class SGReaderWriterOptions;
@@ -75,7 +76,7 @@ struct SGSkyColor
   SGVec3f fog_color;
   SGVec3f cloud_color;
   double sun_angle,
-         moon_angle;
+    moon_angle, altitude_m;
 };
 
 /**
@@ -224,6 +225,7 @@ private:
     SGSharedPtr<SGMoon> moon;
     SGSharedPtr<SGStars> planets;
     SGSharedPtr<SGStars> stars;
+    SGSharedPtr<SGGalaxy> galaxy;
     layer_list_type cloud_layers;
 
     osg::ref_ptr<osg::Group> pre_root, pre_transform;

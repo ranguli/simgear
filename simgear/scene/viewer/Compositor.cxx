@@ -50,6 +50,16 @@ public:
     }
 };
 
+class MoonDirectionWorldCallback : public osg::Uniform::Callback {
+public:
+    virtual void operator()(osg::Uniform *uniform, osg::NodeVisitor *nv) {
+        SGUpdateVisitor *uv = dynamic_cast<SGUpdateVisitor *>(nv);
+        osg::Vec3f l = toOsg(uv->getSecondLightDirection());
+        l.normalize();
+        uniform->set(l);
+    }
+};
+
 namespace simgear {
 namespace compositor {
 
@@ -155,11 +165,16 @@ Compositor::Compositor(osg::View *view,
     new osg::Uniform("fg_SunDirection", osg::Vec3f()),
     new osg::Uniform("fg_SunDirectionWorld", osg::Vec3f()),
     new osg::Uniform("fg_SunZenithCosTheta", 0.0f),
+    new osg::Uniform("fg_MoonDirection", osg::Vec3f()),
+    new osg::Uniform("fg_MoonDirectionWorld", osg::Vec3f()),
+    new osg::Uniform("fg_MoonZenithCosTheta", 0.0f),
     new osg::Uniform("fg_EarthRadius", 0.0f),
     }
 {
     _uniforms[SG_UNIFORM_SUN_DIRECTION_WORLD]->setUpdateCallback(
         new SunDirectionWorldCallback);
+    _uniforms[SG_UNIFORM_MOON_DIRECTION_WORLD]->setUpdateCallback(
+        new MoonDirectionWorldCallback);
 }
 
 Compositor::~Compositor()
@@ -214,7 +229,12 @@ Compositor::update(const osg::Matrix &view_matrix,
     _uniforms[SG_UNIFORM_SUN_DIRECTION_WORLD]->get(sun_dir_world);
     osg::Vec4f sun_dir_view = osg::Vec4f(
         sun_dir_world.x(), sun_dir_world.y(), sun_dir_world.z(), 0.0f) * view_matrix;
-
+    
+    osg::Vec3f moon_dir_world;
+    _uniforms[SG_UNIFORM_MOON_DIRECTION_WORLD]->get(moon_dir_world);
+    osg::Vec4f moon_dir_view = osg::Vec4f(
+        moon_dir_world.x(), moon_dir_world.y(), moon_dir_world.z(), 0.0f) * view_matrix;
+    
     for (int i = 0; i < SG_TOTAL_BUILTIN_UNIFORMS; ++i) {
         osg::ref_ptr<osg::Uniform> u = _uniforms[i];
         switch (i) {
@@ -258,6 +278,12 @@ Compositor::update(const osg::Matrix &view_matrix,
             break;
         case SG_UNIFORM_SUN_ZENITH_COSTHETA:
             u->set(float(sun_dir_world * world_up));
+            break;
+	case SG_UNIFORM_MOON_DIRECTION:
+            u->set(osg::Vec3f(moon_dir_view.x(), moon_dir_view.y(), moon_dir_view.z()));
+            break;
+        case SG_UNIFORM_MOON_ZENITH_COSTHETA:
+            u->set(float(moon_dir_world * world_up));
             break;
         case SG_UNIFORM_EARTH_RADIUS:
             u->set(float(camera_pos.length() - camera_pos_geod.getElevationM()));

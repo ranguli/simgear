@@ -31,19 +31,19 @@
 
 #include <osg/Node>
 #include <osg/Geometry>
-#include <osg/Geode>
 #include <osg/Array>
 
+#include <simgear/scene/material/EffectGeode.hxx>
 
 // return a sphere object as an ssgBranch
-osg::Node*
+simgear::EffectGeode*
 SGMakeSphere(double radius, int slices, int stacks)
 {
     float rho, drho, dtheta;
     float s, t, ds, dt;
     int i, j, imin, imax;
     float nsign = 1.0;
-    osg::Geode* geode = new osg::Geode;
+    simgear::EffectGeode* geode = new simgear::EffectGeode;
 
     drho = SGD_PI / (float) stacks;
     dtheta = SGD_2PI / (float) slices;

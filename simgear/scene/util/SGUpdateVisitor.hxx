@@ -108,11 +108,13 @@ public:
   const SGVec3d& getHorizLocalDown() const
   { return mHorizLocalDown; }
 
-  void setLight(const SGVec3f& direction, const SGVec4f& ambient,
+  void setLight(const SGVec3f& sundirection, const SGVec3f& moondirection,
+		const SGVec4f& ambient,
                 const SGVec4f& diffuse, const SGVec4f& specular,
                 const SGVec4f& fogColor, double sunAngleDeg)
   {
-    mLightDirection = direction;
+    mLightDirection = sundirection;
+    mSecondLightDirection = moondirection;
     mAmbientLight = ambient;
     mDiffuseLight = diffuse;
     mSpecularLight = specular;
@@ -122,6 +124,8 @@ public:
 
   const SGVec3f& getLightDirection() const
   { return mLightDirection; }
+  const SGVec3f& getSecondLightDirection() const
+  { return mSecondLightDirection; }
   const SGVec4f& getAmbientLight() const
   { return mAmbientLight; }
   const SGVec4f& getDiffuseLight() const
@@ -217,6 +221,7 @@ private:
   double mGroundLightsFogExp2Density;
 
   SGVec3f mLightDirection;
+  SGVec3f mSecondLightDirection;
   SGVec4f mAmbientLight;
   SGVec4f mDiffuseLight;
   SGVec4f mSpecularLight;

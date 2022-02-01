@@ -100,13 +100,16 @@ void SGSky::build( double h_radius_m,
 
     stars = new SGStars(property_tree_node);
     _ephTransform->addChild( stars->build(eph.getNumStars(), eph.getStars(), h_radius_m, options) );
+
+    galaxy = new SGGalaxy(property_tree_node);
+    _ephTransform->addChild( galaxy->build(tex_path, h_radius_m, options) );
     
     moon = new SGMoon;
     _ephTransform->addChild( moon->build(tex_path, moon_size) );
 
     oursun = new SGSun;
     _ephTransform->addChild( oursun->build(tex_path, sun_size, property_tree_node ) );
-
+   
     pre_root->addChild( pre_transform.get() );
 }
 
@@ -123,10 +126,11 @@ bool SGSky::repaint( const SGSkyColor &sc, const SGEphemeris& eph )
 	dome->repaint( sc.adj_sky_color, sc.sky_color, sc.fog_color,
                        sc.sun_angle, effective_visibility );
 
-        stars->repaint( sc.sun_angle, eph.getNumStars(), eph.getStars() );
-        planets->repaint( sc.sun_angle, eph.getNumPlanets(), eph.getPlanets() );
+        stars->repaint( sc.sun_angle, sc.altitude_m, eph.getNumStars(), eph.getStars() );
+        planets->repaint( sc.sun_angle,  sc.altitude_m, eph.getNumPlanets(), eph.getPlanets() );
 	oursun->repaint( sc.sun_angle, effective_visibility );
 	moon->repaint( sc.moon_angle );
+	galaxy->repaint( sc.sun_angle, sc.altitude_m );
 
 	for ( unsigned i = 0; i < cloud_layers.size(); ++i ) {
             if (cloud_layers[i]->getCoverage() != SGCloudLayer::SG_CLOUD_CLEAR){
@@ -186,7 +190,7 @@ bool SGSky::reposition( const SGSkyState &st, const SGEphemeris& eph, double dt 
     //moon is closer to the center of Earth, times any articial extra factors
     double moon_dist_factor = moon_r * st.moon_dist_factor;
     moon->reposition( moon_ra, moon_dec, st.moon_dist_bare, moon_dist_factor, lst, lat, alt );
-
+    
     for ( unsigned i = 0; i < cloud_layers.size(); ++i ) {
         if ( cloud_layers[i]->getCoverage() != SGCloudLayer::SG_CLOUD_CLEAR ||
                cloud_layers[i]->get_layer3D()->isDefined3D() ) {
