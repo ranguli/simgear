@@ -965,6 +965,9 @@ SGTranslateAnimation::SGTranslateAnimation(simgear::SGTransientModelData &modelD
   SGSharedPtr<SGExpressiond> value;
   value = read_value(modelData.getConfigNode(), modelData.getModelRoot(), "-m",
                      -SGLimitsd::max(), SGLimitsd::max());
+    if (!value) {
+        throw sg_format_exception("Invalid translate expression", "Value is not readable");
+    }
   _animationValue = value->simplify();
   if (_animationValue)
     _initialValue = _animationValue->getValue();
@@ -1191,6 +1194,9 @@ SGRotateAnimation::SGRotateAnimation(simgear::SGTransientModelData &modelData) :
   SGSharedPtr<SGExpressiond> value;
   value = read_value(modelData.getConfigNode(), modelData.getModelRoot(), "-deg",
                      -SGLimitsd::max(), SGLimitsd::max());
+    if (!value) {
+        throw sg_format_exception("Invalid rotate expression", "INvalid value");
+    }
   _animationValue = value->simplify();
   if (_animationValue)
     _initialValue = _animationValue->getValue();
@@ -2037,6 +2043,9 @@ public:
 SGBlendAnimation::SGBlendAnimation(simgear::SGTransientModelData &modelData) :
     SGAnimation(modelData), _animationValue(read_value(modelData.getConfigNode(), modelData.getModelRoot(), "", 0, 1))
 {
+    if (!_animationValue) {
+        throw sg_format_exception("Invalid blend expression", "Invalid value");
+    }
 }
 
 osg::Group*
