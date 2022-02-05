@@ -426,8 +426,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
             atlas.materialParams2->setElement(materialLookupIndex, osg::Vec4f(mat->get_parameter("dot_density"), mat->get_parameter("dot_size"), mat->get_parameter("dust_resistance"), mat->get_parameter("rock_strata")));
             
             float water = 0.0;
-            if (mat->get_effect_name() == "Effects/water") {
-                SG_LOG(SG_GENERAL, SG_ALERT, " Found water effect " << mat->get_names()[0]);
+            if (atlas.waterAtlas[landclass]) {
                 water = 1.0;
             }
 
