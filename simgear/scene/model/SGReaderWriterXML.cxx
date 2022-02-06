@@ -824,12 +824,20 @@ sgLoad3DModel_internal(const SGPath& path,
 
             /// OSGFIXME: duh, why not only model?????
             SGAnimation::animate(modelData);
+
+            // note from James: we used to re-throw these errors, and they
+            // were caught one level up as an SG_DEV_ALERT log message and
+            // loading an empty osg::Node for the entire model.
+            // Chosing instead to trap them there, since a single failed animation
+            // isn't necessarily a reason to abandon the model load.
         } catch (sg_exception& e) {
-            simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::XMLModelLoad,
-                                   "Couldn't load animation " + animation_nodes[i]->getNameString()
-                                    + ":" + e.getFormattedMessage(),
+            simgear::reportFailure(simgear::LoadFailure::Misconfigured, simgear::ErrorCode::XMLModelLoad,
+                                   "Couldn't load animation " + animation_nodes[i]->getNameString() + ":" + e.getFormattedMessage(),
                                    modelpath);
-            throw;
+        } catch (std::exception& e) { // needed because props throws std::runtime_error sometimes
+            simgear::reportFailure(simgear::LoadFailure::Misconfigured, simgear::ErrorCode::XMLModelLoad,
+                                   "Couldn't load animation " + animation_nodes[i]->getNameString() + ":" + e.what(),
+                                   modelpath);
         }
     }
 
