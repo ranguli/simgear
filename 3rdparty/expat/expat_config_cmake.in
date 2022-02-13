@@ -10,6 +10,13 @@
     #undef WIN32_LEAN_AND_MEAN
 #endif
 
+#cmakedefine HAVE_GETRANDOM
+
+// we can assume > 10.7 macOS so always set this
+#ifdef __APPLE__
+    #define HAVE_ARC4RANDOM_BUF
+#endif
+
 /* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
 #define BYTEORDER  1234
 

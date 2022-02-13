@@ -1,3 +1,6 @@
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(HAVE_GETRANDOM YES)
+endif()
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/3rdparty/expat/expat_config_cmake.in"
