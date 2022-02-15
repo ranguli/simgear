@@ -107,7 +107,7 @@ namespace canvas
       static const SGVec2i MAX_SIZE;
 
       LayoutItem();
-      virtual ~LayoutItem();
+      virtual ~LayoutItem() = default;
 
       /**
        * Set the margins to use by the layout system around the item.
@@ -223,6 +223,28 @@ namespace canvas
       void hide() { setVisible(false); }
 
       /**
+       * The desired row/column of this item, if added to a grid layout.
+       * For single-dimensional layouts, the X value is the position in the layout
+       */
+      SGVec2i gridLocation() const;
+
+      /**
+       * The rows/columns spanned by this item, if added into a grid layout
+       */
+      SGVec2i gridSpan() const;
+
+      void setGridLocation(const SGVec2i& loc);
+
+      void setGridSpan(const SGVec2i& span);
+
+
+      /**
+       * lower-right corner of this item, in the grid: computed as gridLocation + gridSpan - 1
+       * in each axis.
+       */
+      SGVec2i gridEnd() const;
+
+      /**
        * Mark all cached data as invalid and require it to be recalculated.
        */
       virtual void invalidate();
@@ -309,6 +331,8 @@ namespace canvas
       SGRecti           _geometry;
       Margins           _margins;
       uint8_t           _alignment;
+      SGVec2i _gridLocation = {-1, -1};
+      SGVec2i _span = {1, 1};
 
       mutable uint32_t  _flags;
       mutable SGVec2i   _size_hint,

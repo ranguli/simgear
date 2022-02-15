@@ -87,29 +87,7 @@ namespace canvas
         LAST_FLAG = LayoutItem::LAST_FLAG
       };
 
-      struct ItemData
-      {
-        LayoutItemRef layout_item;
-        int     size_hint,
-                min_size,
-                max_size,
-                padding_orig, //!< original padding as specified by the user
-                padding,      //!< padding before element (layouted)
-                size,         //!< layouted size
-                stretch;      //!< stretch factor
-        bool    visible : 1,
-                has_align: 1, //!< Has alignment factor set (!= AlignFill)
-                has_hfw : 1,  //!< height for width
-                done : 1;     //!< layouting done
-
-        /** Clear values (reset to default/empty state) */
-        void reset();
-
-        int hfw(int w) const;
-        int mhfw(int w) const;
-      };
-
-      Layout();
+      Layout() = default;
 
       virtual void contentsRectChanged(const SGRecti& rect);
 
@@ -118,19 +96,6 @@ namespace canvas
        */
       virtual void doLayout(const SGRecti& geom) = 0;
 
-      /**
-       * Distribute the available @a space to all @a items
-       */
-      void distribute(std::vector<ItemData>& items, const ItemData& space);
-
-    private:
-
-      int _num_not_done, //!< number of children not layouted yet
-          _sum_stretch,  //!< sum of stretch factors of all not yet layouted
-                         //   children
-          _space_stretch,//!< space currently assigned to all not yet layouted
-                         //   stretchable children
-          _space_left;   //!< remaining space not used by any child yet
 
   };
 

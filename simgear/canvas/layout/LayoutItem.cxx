@@ -87,12 +87,6 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
-  LayoutItem::~LayoutItem()
-  {
-
-  }
-
-  //----------------------------------------------------------------------------
   void LayoutItem::setContentsMargins(const Margins& margins)
   {
     _margins = margins;
@@ -106,6 +100,24 @@ namespace canvas
     _margins.r = right;
     _margins.b = bottom;
   }
+
+  //----------------------------------------------------------------------------
+  SGVec2i LayoutItem::gridLocation() const
+  {
+      return _gridLocation;
+  }
+
+  //----------------------------------------------------------------------------
+  SGVec2i LayoutItem::gridSpan() const
+  {
+      return _span;
+  }
+
+  SGVec2i LayoutItem::gridEnd() const
+  {
+      return _gridLocation + _span + SGVec2i{-1, -1};
+  }
+
 
   //----------------------------------------------------------------------------
   void LayoutItem::setContentsMargin(int margin)
@@ -299,6 +311,18 @@ namespace canvas
       pos.y() += (geom.height() - size.y()) / 2;
 
     return SGRecti(pos, pos + size);
+  }
+
+  //----------------------------------------------------------------------------
+  void LayoutItem::setGridLocation(const SGVec2i& loc)
+  {
+      _gridLocation = loc;
+  }
+
+  //----------------------------------------------------------------------------
+  void LayoutItem::setGridSpan(const SGVec2i& span)
+  {
+      _span = span;
   }
 
   //----------------------------------------------------------------------------

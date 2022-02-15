@@ -20,6 +20,7 @@
 #include <BoostTestTargetConfig.h>
 
 #include "BoxLayout.hxx"
+#include "GridLayout.hxx"
 #include "NasalWidget.hxx"
 
 #include <simgear/debug/logstream.hxx>
@@ -32,7 +33,7 @@ struct SetLogLevelFixture
 {
   SetLogLevelFixture()
   {
-    sglog().set_log_priority(SG_DEBUG);
+      //  sglog().set_log_priority(SG_DEBUG);
   }
 };
 BOOST_GLOBAL_FIXTURE(SetLogLevelFixture);
@@ -44,13 +45,17 @@ class TestWidget:
   public sc::LayoutItem
 {
   public:
-    TestWidget( const SGVec2i& min_size,
-                const SGVec2i& size_hint,
-                const SGVec2i& max_size = MAX_SIZE )
-    {
-      _size_hint = size_hint;
-      _min_size = min_size;
-      _max_size = max_size;
+      TestWidget(const SGVec2i& min_size,
+                 const SGVec2i& size_hint,
+                 const SGVec2i& max_size = MAX_SIZE,
+                 const SGVec2i& gridLoc = {0, 0},
+                 const SGVec2i& span = {1, 1})
+      {
+          _size_hint = size_hint;
+          _min_size = min_size;
+          _max_size = max_size;
+          _gridLocation = gridLoc;
+          _span = span;
     }
 
     TestWidget(const TestWidget& rhs)
@@ -58,6 +63,8 @@ class TestWidget:
       _size_hint = rhs._size_hint;
       _min_size = rhs._min_size;
       _max_size = rhs._max_size;
+      _gridLocation = rhs._gridLocation;
+      _span = rhs._span;
     }
 
     void setMinSize(const SGVec2i& size) { _min_size = size; }
@@ -732,4 +739,71 @@ BOOST_AUTO_TEST_CASE( nasal_widget )
 
   w->setVisible(false);
   BOOST_CHECK_EQUAL(w->geometry(), SGRecti(0, 0, -1, -1));
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(gridlayout_layout)
+{
+    sc::GridLayoutRef grid(new sc::GridLayout);
+
+    BOOST_CHECK_EQUAL(grid->count(), 0);
+    BOOST_CHECK(!grid->itemAt(0));
+    BOOST_CHECK(!grid->takeAt(0));
+
+    TestWidgetRef w1(new TestWidget(SGVec2i(16, 16),
+                                    SGVec2i(32, 32),
+                                    SGVec2i(9999, 100))),
+        w2(new TestWidget(*w1)),
+        w3(new TestWidget(*w1)),
+        w4(new TestWidget(*w1));
+
+    w1->setMaxSize({9999, 32});
+    grid->addItem(w1);
+    BOOST_CHECK_EQUAL(grid->count(), 1);
+    BOOST_CHECK_EQUAL(grid->itemAt(0), w1);
+    BOOST_CHECK_EQUAL(w1->getParent(), grid);
+
+    grid->addItem(w2, 1, 1);
+    grid->addItem(w3, 2, 1);
+    grid->addItem(w4, 0, 2, 3 /* col span */, 1);
+
+    grid->setGeometry(SGRecti(0, 0, 160, 130));
+
+    BOOST_CHECK_EQUAL(w1->geometry(), SGRecti(0, 4, 50, 32));
+    BOOST_CHECK_EQUAL(w2->geometry(), SGRecti(55, 45, 50, 40));
+
+    // check width includes padding of spanned columns
+    BOOST_CHECK_EQUAL(w4->geometry(), SGRecti(0, 90, 160, 40));
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(gridlayout_min_size_layout)
+{
+    sc::GridLayoutRef grid(new sc::GridLayout);
+    grid->setSpacing(4);
+
+    TestWidgetRef w1(new TestWidget(SGVec2i(16, 16),
+                                    SGVec2i(32, 32),
+                                    SGVec2i(9999, 96))),
+        w2(new TestWidget(*w1)),
+        w3(new TestWidget(*w1)),
+        w4(new TestWidget(*w1));
+
+    w1->setMinSize({72, 24});
+    w1->setSizeHint({72, 32});
+    w1->setGridSpan({1, 2});
+
+    w2->setMinSize({72, 48});
+    w2->setSizeHint({96, 64});
+
+    grid->addItem(w1);
+    grid->addItem(w2, 1, 1);
+    grid->addItem(w3, 2, 1);
+    grid->addItem(w4, 0, 2, 2 /* col span */, 1);
+
+    grid->setGeometry(SGRecti(0, 0, 248, 148));
+
+    BOOST_CHECK_EQUAL(w1->geometry(), SGRecti(0, 0, 85, 96));
+    BOOST_CHECK_EQUAL(w2->geometry(), SGRecti(89, 18, 109, 78));
+    BOOST_CHECK_EQUAL(w4->geometry(), SGRecti(0, 100, 198, 46));
 }

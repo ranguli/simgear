@@ -102,39 +102,74 @@ namespace canvas
       bool horiz() const;
 
     protected:
+        struct ItemData {
+            LayoutItemRef layout_item;
+            int size_hint,
+                min_size,
+                max_size,
+                padding_orig, //!< original padding as specified by the user
+                padding,      //!< padding before element (layouted)
+                size,         //!< layouted size
+                stretch;      //!< stretch factor
+            bool visible : 1,
+                has_align : 1, //!< Has alignment factor set (!= AlignFill)
+                has_hfw : 1,   //!< height for width
+                done : 1;      //!< layouting done
 
-      typedef const int& (SGVec2i::*CoordGetter)() const;
-      CoordGetter _get_layout_coord,    //!< getter for coordinate in layout
-                                        //   direction
-                  _get_fixed_coord;     //!< getter for coordinate in secondary
-                                        //   (fixed) direction
+            /** Clear values (reset to default/empty state) */
+            void reset();
 
-      int _padding;
-      Direction _direction;
+            int hfw(int w) const;
+            int mhfw(int w) const;
+        };
 
-      typedef std::vector<ItemData> LayoutItems;
+        using LayoutItems = std::vector<ItemData>;
 
-      mutable LayoutItems _layout_items;
-      mutable ItemData _layout_data;
+        /**
+       * Distribute the available @a space to all @a items
+       */
+        void distribute(LayoutItems& items, const ItemData& space);
 
-      // Cache for last height-for-width query
-      mutable int _hfw_width,
-                  _hfw_height,
-                  _hfw_min_height;
 
-      void updateSizeHints() const;
-      void updateWFHCache(int w) const;
+        typedef const int& (SGVec2i::*CoordGetter)() const;
+        CoordGetter _get_layout_coord, //!< getter for coordinate in layout
+                                       //   direction
+            _get_fixed_coord;          //!< getter for coordinate in secondary
+                                       //   (fixed) direction
 
-      virtual SGVec2i sizeHintImpl() const;
-      virtual SGVec2i minimumSizeImpl() const;
-      virtual SGVec2i maximumSizeImpl() const;
+        int _padding;
+        Direction _direction;
 
-      virtual int heightForWidthImpl(int w) const;
-      virtual int minimumHeightForWidthImpl(int w) const;
 
-      virtual void doLayout(const SGRecti& geom);
+        mutable LayoutItems _layout_items;
+        mutable ItemData _layout_data;
 
-      virtual void visibilityChanged(bool visible);
+        // Cache for last height-for-width query
+        mutable int _hfw_width,
+            _hfw_height,
+            _hfw_min_height;
+
+        void updateSizeHints() const;
+        void updateWFHCache(int w) const;
+
+        virtual SGVec2i sizeHintImpl() const;
+        virtual SGVec2i minimumSizeImpl() const;
+        virtual SGVec2i maximumSizeImpl() const;
+
+        virtual int heightForWidthImpl(int w) const;
+        virtual int minimumHeightForWidthImpl(int w) const;
+
+        virtual void doLayout(const SGRecti& geom);
+
+        virtual void visibilityChanged(bool visible);
+
+    private:
+        int _num_not_done = 0,  //!< number of children not layouted yet
+            _sum_stretch = 0,   //!< sum of stretch factors of all not yet layouted
+                                //   children
+            _space_stretch = 0, //!< space currently assigned to all not yet layouted
+                                //   stretchable children
+            _space_left = 0;    //!< remaining space not used by any child yet
   };
 
   /**

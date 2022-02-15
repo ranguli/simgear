@@ -3,6 +3,7 @@ include (SimGearComponent)
 set(HEADERS
   AlignFlag_values.hxx
   BoxLayout.hxx
+  GridLayout.hxx
   Layout.hxx
   LayoutItem.hxx
   NasalWidget.hxx
@@ -11,6 +12,7 @@ set(HEADERS
 
 set(SOURCES
   BoxLayout.cxx
+  GridLayout.cxx
   Layout.cxx
   LayoutItem.cxx
   NasalWidget.cxx
