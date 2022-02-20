@@ -20,4 +20,4 @@ set(SOURCES
   shVgu.c
 )
 
-simgear_scene_component(ShivaVG canvas/ShivaVG "${SOURCES}" "${HEADERS}")
+simgear_scene_component(ShaderVG canvas/ShaderVG "${SOURCES}" "${HEADERS}")

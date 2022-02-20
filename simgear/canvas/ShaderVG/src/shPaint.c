@@ -37,9 +37,6 @@
 #define _ARRAY_DEFINE
 #include "shArrayBase.h"
 
-// We currently do not use gradients which need textures, so disable them to
-// prevent freeing resources outside the correct OpenGL thread/context.
-#define SH_NO_PAINT_TEXTURE
 
 void SHPaint_ctor(SHPaint *p)
 {
@@ -56,16 +53,12 @@ void SHPaint_ctor(SHPaint *p)
   for (i=0; i<5; ++i) p->radialGradient[i] = 0.0f;
   p->pattern = VG_INVALID_HANDLE;
   
-#ifndef SH_NO_PAINT_TEXTURE
   glGenTextures(1, &p->texture);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, p->texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SH_GRADIENT_TEX_WIDTH, SH_GRADIENT_TEX_HEIGHT, 0,
                GL_RGBA, GL_FLOAT, NULL);
   GL_CEHCK_ERROR;
-#else
-  p->texture = 0;
-#endif
 }
 
 void SHPaint_dtor(SHPaint *p)
@@ -73,10 +66,8 @@ void SHPaint_dtor(SHPaint *p)
   SH_DEINITOBJ(SHStopArray, p->instops);
   SH_DEINITOBJ(SHStopArray, p->stops);
   
-#ifndef SH_NO_PAINT_TEXTURE
   if (glIsTexture(p->texture))
     glDeleteTextures(1, &p->texture);
-#endif
 }
 
 VG_API_CALL VGPaint vgCreatePaint(void)
@@ -155,7 +146,6 @@ VG_API_CALL void vgPaintPattern(VGPaint paint, VGImage pattern)
 
 void shUpdateColorRampTexture(SHPaint *p)
 {
-#ifndef SH_NO_PAINT_TEXTURE
   SHint s=0;
   SHStop *stop1, *stop2;
   SHfloat rgba[SH_GRADIENT_TEX_COORDSIZE];
@@ -199,9 +189,6 @@ void shUpdateColorRampTexture(SHPaint *p)
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, i, SH_GRADIENT_TEX_WIDTH, 1, GL_RGBA, GL_FLOAT, rgba);
 
   GL_CEHCK_ERROR;
-#else
-  printf("ShaderVG: gradients not supported!");
-#endif
 }
 
 void shValidateInputStops(SHPaint *p)
@@ -363,7 +350,6 @@ void shGenerateStops(SHPaint *p, SHfloat minOffset, SHfloat maxOffset,
 
 void shSetGradientTexGLState(SHPaint *p)
 {
-#ifndef SH_NO_PAINT_TEXTURE
   glBindTexture(GL_TEXTURE_2D, p->texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -376,9 +362,6 @@ void shSetGradientTexGLState(SHPaint *p)
   case VG_COLOR_RAMP_SPREAD_REFLECT:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
   }
-#else
-  printf("ShaderVG: gradients not supported!");
-#endif
 }
 
 void shSetPatternTexGLState(SHPaint *p, VGContext *c)

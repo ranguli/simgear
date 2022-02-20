@@ -29,7 +29,7 @@ set(SOURCES
   VGInitOperation.cxx
 )
 
-add_subdirectory(ShivaVG/src)
+add_subdirectory(${OPENVG}/src)
 add_subdirectory(elements)
 add_subdirectory(events)
 add_subdirectory(layout)

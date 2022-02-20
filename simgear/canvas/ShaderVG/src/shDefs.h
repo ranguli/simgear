@@ -23,8 +23,6 @@
 
 /* Standard headers */
 
-#include "shConfig.h"
-
 #ifdef VG_API_WINDOWS
 #  include <windows.h>
 #endif
@@ -156,17 +154,14 @@ SHfloat getMaxFloat();
 
 /* OpenGL headers */
 
-#if defined(VG_API_LINUX) || defined(VG_API_FREEBSD) || defined(VG_API_OPENBSD)
-    #include <GL/gl.h>
-    #include <GL/glx.h>
-#elif defined(VG_API_MACOSX)
-    #include <OpenGL/gl.h>
+#if defined(VG_API_MACOSX)
+#  include <OpenGL/gl.h>
 #elif defined(VG_API_WINDOWS)
-    #include <GL/gl.h>
+#  define GL_GLEXT_PROTOTYPES
+#  include <GL/glcorearb.h>
 #else
-    #define GL_GLEXT_LEGACY /* don't include glext.h */
-    #include <GL/gl.h>
-    #include <GL/glx.h>
+#  define GL_GLEXT_PROTOTYPES
+#  include <GL/glcorearb.h>
 #endif
 
 #include "shExtensions.h"

@@ -390,7 +390,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       glDisable(GL_STENCIL_TEST);
 //    glDisable(GL_BLEND);
- #if 0     
+#if 0
     }else{
       
       /* Simulate thin stroke by alpha */
@@ -418,7 +418,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
   SHImage *i;
   SHfloat mgl[16];
   SHPaint *fill;
-  SHVector2 min, max;
+//SHVector2 min, max;
   SHRectangle *rect;
   
   VG_GETCONTEXT(VG_NO_RETVAL);
