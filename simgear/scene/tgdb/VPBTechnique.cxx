@@ -537,11 +537,8 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
             if (validValue)
             {
                 osg::Vec3d model;
-                osg::Vec3d origin;
-                _masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), -1000), origin);
-                _masterLocator->convertLocalToModel(ndc, model);
 
-                model = VPBTechnique::checkAndDisplaceAgainstElevationConstraints(origin, model, _constraint_vtx_gap);
+                model = VPBTechnique::checkAndDisplaceAgainstElevationConstraints(ndc, _numColumns, _numRows, _constraint_vtx_gap, _masterLocator);
 
                 texcoords->push_back(osg::Vec2(ndc.x(), ndc.y()));
 
@@ -2382,23 +2379,45 @@ void VPBTechnique::removeElevationConstraint(osg::ref_ptr<osg::Node> constraint)
 
 // Check a given vertex against any elevation constraints  E.g. to ensure the terrain mesh doesn't
 // poke through any airport meshes.  If such a constraint exists, the function will return a replacement
-// vertex displaces such that it lies 1m below the contraint relative to the passed in origin.  
-osg::Vec3d VPBTechnique::checkAndDisplaceAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex, float vtx_gap)
+// vertex displaces such that it below the contraint relative to the passed in origin by vtx_gap meters.  
+osg::Vec3d VPBTechnique::checkAndDisplaceAgainstElevationConstraints(osg::Vec3d ndc, int cols, int rows, float vtx_gap, Locator* masterLocator)
 {
     const std::lock_guard<std::mutex> lock(VPBTechnique::_elevationConstraintMutex); // Lock the _elevationConstraintGroup for this scope
-    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
-    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
-    osgUtil::IntersectionVisitor visitor(intersector.get());
-    _elevationConstraintGroup->accept(visitor);
 
-    if (intersector->containsIntersections()) {
-        // We have an intersection with our constraints model, so move the terrain vertex to 1m below the intersection point
-        osg::Vec3d ray = intersector->getFirstIntersection().getWorldIntersectPoint() - origin;
-        ray.normalize();
-        return intersector->getFirstIntersection().getWorldIntersectPoint() - ray*vtx_gap;
-    } else {
-        return vertex;
+    osg::Vec3d origin, vertex, deltaX, deltaY;
+    masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), -1000), origin);
+    masterLocator->convertLocalToModel(ndc, vertex);
+    masterLocator->convertLocalToModel(ndc + osg::Vec3d(1.0 / (double) cols, 0.0,0.0), deltaX);
+    masterLocator->convertLocalToModel(ndc + osg::Vec3d(0.0, 1.0 / (double) rows, 0.0), deltaY);
+
+    double elev = ndc.z();
+
+    for (int i = -1; i < 2; ++i) {
+        for (int j = -1; j < 2; ++j) {
+            osg::Vec3d delta = deltaX * i + deltaY * j;
+            osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
+            intersector = new osgUtil::LineSegmentIntersector(origin + delta, vertex + delta);
+            osgUtil::IntersectionVisitor visitor(intersector.get());
+            _elevationConstraintGroup->accept(visitor);
+
+            if (intersector->containsIntersections()) {
+                // We have an intersection with our constraints model, so move the terrain vertex to below the intersection point by vtx_gap meters
+                osg::Vec3d ray = intersector->getFirstIntersection().getWorldIntersectPoint() - (origin + delta);
+                ray.normalize();
+                osg::Vec3d local;
+                masterLocator->convertModelToLocal(intersector->getFirstIntersection().getWorldIntersectPoint() - ray*vtx_gap, local);
+                if (elev > local.z()) {
+                    elev = local.z();
+                }
+            }
+        }
     }
+
+    // elev now contains the local elevation of a point constrained by the elevation constraints of the vertex and the 8 surrounding
+    // vertices.
+    osg::Vec3d constrained;
+    masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), elev), constrained);
+    return constrained;    
 }
 
 bool VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex)

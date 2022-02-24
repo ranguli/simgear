@@ -96,7 +96,7 @@ class VPBTechnique : public TerrainTechnique
         // As airports are generated in a separate loading thread, these are static.
         static void addElevationConstraint(osg::ref_ptr<osg::Node> constraint);
         static void removeElevationConstraint(osg::ref_ptr<osg::Node> constraint);
-        static osg::Vec3d checkAndDisplaceAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex, float vertex_gap);
+        static osg::Vec3d checkAndDisplaceAgainstElevationConstraints(osg::Vec3d ndc, int cols, int rows, float vtx_gap, Locator* masterLocator);
         static bool checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex);
 
         static void clearConstraints();
