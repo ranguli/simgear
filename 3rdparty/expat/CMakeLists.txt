@@ -1,6 +1,20 @@
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(HAVE_GETRANDOM YES)
+    check_cxx_source_compiles(
+        "#include <sys/random.h>
+        int main(void) {
+            return 0;
+        }
+        "
+        HAVE_GETRANDOM)
+
+    if (NOT HAVE_GETRANDOM)
+        # on older (GLibC < 2.25) fall back to /dev/urandom
+        set(XML_DEV_URANDOM 1)
+    else()
+        message(STATUS "Found <sys/random.h>")
+    endif()
 endif()
+
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/3rdparty/expat/expat_config_cmake.in"

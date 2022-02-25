@@ -11,6 +11,7 @@
 #endif
 
 #cmakedefine HAVE_GETRANDOM
+#cmakedefine XML_DEV_URANDOM
 
 // we can assume > 10.7 macOS so always set this
 #ifdef __APPLE__
