@@ -81,7 +81,7 @@ struct FfmpegEncoder
     
     struct SwsContext*  m_sws_context = nullptr;
     AVFrame*            m_frame_yuv = nullptr;
-    AVCodec*            m_codec = nullptr;
+    const AVCodec*      m_codec = nullptr;
     AVCodecContext*     m_codec_context = nullptr;
     AVStream*           m_stream = nullptr;
     AVPacket*           m_packet = nullptr;
