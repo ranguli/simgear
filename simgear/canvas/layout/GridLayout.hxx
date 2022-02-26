@@ -26,21 +26,21 @@ public:
 
     void addItem(const LayoutItemRef& item, int column, int row, int colSpan = 1, int rowSpan = 1);
 
-    virtual void addItem(const LayoutItemRef& item);
+    void addItem(const LayoutItemRef& item) override;
 
-    virtual size_t count() const;
-    virtual LayoutItemRef itemAt(size_t index);
-    virtual LayoutItemRef takeAt(size_t index);
-    virtual void clear();
+    size_t count() const override;
+    LayoutItemRef itemAt(size_t index) override;
+    LayoutItemRef takeAt(size_t index) override;
+    void clear() override;
 
-    virtual void setSpacing(int spacing);
-    virtual int spacing() const;
+    void setSpacing(int spacing) override;
+    int spacing() const override;
 
     void invalidate() override;
 
-    virtual bool hasHeightForWidth() const;
+    bool hasHeightForWidth() const override;
 
-    virtual void setCanvas(const CanvasWeakPtr& canvas);
+    void setCanvas(const CanvasWeakPtr& canvas) override;
 
     void setRowStretch(size_t index, int stretch);
     void setColumnStretch(size_t index, int stretch);

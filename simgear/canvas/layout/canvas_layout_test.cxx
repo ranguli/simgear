@@ -807,3 +807,42 @@ BOOST_AUTO_TEST_CASE(gridlayout_min_size_layout)
     BOOST_CHECK_EQUAL(w2->geometry(), SGRecti(89, 18, 109, 78));
     BOOST_CHECK_EQUAL(w4->geometry(), SGRecti(0, 100, 198, 46));
 }
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(gridlayout_stretch)
+{
+    sc::GridLayoutRef grid(new sc::GridLayout);
+    grid->setSpacing(4);
+    grid->setDimensions({3, 3});
+
+    TestWidgetRef w1(new TestWidget(SGVec2i(16, 16),
+                                    SGVec2i(32, 32),
+                                    SGVec2i(9999, 9999))),
+        w2(new TestWidget(*w1)),
+        w3(new TestWidget(*w1)),
+        w4(new TestWidget(*w1)),
+        w5(new TestWidget(*w1));
+
+
+    grid->setColumnStretch(1, 1);
+    grid->setColumnStretch(2, 2);
+
+    grid->setRowStretch(0, 1);
+    grid->setRowStretch(1, 4);
+    grid->setRowStretch(2, 1);
+
+    w1->setGridSpan({1, 2});
+
+    grid->addItem(w1);
+    grid->addItem(w2, 1, 1);
+    grid->addItem(w3, 2, 1);
+    grid->addItem(w4, 0, 2, 2 /* col span */, 1);
+    grid->addItem(w5, 2, 0);
+
+    grid->setGeometry(SGRecti(0, 0, 248, 224));
+
+    BOOST_CHECK_EQUAL(w1->geometry(), SGRecti(0, 0, 32, 168));
+    BOOST_CHECK_EQUAL(w2->geometry(), SGRecti(36, 56, 80, 112));
+    BOOST_CHECK_EQUAL(w4->geometry(), SGRecti(0, 172, 116, 52));
+    BOOST_CHECK_EQUAL(w5->geometry(), SGRecti(120, 0, 128, 52));
+}

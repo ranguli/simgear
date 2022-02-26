@@ -301,16 +301,61 @@ void GridLayout::setDimensions(const SGVec2i& dim)
     invalidate();
 }
 
+//----------------------------------------------------------------------------
 size_t GridLayout::numRows() const
 {
     return _dimensions.y();
 }
 
+//----------------------------------------------------------------------------
 size_t GridLayout::numColumns() const
 {
     return _dimensions.x();
 }
 
+
+//----------------------------------------------------------------------------
+void GridLayout::setRowStretch(size_t index, int stretch)
+{
+    if (index >= _dimensions.y()) {
+        throw sg_range_exception("GridLayout::setRowStretch: invalid row");
+    }
+
+    if (stretch < 0) {
+        throw sg_range_exception("GridLayout: negative stretch values are forbidden");
+    }
+
+    // becuase we lazily update the rows data, we'd have nowhere to store the
+    // new stretch value, so actively resize it now.
+    if (index >= _rows.size()) {
+        _rows.resize(_dimensions.y());
+    }
+
+    _rows[index].stretch = stretch;
+    invalidate();
+}
+
+//----------------------------------------------------------------------------
+
+void GridLayout::setColumnStretch(size_t index, int stretch)
+{
+    if (index >= _dimensions.x()) {
+        throw sg_range_exception("GridLayout::setColumnStretch: invalid column");
+    }
+
+    if (stretch < 0) {
+        throw sg_range_exception("GridLayout: negative stretch values are forbidden");
+    }
+
+    // becuase we lazily update the columns data, we'd have nowhere to store the
+    // new stretch value, so actively resize it now.
+    if (index >= _columns.size()) {
+        _columns.resize(_dimensions.x());
+    }
+
+    _columns[index].stretch = stretch;
+    invalidate();
+}
 
 //----------------------------------------------------------------------------
 void GridLayout::updateSizeHints() const
