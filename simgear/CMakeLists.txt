@@ -173,10 +173,6 @@ if(NOT SIMGEAR_HEADLESS)
         ${FFMPEG_LIBRARIES}
         FGTinyGLTF)
 
-    if (USE_SHADERVG)
-      target_link_libraries(SimGearScene PRIVATE GLEW::GLEW)
-    endif()
-
     # ToDo: define an ALIAS target for the sound backend, to get
     # rid of this logic here
     if (ENABLE_SOUND)
