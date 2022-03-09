@@ -21,6 +21,12 @@
 #ifndef __SHDEFS_H
 #define __SHDEFS_H
 
+// FlightGear change : include shConfig.h here, since the logic below requires it.
+// wondering if this file is supposed to be auto-included, since there is no explicit
+// include of it anywhere in Shader/Shiva sources.
+#include "shConfig.h"
+// end of FlightGear change
+
 /* Standard headers */
 
 #ifdef VG_API_WINDOWS
