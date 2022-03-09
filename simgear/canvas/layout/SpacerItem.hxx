@@ -37,6 +37,8 @@ namespace canvas
 
   };
 
+using SpacerItemRef = SGSharedPtr<SpacerItem> ;
+
 } // namespace canvas
 } // namespace simgear
 
