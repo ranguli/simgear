@@ -36,6 +36,7 @@
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/debug/ErrorReportingCallback.hxx>
+#include <simgear/structure/OSGUtils.hxx>
 
 using std::string;
 
@@ -113,7 +114,7 @@ osg::Node * SGText::appendText(const SGPropertyNode* configNode,
   } else {
     simgear::reportFailure(simgear::LoadFailure::NotFound,
                           simgear::ErrorCode::LoadingTexture,
-                                   "SGText: couldn;t find font:" + requestedFont);
+                                   "SGText: couldn't find font:" + requestedFont);
   }
 
   text->setCharacterSize(configNode->getDoubleValue("character-size", 1.0 ), 
@@ -169,36 +170,8 @@ osg::Node * SGText::appendText(const SGPropertyNode* configNode,
   text->setDrawMode( drawMode );
 
   if( (p = configNode->getNode( "alignment" )) != NULL ) {
-    string alignment = p->getStringValue();
-    if( alignment.compare( "left-top" ) == 0 ) {
-      text->setAlignment( osgText::Text::LEFT_TOP );
-    } else if( alignment.compare( "left-center" ) == 0 ) {
-      text->setAlignment( osgText::Text::LEFT_CENTER );
-    } else if( alignment.compare( "left-bottom" ) == 0 ) {
-      text->setAlignment( osgText::Text::LEFT_BOTTOM );
-    } else if( alignment.compare( "center-top" ) == 0 ) {
-      text->setAlignment( osgText::Text::CENTER_TOP );
-    } else if( alignment.compare( "center-center" ) == 0 ) {
-      text->setAlignment( osgText::Text::CENTER_CENTER );
-    } else if( alignment.compare( "center-bottom" ) == 0 ) {
-      text->setAlignment( osgText::Text::CENTER_BOTTOM );
-    } else if( alignment.compare( "right-top" ) == 0 ) {
-      text->setAlignment( osgText::Text::RIGHT_TOP );
-    } else if( alignment.compare( "right-center" ) == 0 ) {
-      text->setAlignment( osgText::Text::RIGHT_CENTER );
-    } else if( alignment.compare( "right-bottom" ) == 0 ) {
-      text->setAlignment( osgText::Text::RIGHT_BOTTOM );
-    } else if( alignment.compare( "left-baseline" ) == 0 ) {
-      text->setAlignment( osgText::Text::LEFT_BASE_LINE );
-    } else if( alignment.compare( "center-baseline" ) == 0 ) {
-      text->setAlignment( osgText::Text::CENTER_BASE_LINE );
-    } else if( alignment.compare( "right-baseline" ) == 0 ) {
-      text->setAlignment( osgText::Text::RIGHT_BASE_LINE );
-    } else if( alignment.compare( "baseline" ) == 0 ) {
-      text->setAlignment( osgText::Text::BASE_LINE );
-    } else {
-      SG_LOG(SG_GENERAL, SG_ALERT, "ignoring unknown text-alignment '" << alignment <<"'." );
-    }
+      
+      text->setAlignment(simgear::osgutils::mapAlignment(p->getStringValue()));
   }
 
   if( (p = configNode->getNode( "layout" )) != NULL ) {
