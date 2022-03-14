@@ -125,15 +125,25 @@ public:
     {
         return _lineSegments;
     }
-
+    // instead of using the lowest X to instead find the lowest of all (x,y,z) and use this
+    // see https://sourceforge.net/p/flightgear/codetickets/2706/
+    bool compareVec3(const osg::Vec3& v1, const osg::Vec3& v2) {
+        // compare to the nearest 0.01mm
+        if (abs(v2[0]-v1[0]) > 0.00001)
+            return v2[0] < v1[0];
+        else if (abs(v2[1] - v1[1]) > 0.00001)
+            return v2[1] < v1[1];
+        else 
+            return v2[2] < v1[2];
+    }
     void addLine(const osg::Vec3& v1, const osg::Vec3& v2)
     {
-        // Trick to get the ends in the right order.
-        // Use the x axis in the original coordinate system. Choose the
-        // most negative x-axis as the one pointing forward
         SGVec3f tv1(toSG(_matrix.preMult(v1)));
         SGVec3f tv2(toSG(_matrix.preMult(v2)));
-        if (tv1[0] > tv2[0])
+
+        // Get the ends in the right order based on their 
+        // lowest coordinates in x,y,z
+        if (compareVec3(v1, v2))
             _lineSegments.push_back(SGLineSegmentf(tv1, tv2));
         else
             _lineSegments.push_back(SGLineSegmentf(tv2, tv1));
@@ -434,6 +444,7 @@ SGAnimation::SGAnimation(simgear::SGTransientModelData &modelData) :
 {
   _name = modelData.getConfigNode()->getStringValue("name", "");
   _enableHOT = modelData.getConfigNode()->getBoolValue("enable-hot", true);
+
   std::vector<SGPropertyNode_ptr> objectNames =
     modelData.getConfigNode()->getChildren("object-name");
   for (unsigned i = 0; i < objectNames.size(); ++i)
@@ -714,7 +725,7 @@ protected:
  * This function will take action when axis has an object-name tag and the corresponding object
  * can be found within the hierarchy.
  */
-bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, SGVec3d &offset, simgear::SGTransientModelData &modelData) const
+const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, simgear::SGTransientModelData &modelData) const
 {
     std::string axis_object_name = std::string();
     bool can_warn = true;
@@ -746,7 +757,6 @@ bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& cente
             FindGroupVisitor axis_object_name_finder(axis_object_name);
             rootNode->accept(axis_object_name_finder);
             osg::Group *object_group = axis_object_name_finder.getGroup();
-
             if (object_group)
             {
                 /*
@@ -792,13 +802,12 @@ bool SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& cente
         }
         if (axisSegment)
         {
-            offset = axisSegment->getStart() - axisSegment->getEnd();
             center = 0.5*(axisSegment->getStart() + axisSegment->getEnd());
             axis = axisSegment->getEnd() - axisSegment->getStart();
-            return true;
+            return axisSegment;
         }
     }
-    return false;
+    return nullptr;
 }
 //------------------------------------------------------------------------------
 // factored out to share with SGKnobAnimation
@@ -806,8 +815,7 @@ void SGAnimation::readRotationCenterAndAxis(osg::Node *_rootNode, SGVec3d& cente
                                              SGVec3d& axis, simgear::SGTransientModelData &modelData) const
 {
   center = SGVec3d::zeros();
-  SGVec3d offsets;
-  if (setCenterAndAxisFromObject(_rootNode, center, axis, offsets, modelData))
+  if (setCenterAndAxisFromObject(_rootNode, center, axis, modelData))
   {
       if (8 * SGLimitsd::min() < norm(axis))
           axis = normalize(axis);
@@ -961,24 +969,33 @@ public:
 SGTranslateAnimation::SGTranslateAnimation(simgear::SGTransientModelData &modelData) :
   SGAnimation(modelData)
 {
-  _condition = getCondition();
-  SGSharedPtr<SGExpressiond> value;
-  value = read_value(modelData.getConfigNode(), modelData.getModelRoot(), "-m",
-                     -SGLimitsd::max(), SGLimitsd::max());
-    if (!value) {
-        throw sg_format_exception("Invalid translate expression", "Value is not readable");
-    }
-  _animationValue = value->simplify();
-  if (_animationValue)
-    _initialValue = _animationValue->getValue();
-  else
-    _initialValue = 0;
+	_condition = getCondition();
+	SGSharedPtr<SGExpressiond> value;
 
-      SGVec3d _center, _offsets;
-      if (modelData.getNode() && !setCenterAndAxisFromObject(modelData.getNode(), _center, _axis, _offsets, modelData))
-          _axis = readTranslateAxis(modelData.getConfigNode());
-      else
-          _axis = _offsets;
+	value = read_value(modelData.getConfigNode(), modelData.getModelRoot(), "-m",
+		-SGLimitsd::max(), SGLimitsd::max());
+	if (!value) {
+		throw sg_format_exception("Invalid translate expression", "Value is not readable");
+	}
+	_animationValue = value->simplify();
+	if (_animationValue)
+		_initialValue = _animationValue->getValue();
+	else
+		_initialValue = 0;
+
+	SGVec3d _center;
+
+	if (modelData.getNode())
+	{
+		auto segment = setCenterAndAxisFromObject(modelData.getNode(), _center, _axis, modelData);
+		if (segment) {
+			_center = segment->getStart();
+			_axis = segment->getEnd() - segment->getStart();
+		}
+		else {
+			_axis = readTranslateAxis(modelData.getConfigNode());
+		}
+	}
 }
 
 osg::Group*
