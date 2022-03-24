@@ -445,7 +445,10 @@ private:
 
     void notifyWillChange(SGSubsystem* sub, SGSubsystem::State s);
     void notifyDidChange(SGSubsystem* sub, SGSubsystem::State s);
-    
+
+    void updateMembers(int loopCount, double dt);
+    void updateMembersWithTiming(int loopCount, double dt);
+
     friend class SGSubsystemMgr;
 
     void set_manager(SGSubsystemMgr* manager);

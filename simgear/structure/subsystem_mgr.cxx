@@ -416,6 +416,30 @@ SGSubsystemGroup::update (double delta_time_sec)
     }
 
     const bool recordTime = (reportTimingCb != nullptr);
+    if (recordTime) {
+        // recording timing adds some overhead at present, this is
+        // an easy way to ensure in the case where recording is not actually
+        // enabled, we don't pay that cost.
+        // Longer-term solution: add timing information to the Member struct,
+        // so that it can be recorded without the TimerStats strucutres being
+        // copied/created/cleared each update()
+        updateMembersWithTiming(loopCount, delta_time_sec);
+    } else {
+        updateMembers(loopCount, delta_time_sec);
+    }
+}
+
+void SGSubsystemGroup::updateMembers(int loopCount, double delta_time_sec)
+{
+    while (loopCount-- > 0) {
+        for (auto member : _members) {
+            member->update(delta_time_sec); // indirect call
+        }
+    } // of multiple update loop
+}
+
+void SGSubsystemGroup::updateMembersWithTiming(int loopCount, double delta_time_sec)
+{
     SGTimeStamp timeStamp;
     TimerStats lvTimerStats(_timerStats);
     TimerStats overrunItems;
@@ -435,7 +459,7 @@ SGSubsystemGroup::update (double delta_time_sec)
           if (member->name.size())
               _timerStats[member->name] += timeStamp.elapsedMSec() / 1000.0;
 
-          if (recordTime && reportTimingCb) {
+          if (reportTimingCb) {
               member->updateExecutionTime(timeStamp.elapsedMSec()*1000);
               if (timeStamp.elapsedMSec() > SGSubsystemMgr::maxTimePerFrame_ms) {
                   overrunItems[member->name] += timeStamp.elapsedMSec();
@@ -444,6 +468,7 @@ SGSubsystemGroup::update (double delta_time_sec)
           }
       }
     } // of multiple update loop
+
     _lastExecutionTime = _executionTime;
     _executionTime += outerTimeStamp.elapsedMSec();
     if (overrun) {
@@ -493,8 +518,8 @@ SGSubsystemGroup::update (double delta_time_sec)
     }
     _lastTimerStats.clear();
     _lastTimerStats.insert(_timerStats.begin(), _timerStats.end());
-
 }
+
 void SGSubsystem::reportTimingStats(TimerStats *__lastValues) {
     std::string _name = "";
 
