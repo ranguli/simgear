@@ -18,6 +18,8 @@
 #ifndef SGMisc_H
 #define SGMisc_H
 
+#include <cmath>
+
 template<typename T>
 class SGMisc {
 public:
