@@ -254,7 +254,7 @@ namespace canvas
     SG_LOG
     (
       SG_GENERAL,
-      SG_INFO,
+      SG_DEBUG,
       "addEventListener(" << _node->getPath() << ", " << type_str << ")"
     );
 
