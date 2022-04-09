@@ -401,9 +401,9 @@ public:
                    (0 < tex_height) ? 1000.0f/tex_height : 1.0f);
   }
 
-  float get_parameter(const std::string& param) const
+  float get_parameter(const std::string& param, float defaultValue = (0.0F)) const
   {
-    return parameters->getFloatValue(param);
+    return parameters->getFloatValue(param, defaultValue);
   }
 
 protected:

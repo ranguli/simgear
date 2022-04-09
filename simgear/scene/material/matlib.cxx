@@ -430,7 +430,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
                 water = 1.0;
             }
 
-            atlas.materialParams3->setElement(materialLookupIndex, osg::Vec4f(water, 0.0, 0.0, 0.0));
+            atlas.materialParams3->setElement(materialLookupIndex, osg::Vec4f(water, mat->get_parameter("waterline-start"), mat->get_parameter("waterline-end"), 0.0));
 
             // Similarly, there are specifically 7 textures that are defined in the materials that need to be passed into
             // the shader as an array based on the material lookup.
