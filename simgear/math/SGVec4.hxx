@@ -249,6 +249,14 @@ T
 norm(const SGVec4<T>& v)
 { return simd4::magnitude(v.simd4()); }
 
+/// The squared euclidean norm of the vector
+/// Comparing two squared values prevents two computionally heavy sqrt calls.
+template<typename T>
+inline
+T
+norm2(const SGVec4<T>& v)
+{ return simd4::magnitude2(v.simd4()); }
+
 /// The euclidean norm of the vector, that is what most people call length
 template<typename T>
 inline
