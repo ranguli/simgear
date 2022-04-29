@@ -216,6 +216,10 @@ protected:
     std::string _refname = "";
     bool _active = false;
 
+    // Mach induced Sonic boom
+    bool _mInCone = false;
+    float _mOffset_m = 0.0;
+
 private:
     void cleanup_removed_samples();
     void start_playing_sample(SGSoundSample *sample);
@@ -242,6 +246,15 @@ private:
 
     void update_pos_and_orientation();
     void update_sample_config( SGSoundSample *sound );
+
+    // Mach induced Sonic boom
+    enum {
+       UP = 0,
+       RIGHT,
+       BACK
+    };
+
+    float _mach = 0.0;
 };
 
 #endif // _SG_SAMPLE_GROUP_OPENAL_HXX

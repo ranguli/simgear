@@ -287,9 +287,26 @@ void SGSampleGroup::update_pos_and_orientation() {
     SGQuatd hlOr = SGQuatd::fromLonLat(_base_pos);
     SGQuatd ec2body = hlOr*_orientation;
 
-    SGVec3f velocity = SGVec3f::zeros();
+    SGVec3d velocity = SGVec3d::zeros();
     if ( _velocity[0] || _velocity[1] || _velocity[2] ) {
-       velocity = toVec3f( hlOr.backTransform(_velocity*SG_FEET_TO_METER) );
+       velocity = hlOr.backTransform(_velocity*SG_FEET_TO_METER);
+    }
+
+    float speed = 0.0f;
+    double mAngle = SGD_PI_2;
+    if (!_tied_to_listener) {
+        const float Rvapor = 461.52; // Water vapor: individual gas constant
+        const float Rair = 287.5;    // Air: individual gas constant
+        const float y = 1.402;       // Air: Ratio of specific heat
+
+        float T = 273.16 + _degC;    // Kelvin
+        float hr = 0.01 * _humidity;
+        float R = Rair + 0.04f * hr * Rvapor;
+        float sound_speed = sqrtf( y * R * T ); // m/s
+
+        speed = length(velocity);
+        _mach = speed / sound_speed;
+        mAngle = asin(1.0/_mach);
     }
 
     for (auto current : _samples ) {
@@ -298,14 +315,29 @@ void SGSampleGroup::update_pos_and_orientation() {
         sample->set_orientation( _orientation );
         sample->set_rotation( ec2body );
         sample->set_position(base_position);
-        sample->set_velocity( velocity );
+        sample->set_velocity( toVec3f(velocity) );
         sample->set_atmosphere( _degC, _humidity, _pressure );
 
-        // Test if a sample is farther away than max distance, if so
-        // stop the sound playback and free it's source.
         if (!_tied_to_listener) {
             sample->update_pos_and_orientation();
+
+            // Sample position relative to the listener, including the
+            // sample offset relative to the base position.
+            // Same coordinate system as OpenGL; y=up, x=right, z=back
             SGVec3d position = sample->get_position() - smgr_position;
+            if (_mach > 1.0) {
+                _mOffset_m = position[BACK];
+
+                // Skip the slant calculation for angles greater than 89 deg
+                // to avoid instability
+                if (mAngle < 1.553343) {
+                    _mOffset_m -= position[UP] / tan(mAngle);
+                }
+                _mInCone = (_mOffset_m > 0.01) ? true : false;
+            }
+
+            // Test if a sample is farther away than max distance, if so
+            // stop the sound playback and free it's source.
             float max2 = sample->get_max_dist() * sample->get_max_dist();
             float dist2 = position[0]*position[0]
                           + position[1]*position[1] + position[2]*position[2];
