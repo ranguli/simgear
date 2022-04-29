@@ -75,9 +75,6 @@ void SGCommandMgr::setImplicitRoot(SGPropertyNode *root)
 void
 SGCommandMgr::addCommandObject (const std::string &name, Command* command)
 {
-#if !defined(NDEBUG)
-  assert(SGThread::current() == d->_mainThreadId);
-#endif
   if (d->_commands.find(name) != d->_commands.end())
     throw sg_exception("duplicate command name:" + name);
 
