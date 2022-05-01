@@ -8,6 +8,7 @@ set(HEADERS
     timezone.h
     zonedetect.h
     lowleveltime.h
+    rawprofile.hxx
     )
     
 set(SOURCES 
