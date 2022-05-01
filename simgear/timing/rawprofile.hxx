@@ -25,6 +25,8 @@ struct RawProfile
     /*
         damping_time:
             Time in seconds for average to change by factor of e.
+        sglog_name:
+            Prefix string when we write average to SG_LOG().
         sglog_interval:
             Interval in seconds between calls to SG_LOG() or zero to disable.
         prop:
@@ -46,8 +48,8 @@ struct RawProfile
         m_prop = prop;
     }
     
-    typedef std::chrono::high_resolution_clock                  clock_t;
-    typedef std::chrono::time_point< clock_t>                   time_point_t;
+    typedef std::chrono::high_resolution_clock  clock_t;
+    typedef std::chrono::time_point< clock_t>   time_point_t;
     
     void start()
     {
