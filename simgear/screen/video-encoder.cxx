@@ -221,7 +221,8 @@ VideoEncoder::VideoEncoder(
         const std::string& codec,
         double quality,
         double speed,
-        int bitrate
+        int bitrate,
+        bool log_sws_scale_stats
         )
 {
     throw std::runtime_error("Video encoding is not available in this build of Flightgear");
