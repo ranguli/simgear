@@ -4,6 +4,7 @@
 
 #ifndef SG_VIDEO_ENCODER_STANDALONE
     #include <simgear/debug/logstream.hxx>
+    #include <simgear/timing/rawprofile.hxx>
 #endif
 
 extern "C"
@@ -72,6 +73,7 @@ static const char* select(const char** names, int names_num, double select)
     return names[i];
 }
 
+
 /* Video encoder which uses ffmpeg libraries. */
 struct FfmpegEncoder
 {
@@ -94,6 +96,7 @@ struct FfmpegEncoder
     double  m_t = 0;
     int64_t m_t_int_prev = 0;
     bool    m_have_written_header = false;
+    bool    m_log_sws_scale_stats;
     
     /* Constructor.
     
@@ -111,6 +114,9 @@ struct FfmpegEncoder
             Encoding speed in range 0..1 or -1 to use codec's default.
         bitrate
             Target bitratae in bits/sec or -1 to use codex's default.
+        log_sws_scale_stats
+            If true we write summary timing stats for our calls of sws_scale()
+            to SG_LOG().
     
     Throws exception if we cannot set up encoding, e.g. unrecognised
     codec. Other configuration errors may be detected only when encode() is
@@ -121,7 +127,8 @@ struct FfmpegEncoder
             const std::string& codec_name,
             double quality,
             double speed,
-            int bitrate
+            int bitrate,
+            bool log_sws_scale_stats=false
             )
     {
         assert(quality == -1 || (quality >= 0 && quality <= 1));
@@ -133,6 +140,8 @@ struct FfmpegEncoder
         m_quality = quality;
         m_speed = speed;
         m_bitrate = bitrate;
+        
+        m_log_sws_scale_stats = log_sws_scale_stats;
         
         try
         {
@@ -435,11 +444,14 @@ struct FfmpegEncoder
 
         We also need to flip the image vertically so set m_input_linesize[0] to
         -ve and make m_input_data[0] point to the last line in input_raw. */
+        #ifndef SG_VIDEO_ENCODER_STANDALONE
+        static RawProfile raw_profile(1, "sws_scale() time: ");
+        if (m_log_sws_scale_stats)  raw_profile.start();
+        #endif
         int stride2 = -stride;
         const uint8_t* input_raw2 = (const uint8_t*) input_raw + stride * (height-1);
         sws_scale(
                 m_sws_context,
-                //(const uint8_t * const *)
                 &input_raw2,
                 &stride2,
                 0 /*srcSliceY*/,
@@ -447,6 +459,9 @@ struct FfmpegEncoder
                 m_frame_yuv->data,
                 m_frame_yuv->linesize
                 );
+        #ifndef SG_VIDEO_ENCODER_STANDALONE
+        if (m_log_sws_scale_stats)  raw_profile.stop();
+        #endif
 
         /* Send m_frame_yuv to encoder. */
         m_t += dt;

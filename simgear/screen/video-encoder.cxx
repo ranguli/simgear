@@ -41,12 +41,13 @@ struct VideoEncoderInternal : osg::GraphicsOperation
             const std::string& codec,
             double quality,
             double speed,
-            int bitrate
+            int bitrate,
+            bool log_sws_scale_stats
             )
     :
     osg::GraphicsOperation("VideoEncoderOperation", false /*keep*/),
     m_image(new osg::Image),
-    m_ffmpeg_encoder(path, codec, quality, speed, bitrate),
+    m_ffmpeg_encoder(path, codec, quality, speed, bitrate, log_sws_scale_stats),
     m_thread(
             [this]
             {
@@ -180,11 +181,12 @@ VideoEncoder::VideoEncoder(
         const std::string& codec,
         double quality,
         double speed,
-        int bitrate
+        int bitrate,
+        bool log_sws_scale_stats
         )
 {
     av_log_set_callback(av_log);
-    m_internal = new VideoEncoderInternal(path,  codec, quality, speed, bitrate);
+    m_internal = new VideoEncoderInternal(path,  codec, quality, speed, bitrate, log_sws_scale_stats);
 }
 
 VideoEncoder::~VideoEncoder()

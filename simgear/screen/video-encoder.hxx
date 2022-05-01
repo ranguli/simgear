@@ -34,6 +34,9 @@ struct VideoEncoder
             Encoding speed in range 0..1 or -1 to use codec's default.
         bitrate
             Target bitratae in bits/sec or -1 to use codex's default.
+        log_sws_scale_stats
+            If true we write summary timing stats for our calls of sws_scale()
+            to SG_LOG().
     
     Throws exception if we cannot set up encoding, e.g. unrecognised
     codec. Other configuration errors may be detected only when encode() is
@@ -44,7 +47,8 @@ struct VideoEncoder
             const std::string& codec,
             double quality,
             double speed,
-            int bitrate
+            int bitrate,
+            bool log_sws_scale_stats=false
             );
     
     /* Appends gc's current bitmap to compressed video. Works by scheduling a
