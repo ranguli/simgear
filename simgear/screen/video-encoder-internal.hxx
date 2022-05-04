@@ -279,7 +279,7 @@ struct FfmpegEncoder
             /* Resolution must be a multiple of two. */
             m_codec_context->width = width / 2 * 2;
             m_codec_context->height = height / 2 * 2;
-            m_codec_context->time_base = (AVRational){ 1, 60 };
+            m_codec_context->time_base = AVRational{ 1, 60 };
             //m_codec_context->gop_size = 12; /* emit one intra m_frame every twelve frames at most */
             m_codec_context->pix_fmt = AV_PIX_FMT_YUV420P;
             /* Some formats want m_stream headers to be separate. */

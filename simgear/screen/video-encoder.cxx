@@ -170,10 +170,18 @@ static void av_log(void* /*avcl*/, int level, const char* format, va_list va)
     if (level < 44) sglevel = SG_DEBUG;
     if (level < 54) sglevel = SG_BULK;
     else sglevel = SG_BULK;
-    char* message = nullptr;
-    vasprintf(&message, format, va);
+    #ifdef _WIN32
+        /* Windows does not have vasprintf(). */
+        char message[200];
+        vsnprintf(message, sizeof(message), format, va);
+    #else
+        char* message = nullptr;
+        vasprintf(&message, format, va);
+    #endif
     SG_LOG(SG_VIEW, sglevel, "level=" << level << ": " << message);
-    free(message);
+    #ifndef _WIN32
+        free(message);
+    #endif
 }
 
 VideoEncoder::VideoEncoder(
