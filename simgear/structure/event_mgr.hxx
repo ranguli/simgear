@@ -11,63 +11,51 @@ class SGEventMgr;
 class SGTimer
 {
 public:
+    SGTimer() = default;
     ~SGTimer();
     void run();
 
     std::string name;
-    double interval;
-    SGCallback* callback;
-    bool repeat;
-    bool running;
+    double interval = 0.0;
+    SGCallback* callback = nullptr;
+    bool repeat = false;
+    bool running = false;
+
+    // Allow move only
+    SGTimer& operator=(const SGTimer &) = delete;
+    SGTimer(const SGTimer &other) = delete;
+    SGTimer& operator=(SGTimer &&) = default;
+    SGTimer(SGTimer &&other) = default;
 };
 
+/*! Queue to execute SGTimers after given delays */
 class SGTimerQueue
 {
 public:
-    SGTimerQueue(int preSize=1);
-    ~SGTimerQueue();
+    SGTimerQueue() = default;
+    ~SGTimerQueue() = default;
+
     void clear();
     void update(double deltaSecs, std::map<std::string, double> &timingStats);
-
-    double now() { return _now; }
-
-    void     insert(SGTimer* timer, double time);
-    SGTimer* remove(SGTimer* timer);
-    SGTimer* remove();
-
-    SGTimer* nextTimer() { return _numEntries ? _table[0].timer : 0; }
-    double   nextTime()  { return -_table[0].pri; }
-
-    SGTimer* findByName(const std::string& name) const;
+    void insert(std::unique_ptr<SGTimer> timer, double time);
+    bool removeByName(const std::string& name);
 
     void dump();
 
 private:
-    // The "priority" is stored as a negative time.  This allows the
-    // implementation to treat the "top" of the heap as the largest
-    // value and avoids developer mindbugs. ;)
-    struct HeapEntry { double pri; SGTimer* timer; };
+    std::unique_ptr<SGTimer> remove();
+    double nextTime() const { return _table[0].pri; }
 
-    int parent(int n) { return ((n+1)/2) - 1; }
-    int lchild(int n) { return ((n+1)*2) - 1; }
-    int rchild(int n) { return ((n+1)*2 + 1) - 1; }
-    double pri(int n) { return _table[n].pri; }
-    void swap(int a, int b) {
-        HeapEntry tmp = _table[a];
-        _table[a] = _table[b];
-        _table[b] = tmp;
-    }
-    void siftDown(int n);
-    void siftUp(int n);
-    void growArray();
+    struct Entry {
+        double pri;
+        std::unique_ptr<SGTimer> timer;
 
-    // gcc complains there is no function specification anywhere.
-    // void check();
+        bool operator>(const Entry& other) const { return pri > other.pri; }
+    };
 
-    double _now;
-    HeapEntry *_table;
-    int _numEntries;
-    int _tableSize;
+    std::unique_ptr<SGTimer> _current_timer;
+    double _now = 0.0;
+    std::vector<Entry> _table;
 };
 
 class SGEventMgr : public SGSubsystem
