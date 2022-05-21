@@ -8,18 +8,12 @@
 
 #include <simgear/debug/logstream.hxx>
 
-SGTimer::~SGTimer()
-{
-    delete callback;
-    callback = nullptr;
-}
-
 void SGTimer::run()
 {
-    (*callback)();
+    callback();
 }
 
-void SGEventMgr::add(const std::string& name, SGCallback* cb,
+void SGEventMgr::add(const std::string& name, simgear::Callback cb,
                      double interval, double delay,
                      bool repeat, bool simtime)
 {

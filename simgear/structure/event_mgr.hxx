@@ -4,6 +4,8 @@
 #include <simgear/props/props.hxx>
 #include <simgear/structure/subsystem_mgr.hxx>
 
+#include <utility>
+
 #include "callback.hxx"
 
 class SGEventMgr;
@@ -12,12 +14,12 @@ class SGTimer
 {
 public:
     SGTimer() = default;
-    ~SGTimer();
+
     void run();
 
     std::string name;
     double interval = 0.0;
-    SGCallback* callback = nullptr;
+    simgear::Callback callback;
     bool repeat = false;
     bool running = false;
 
@@ -76,42 +78,19 @@ public:
     void setRealtimeProperty(SGPropertyNode* node) { _rtProp = node; }
 
     /**
-     * Add a single function callback event as a repeating task.
-     * ex: addTask("foo", &Function ... )
+     * Add a callback as a one-shot event.
      */
-    template<typename FUNC>
-    inline void addTask(const std::string& name, const FUNC& f,
-                        double interval, double delay=0, bool sim=false)
-    { add(name, make_callback(f), interval, delay, true, sim); }
-
-    /**
-     * Add a single function callback event as a one-shot event.
-     * ex: addEvent("foo", &Function ... )
-     */
-    template<typename FUNC>
-    inline void addEvent(const std::string& name, const FUNC& f,
+    inline void addEvent(const std::string& name, simgear::Callback cb,
                          double delay, bool sim=false)
-    { add(name, make_callback(f), 0, delay, false, sim); }
+    { add(name, std::move(cb), 0, delay, false, sim); }
 
     /**
-     * Add a object/method pair as a repeating task.
-     * ex: addTask("foo", &object, &ClassName::Method, ...)
+     * Add a callback as a repeating task.
      */
-    template<class OBJ, typename METHOD>
     inline void addTask(const std::string& name,
-                        const OBJ& o, METHOD m,
+                        simgear::Callback cb,
                         double interval, double delay=0, bool sim=false)
-    { add(name, make_callback(o,m), interval, delay, true, sim); }
-
-    /**
-     * Add a object/method pair as a repeating task.
-     * ex: addEvent("foo", &object, &ClassName::Method, ...)
-     */
-    template<class OBJ, typename METHOD>
-    inline void addEvent(const std::string& name,
-                         const OBJ& o, METHOD m,
-                         double delay, bool sim=false)
-    { add(name, make_callback(o,m), 0, delay, false, sim); }
+    { add(name, std::move(cb), interval, delay, true, sim); }
 
 
     void removeTask(const std::string& name);
@@ -121,7 +100,7 @@ public:
 private:
     friend class SGTimer;
 
-    void add(const std::string& name, SGCallback* cb,
+    void add(const std::string& name, simgear::Callback cb,
              double interval, double delay,
              bool repeat, bool simtime);
 
