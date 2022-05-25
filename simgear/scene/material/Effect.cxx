@@ -998,12 +998,16 @@ void ShaderProgramBuilder::buildAttribute(Effect* effect, Pass* pass,
         }
     }
 
+    // disabling this check because some effects have disabled technqiues
+    // with no shaders defined, intentionally.
+#if 0
     if (sgprogram->getNumShaders() == 0) {
         simgear::reportFailure(simgear::LoadFailure::BadData,
                                simgear::ErrorCode::LoadEffectsShaders,
                                "No shader source code defined for effect",
                                effect->filePath());
     }
+#endif
 
     for (const auto& key : prgKey.attributes) {
         program->addBindAttribLocation(key.first, key.second);
