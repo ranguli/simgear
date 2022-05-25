@@ -116,7 +116,7 @@ Effect* makeEffect(const string& name,
     }
     string effectFileName(name);
     effectFileName += ".eff";
-    string absFileName = SGModelLib::findDataFile(effectFileName, options, modelPath);
+    string absFileName = SGModelLib::findDataFile(effectFileName, options, modelPath.dir());
     if (absFileName.empty()) {
         simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::LoadEffectsShaders, "Couldn't find Effect:" + effectFileName);
         return nullptr;
