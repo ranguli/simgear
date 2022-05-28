@@ -174,7 +174,6 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
             applyColorLayers(*buffer, masterLocator);
             applyLineFeatures(*buffer, masterLocator);
             applyAreaFeatures(*buffer, masterLocator);
-            applyCoastline(*buffer, masterLocator);
             applyMaterials(*buffer, masterLocator);
         }
     }
@@ -185,7 +184,6 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
         applyColorLayers(*buffer, masterLocator);
         applyLineFeatures(*buffer, masterLocator);
         applyAreaFeatures(*buffer, masterLocator);
-        applyCoastline(*buffer, masterLocator);
         applyMaterials(*buffer, masterLocator);
     }
 
@@ -1374,9 +1372,19 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
         texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
+        osg::ref_ptr<osg::Texture2D> waterTexture  = new osg::Texture2D;
+        waterTexture->setImage(generateWaterTexture(buffer, masterLocator));
+        waterTexture->setMaxAnisotropy(16.0f);
+        waterTexture->setResizeNonPowerOfTwoHint(false);
+        waterTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        waterTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        waterTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        waterTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(7, waterTexture, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
         stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
         stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
@@ -2087,61 +2095,51 @@ void VPBTechnique::generateAreaFeature(BufferData& buffer, Locator* masterLocato
     }
 }
 
-void VPBTechnique::applyCoastline(BufferData& buffer, Locator* masterLocator)
-{
+osg::Image* VPBTechnique::generateWaterTexture(BufferData& buffer, Locator* masterLocator) {
+    osg::Image* waterTexture = new osg::Image();
+
     unsigned int coast_features_lod_range = 4;
-    float coastWidth = 40.0;
+    unsigned int waterTextureSize = 2048;
+    float coastWidth = 150.0;
 
     const unsigned int tileLevel = _terrainTile->getTileID().level;
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
 
     if (propertyNode) {
         const SGPropertyNode* static_lod = propertyNode->getNode("/sim/rendering/static-lod");
+        waterTextureSize =         static_lod->getIntValue("water-texture-size", coast_features_lod_range);
         coast_features_lod_range = static_lod->getIntValue("coastline-lod-level", coast_features_lod_range);
-        coastWidth = static_lod->getFloatValue("coastline-width", coastWidth);
+        coastWidth =               static_lod->getFloatValue("coastline-width", coastWidth);
     }
 
     if (tileLevel < coast_features_lod_range) {
         // Do not generate coasts for tiles too far away
-        return;
+        waterTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        waterTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+        return waterTexture;
     }
 
-    const SGMaterialLibPtr matlib  = _options->getMaterialLib();
-    if (! matlib) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate areas");
-        return;
-    }    
+    waterTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
+    for (unsigned int y = 0; y < waterTextureSize; ++y) {
+        for (unsigned int x = 0; x < waterTextureSize; ++x) {
+            waterTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
+        }
+    }
 
     // Get all appropriate coasts.  We assume that the VPB terrain tile is smaller than a Bucket size.
     const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
+    float tileSize = sqrt(buffer._width * buffer._width + buffer._height * buffer._height);
     const SGGeod loc = SGGeod::fromCart(toSG(world));
     const SGBucket bucket = SGBucket(loc);
     auto coasts = std::find_if(_coastFeatureLists.begin(), _coastFeatureLists.end(), [bucket](BucketCoastlineBinList b){return (b.first == bucket);});
 
-    if (coasts == _coastFeatureLists.end()) return;
+    if (coasts == _coastFeatureLists.end()) return waterTexture;
 
     // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
     osg::Vec3d up = world;
     up.normalize();
 
     TileBounds tileBounds(masterLocator, up);
-
-    SGMaterialCache* matcache = matlib->generateMatCache(loc, _options);
-    SGMaterial* mat = matcache->find("ws30coastline");
-
-    if (!mat) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material ws30coastline at " << loc << " " << bucket);
-        return;
-    }    
-
-    unsigned int xsize = mat->get_xsize();
-    unsigned int ysize = mat->get_ysize();
-
-    //  Generate a geometry for this set of coasts.
-    osg::Vec3Array* v = new osg::Vec3Array;
-    osg::Vec2Array* t = new osg::Vec2Array;
-    osg::Vec3Array* n = new osg::Vec3Array;
-    osg::Vec4Array* c = new osg::Vec4Array;
 
     for (; coasts != _coastFeatureLists.end(); ++coasts) {
         const CoastlineBinList coastBins = coasts->second;
@@ -2155,128 +2153,131 @@ void VPBTechnique::applyCoastline(BufferData& buffer, Locator* masterLocator)
                 if (clipped.size() > 1) {                    
                     // We need at least two points to render a line.
                     LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
-                    generateCoastlineFeature(buffer, masterLocator, line, world, v, t, n, xsize, ysize);
+                    addCoastline(masterLocator, waterTexture, line, waterTextureSize, tileSize, coastWidth);
                 }
             }
         }
     }
 
-    if (v->size() == 0) return;
-
-    c->push_back(osg::Vec4(1.0,1.0,1.0,1.0));
-
-    osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
-    geometry->setVertexArray(v);
-    geometry->setTexCoordArray(0, t, osg::Array::BIND_PER_VERTEX);
-    geometry->setTexCoordArray(1, t, osg::Array::BIND_PER_VERTEX);
-    geometry->setNormalArray(n, osg::Array::BIND_PER_VERTEX);
-    geometry->setColorArray(c, osg::Array::BIND_OVERALL);
-    geometry->setUseDisplayList( false );
-    geometry->setUseVertexBufferObjects( true );
-    geometry->addPrimitiveSet( new osg::DrawArrays( GL_TRIANGLES, 0, v->size()) );
-
-    EffectGeode* geode = new EffectGeode;
-    geode->addDrawable(geometry);
-
-    geode->setMaterial(mat);
-    geode->setEffect(mat->get_one_effect(0));
-    geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
-    buffer._transform->addChild(geode);
+    return waterTexture;
 }
 
-void VPBTechnique::generateCoastlineFeature(BufferData& buffer, Locator* masterLocator, LineFeatureBin::LineFeature coastline, osg::Vec3d modelCenter, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, unsigned int xsize, unsigned int ysize)
-{
-    if (coastline._nodes.size() < 2) { 
+// Update the color of a particular texture pixel, clipping to the texture and not over-writing a larger value.
+void VPBTechnique::updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y) {
+    if (floor(x) < 0.0) return;
+    if (floor(x) > (waterTextureSize -1)) return;
+    if (floor(y) < 0.0) return;
+    if (floor(y) > (waterTextureSize -1)) return;
+    auto clamp = [waterTextureSize](float l) { return (unsigned int) fmaxf(0, fminf(floor(l), waterTextureSize - 1)); };
+    unsigned int clamped_x = clamp(x);
+    unsigned int clamped_y = clamp(y);    
+    osg::Vec4 new_color = max(waterTexture->getColor(clamped_x, clamped_y), color);
+    waterTexture->setColor(new_color, clamped_x, clamped_y);
+}
+
+
+void VPBTechnique::writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy) {
+
+    // We need to create a shoreline of width coastWidth to define it better and to hide any discrepancy in the underlying terrain mesh
+    // which may be either mis-aligned or simply of insufficient resolution.
+    float waterTextureResolution = tileSize / waterTextureSize;
+    int width = (int) coastWidth / waterTextureResolution;
+    int aboveHWLtxUnits = 0.3*width;
+    int belowHWLtxUnits = width - aboveHWLtxUnits;
+
+    // Above the high water mark we just want sand.  However there can be interpolation artifacts right at the edge causing a border or water. To avoid
+    // this we create an extra texel where the G channel is used to ensure we get a hard fall-off to the underlying texture
+    // on the adjacent sand texture unit.
+    updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 1.0f, 0.0f, 0.0), x - dx*(aboveHWLtxUnits + 1), y -dy*(aboveHWLtxUnits + 1));
+    
+    // Create the sand above the high water mark
+    for (int d = 0; d < aboveHWLtxUnits; d++) {
+        updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 1.0f, 0.0f, 0.0), x - dx*d, y -dy*d);
+    }
+
+    // Create the shoreline below the high water level which will gradually merge into the underlying terrain mesh
+    for (int d = 0; d < belowHWLtxUnits; d++) {
+        updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 0.0f, 1.0f, 0.0)*(belowHWLtxUnits -d)/belowHWLtxUnits, x + dx*d, y + dy*d);
+    }
+}
+
+void VPBTechnique::addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth) {
+    
+
+    if (line._nodes.size() < 2) { 
         SG_LOG(SG_TERRAIN, SG_ALERT, "Coding error - LineFeatureBin::LineFeature with fewer than two nodes"); 
         return; 
     }
 
-    osg::Vec3d ma, mb;
-    std::list<osg::Vec3d> coastlinePoints;
-    auto coastline_iter = coastline._nodes.begin();
+    auto iter = line._nodes.begin();
 
-    // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
-    osg::Vec3d up = modelCenter;
-    up.normalize();
-
-    ma = getMeshIntersection(buffer, masterLocator, *coastline_iter - modelCenter, up);
-    coastline_iter++;
-
-    for (; coastline_iter != coastline._nodes.end(); coastline_iter++) {
-        mb = getMeshIntersection(buffer, masterLocator, *coastline_iter - modelCenter, up);
-        auto esl = VPBElevationSlice::computeVPBElevationSlice(buffer._landGeometry, ma, mb, up);
-
-        for(auto eslitr = esl.begin(); eslitr != esl.end(); ++eslitr) {
-            coastlinePoints.push_back(*eslitr);
-        }
-
-        // Now traverse the next segment
-        ma = mb;
+    // LineFeature is in Model coordinates, but for the rasterization we will use local coordinates.
+    osg::Vec3d start;
+    bool success = masterLocator->convertModelToLocal(*iter, start);
+    if (!success) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to convert from model coordinates to local: " << *iter); 
+        return; 
     }
 
-    if (coastlinePoints.size() == 0) return;
-
-    // We now have a series of points following the topography of the elevation mesh.
-
-    auto iter = coastlinePoints.begin();
-    osg::Vec3d start = *iter;
     iter++;
+    for (; iter != line._nodes.end(); iter++) {
+        osg::Vec3d end;
+        success = masterLocator->convertModelToLocal(*iter, end);
+        if (!success) {
+            SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to convert from model coordinates to local: " << *iter); 
+            continue; 
+        }
 
-    osg::Vec3d last_spanwise =  (*iter - start)^ up;
-    last_spanwise.normalize();
+        // We now have two points in local (2d) space, so rasterize the line between them onto the water texture.
+        // We use a simple version of a DDA to render the lines.  We should replace this with a scanline algorithm to handle coastlines
+        // and waterbodies efficiently.
+        // Do everything in the texture coordinates.
+        float dx = (end.x() - start.x()) * waterTextureSize;
+        float dy = (end.y() - start.y()) * waterTextureSize;
+        float step = abs(dy);
+        bool steep = true;
+        if (abs(dx) >= abs(dy)) {
+            step = abs(dx);
+            steep = false;
+        }
+        dx = dx / step;
+        dy = dy / step;
+        float x = start.x() * waterTextureSize;
+        float y = start.y() * waterTextureSize;
+        int i = 0;
+        while (i <= step) {
+            if ((x >= 0.0f) && (y >= 0.0f) && (x < waterTextureSize) && (y < waterTextureSize)) {
+                // The line defines the Mean High Water Level.  By definition, the sea is always to
+                // the right of the line.  We want to fill in a section of sea and shore to cover up any issues 
+                // between the OSM data and the landclass texture.
 
-    float yTexBaseA = 0.0f;
-    float yTexBaseB = 0.0f;
+                if (steep) {
+                    // A steep line, so we are should add width in the x-axis
+                    if (dy < 0) {
+                        // We are travelling downwards, so the seaward side is -x
+                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, -1, 0);
+                    } else {
+                        // We are travelling upwards, so the seaward side is +x
+                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 1, 0);
+                    }
+                } else {
+                    // Not a steep line, so we should add width in the y axis
+                    if (dx < 0) {
+                        // We are travelling right to left, so the seaward side is +y
+                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 0, 1);
+                    } else {
+                        // We are travelling left to right, so the seaward side is -y
+                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 0, -1);
+                    }
+                }
+            } 
 
-    for (; iter != coastlinePoints.end(); iter++) {
-
-        osg::Vec3d end = *iter;
-
-        // Ignore small segments - we really don't need resolution less than 10m
-        if ((end - start).length2() < 100.0) continue;
-
-        // Find a spanwise vector
-        osg::Vec3d spanwise = ((end-start) ^ up);
-        spanwise.normalize();
-
-        // Define the coastline extents. Angle it down slightly on the seaward side (b->d).
-        // OSM coastlines are always with the 
-        const osg::Vec3d a = start + up;
-        const osg::Vec3d b = start + last_spanwise * coastline._width;
-        const osg::Vec3d c = end   + up;
-        const osg::Vec3d d = end   + spanwise * coastline._width;
-
-        // Determine the x and y texture coordinates for the edges
-        const float xTex = coastline._width / xsize;
-        const float yTexA = yTexBaseA + (c-a).length() / ysize;
-        const float yTexB = yTexBaseB + (d-b).length() / ysize;
-
-        // Now generate two triangles, .
-        v->push_back(a);
-        v->push_back(b);
-        v->push_back(c);
-
-        t->push_back(osg::Vec2d(0, yTexBaseA));
-        t->push_back(osg::Vec2d(xTex, yTexBaseB));
-        t->push_back(osg::Vec2d(0, yTexA));
-
-        v->push_back(b);
-        v->push_back(d);
-        v->push_back(c);
-
-        t->push_back(osg::Vec2d(xTex, yTexBaseB));
-        t->push_back(osg::Vec2d(xTex, yTexB));
-        t->push_back(osg::Vec2d(0, yTexA));
-
-        // Normal is straight from the quad
-        osg::Vec3d normal = -(end-start)^spanwise;
-        normal.normalize();
-        for (unsigned int i = 0; i < 6; i++) n->push_back(normal);
+            x = x + dx;
+            y = y + dy;
+            i = i + 1;
+        }
 
         start = end;
-        yTexBaseA = yTexA;
-        yTexBaseB = yTexB;
-        last_spanwise = spanwise;
     }
 }
 

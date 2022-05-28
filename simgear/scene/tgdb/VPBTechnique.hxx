@@ -169,16 +169,10 @@ class VPBTechnique : public TerrainTechnique
             unsigned int xsize,
             unsigned int ysize);
 
-        virtual void applyCoastline(BufferData& buffer, Locator* masterLocator);
-        virtual void generateCoastlineFeature(BufferData& buffer, 
-            Locator* masterLocator, 
-            LineFeatureBin::LineFeature coastLine, 
-            osg::Vec3d modelCenter, 
-            osg::Vec3Array* v, 
-            osg::Vec2Array* t, 
-            osg::Vec3Array* n, 
-            unsigned int xsize, 
-            unsigned int ysize);
+        virtual osg::Image* generateWaterTexture(BufferData& buffer, Locator* masterLocator);
+        virtual void addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
+        virtual void updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y);
+        virtual void writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy);
 
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up);
 

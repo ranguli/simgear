@@ -440,7 +440,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
             //  TEXTURE NAME texture-unit  Material texture index Default value
             //  Primary texure      0             0               n/a
             //  gradient_texture    2            13               Textures/Terrain/rock_alt.png
-            //  dot_texture         3            15               Textures/Terrain/void.png
+            //  dot_texture         3            15               Textures/Terrain/sand6.png
             //  grain_texture       4            14               Textures/Terrain/grain_texture.png
             //  mix_texture         5            12               Textures/Terrain/void.png
             //  detail_texture      7            11               Textures/Terrain/void.png
@@ -457,6 +457,7 @@ SGMaterialCache::Atlas SGMaterialLib::getMaterialTextureAtlas(SGVec2f center, co
                     if (i <  13) texture = std::string("Textures/Terrain/void.png");
                     if (i == 13) texture = std::string("Textures/Terrain/rock_alt.png");
                     if (i == 14) texture = std::string("Textures/Terrain/grain_texture.png");
+                    if (i == 15) texture = std::string("Textures/Terrain/sand6.png");
                     if (i >  14) texture = std::string("Textures/Terrain/void.png");
                 }
 
