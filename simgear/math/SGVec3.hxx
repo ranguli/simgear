@@ -491,7 +491,6 @@ interpolate(T tau, const SGVec3<T>& v1, const SGVec3<T>& v2)
   return r;
 }
 
-#ifndef NDEBUG
 template<typename T>
 inline
 bool
@@ -500,7 +499,6 @@ isNaN(const SGVec3<T>& v)
   return SGMisc<T>::isNaN(v(0)) ||
     SGMisc<T>::isNaN(v(1)) || SGMisc<T>::isNaN(v(2));
 }
-#endif
 
 /// Output to an ostream
 template<typename char_type, typename traits_type, typename T>

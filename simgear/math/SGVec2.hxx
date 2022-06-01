@@ -406,7 +406,6 @@ point_in_triangle(const SGVec2<T>& testpt, const SGVec2<T>& pt1, const SGVec2<T>
   return !(has_neg && has_pos);
 }
 
-#ifndef NDEBUG
 template<typename T>
 inline
 bool
@@ -414,7 +413,6 @@ isNaN(const SGVec2<T>& v)
 {
   return SGMisc<T>::isNaN(v(0)) || SGMisc<T>::isNaN(v(1));
 }
-#endif
 
 /// Output to an ostream
 template<typename char_type, typename traits_type, typename T>
