@@ -226,7 +226,7 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
                         cullcb->getLightMatrixUniform());
                 } else {
                     SG_LOG(SG_INPUT, SG_WARN, "ScenePassBuilder::build: Pass '"
-                           << shadow_pass_name << "is not a shadow pass");
+                           << shadow_pass_name << "' is not a shadow pass");
                 }
             }
         }
