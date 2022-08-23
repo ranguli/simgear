@@ -127,20 +127,42 @@ void ResourceManager::removeProvider(ResourceProvider* aProvider)
 
 SGPath ResourceManager::findPath(const std::string& aResource, SGPath aContext)
 {
+    const SGPath completePath(aContext, aResource);
+
     if (!aContext.isNull()) {
-        SGPath r(aContext, aResource);
-        if (r.exists()) {
+        const SGPath r = completePath.validate(false); // read access
+        if (!r.isNull() && r.exists()) {
             return r;
         }
     }
-    
-    for (auto provider : _providers) {
-      SGPath path = provider->resolve(aResource, aContext);
-      if (!path.isNull()) {
-        return path;
-      }
+
+    // If the path is absolute and SGPath::validate() grants read access -> OK
+    if (completePath.isAbsolute()) {
+        const auto authorizedPath = completePath.validate(false);
+        if (authorizedPath.isNull()) {
+            const auto msg = "ResourceManager::findPath(): access refused "
+                "because of the SGPath::validate() security policy: '" +
+                completePath.utf8Str() + "' (maybe a path relative to $FG_ROOT "
+                "that incorrectly starts with a '/'?)";
+            SG_LOG(SG_GENERAL, SG_WARN, msg);
+        } else if (authorizedPath.exists()) {
+            return authorizedPath;
+        }
     }
-    
+
+    // Normally, we could skip this loop when completePath.isAbsolute() is
+    // true. However, we currently need it because a bunch of PropertyList
+    // files in $FG_ROOT/Materials, such as
+    // $FG_ROOT/Materials/regions/materials.xml, rely on a BasePathProvider to
+    // open included files with a path given relatively to $FG_ROOT
+    // (readProperties() uses this function to locate included files).
+    for (const auto& provider : _providers) {
+        const SGPath path = provider->resolve(aResource, aContext);
+        if (!path.isNull()) {
+            return path;
+        }
+    }
+
     return SGPath();
 }
 
