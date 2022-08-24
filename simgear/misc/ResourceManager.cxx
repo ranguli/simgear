@@ -150,12 +150,11 @@ SGPath ResourceManager::findPath(const std::string& aResource, SGPath aContext)
         }
     }
 
-    // Normally, we could skip this loop when completePath.isAbsolute() is
-    // true. However, we currently need it because a bunch of PropertyList
-    // files in $FG_ROOT/Materials, such as
-    // $FG_ROOT/Materials/regions/materials.xml, rely on a BasePathProvider to
-    // open included files with a path given relatively to $FG_ROOT
-    // (readProperties() uses this function to locate included files).
+    // Loop over the resource providers even if 'completePath' is absolute.
+    // For instance, when readProperties() processes 'include' attributes, it
+    // is expected that 'aResource' be interpreted relatively to 'aContext'
+    // or, if this doesn't lead to an existing file, a data path like
+    // $FG_ROOT. In the latter case, BasePathProvider will do the job.
     for (const auto& provider : _providers) {
         const SGPath path = provider->resolve(aResource, aContext);
         if (!path.isNull()) {
