@@ -129,23 +129,14 @@ SGPath ResourceManager::findPath(const std::string& aResource, SGPath aContext)
 {
     const SGPath completePath(aContext, aResource);
 
-    if (!aContext.isNull()) {
-        const SGPath r = completePath.validate(false); // read access
-        if (!r.isNull() && r.exists()) {
-            return r;
-        }
+    if (!aContext.isNull() && completePath.exists()) {
+        return completePath;
     }
 
-    // If the path is absolute and SGPath::validate() grants read access -> OK
+    // Absolute, existing path and SGPath::validate() grants read access -> OK
     if (completePath.isAbsolute()) {
         const auto authorizedPath = completePath.validate(false);
-        if (authorizedPath.isNull()) {
-            const auto msg = "ResourceManager::findPath(): access refused "
-                "because of the SGPath::validate() security policy: '" +
-                completePath.utf8Str() + "' (maybe a path relative to $FG_ROOT "
-                "that incorrectly starts with a '/'?)";
-            SG_LOG(SG_GENERAL, SG_WARN, msg);
-        } else if (authorizedPath.exists()) {
+        if (!authorizedPath.isNull() && authorizedPath.exists()) {
             return authorizedPath;
         }
     }
