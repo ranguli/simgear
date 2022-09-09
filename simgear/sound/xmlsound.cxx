@@ -33,12 +33,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <simgear/debug/ErrorReportingCallback.hxx>
 #include <simgear/debug/logstream.hxx>
-#include <simgear/props/props.hxx>
-#include <simgear/props/condition.hxx>
-#include <simgear/structure/exception.hxx>
 #include <simgear/math/sg_random.hxx>
 #include <simgear/misc/sg_path.hxx>
+#include <simgear/props/condition.hxx>
+#include <simgear/props/props.hxx>
+#include <simgear/structure/exception.hxx>
 
 #include "sample_group.hxx"
 #include "sample.hxx"
@@ -123,10 +124,10 @@ SGXmlSound::init( SGPropertyNode *root,
    if (condition != nullptr)
       _condition = sgReadCondition(root, condition);
 
-   if (!_property && !_condition)
-      SG_LOG(SG_SOUND, SG_DEV_WARN,
-             "  Neither a condition nor a property specified"
-             " in section: " << _name);
+   if (!_property && !_condition) {
+       simgear::reportFailure(simgear::LoadFailure::Misconfigured, simgear::ErrorCode::AudioFX,
+                              "SGXmlSound: node:" + _name, path);
+   }
 
    _delay = node->getDoubleValue("delay-sec", 0.0);
 
@@ -315,8 +316,9 @@ SGXmlSound::init( SGPropertyNode *root,
    string soundFileStr = node->getStringValue("path", "");
    _sample = new SGSoundSample(soundFileStr.c_str(), path);
    if (!_sample->file_path().exists()) {
-      SG_LOG(SG_SOUND, SG_WARN, "XML sound: couldn't find file: '" + soundFileStr + "'");
-      return false;
+       simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::AudioFX,
+                              "SGXmlSound: node:" + _name + "; can't find:" + soundFileStr, path);
+       return false;
    }
 
    _sample->set_relative_position( offset_pos );
