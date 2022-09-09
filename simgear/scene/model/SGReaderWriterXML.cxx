@@ -592,6 +592,8 @@ sgLoad3DModel_internal(const SGPath& path,
             texturepath = texturepath.dir();
 
         options->setDatabasePath(texturepath.utf8Str());
+        options->setPluginStringData("filePath", modelpath.utf8Str());
+
         osgDB::ReaderWriter::ReadResult modelResult;
         modelResult = osgDB::readRefNodeFile(modelpath.utf8Str(), options.get());
 
