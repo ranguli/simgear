@@ -774,9 +774,12 @@ ModelRegistry::readNode(const string& fileName,
 
             // try this AC reader; if it succeeds, we can use that.
             auto iter = nodeCallbackMap.find("ac");
-            result = iter->second->readNode(fileName, opt);
+            result = iter->second->readNode(plainModelFileName, opt);
             if (result.validNode()) {
-                SG_LOG(SG_IO, SG_DEV_WARN, "Couldn't find XML model, found via .AC instead:" << fileName);
+                // TODO: allow extracting keys from the error-context;
+                // would need an additional callback added with a return value
+                // const auto stgName = ec.get("terrain-stg");
+                SG_LOG(SG_IO, SG_DEV_WARN, "Couldn't find XML model, found via .AC instead:" << plainModelFileName);
                 return result;
             }
         }

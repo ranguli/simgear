@@ -16,11 +16,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifdef HAVE_CONFIG_H
-#  include <simgear_config.h>
-#endif
+#include <simgear_config.h>
 
 #include <algorithm>
+#include <optional>
 //yuck
 #include <cstring>
 #include <cassert>
@@ -39,6 +38,7 @@
 #include <simgear/props/condition.hxx>
 #include <simgear/props/props.hxx>
 #include <simgear/props/props_io.hxx>
+
 #include <simgear/scene/util/SGNodeMasks.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/structure/exception.hxx>
@@ -496,23 +496,64 @@ void addTooltipAnimations(const SGPath& path, SGPropertyNode_ptr props, osg::ref
     SG_LOG(SG_INPUT, SG_DEBUG, "auto-tooltips: num_new_animations=" << num_new_animations);
 }
 
+static std::optional<SGPath> isModelWithRemovedXMLWrapper(const SGPath& model)
+{
+    if (model.extension() != "xml") {
+        return {};
+    }
+
+    const auto grandparentDirPath = model.dirPath().dirPath();
+    if (grandparentDirPath.file() != "Models") {
+        return {};
+    }
+
+    const auto names = std::vector<std::string>{
+        "marker",
+        "ndb",
+    };
+
+    const auto it = std::find(names.begin(), names.end(), model.file_base());
+    if (it != names.end()) {
+        return SGPath{model.dirPath() / (*it + ".ac")};
+    }
+
+    return {};
+}
+
 static std::tuple<int, osg::Node *>
 sgLoad3DModel_internal(const SGPath& path,
                        const osgDB::Options* dbOptions,
                        SGPropertyNode *overlay)
 {
+    SGPath modelpath(path);
+    SGPath texturepath(path);
+
     if (!path.exists()) {
-        simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::XMLModelLoad,
-                               "Failed to load model XML: not found", path);
-        SG_LOG(SG_IO, SG_DEV_ALERT, "Failed to load file: \"" << path << "\"");
-        return std::make_tuple(0, (osg::Node*)NULL);
+        // tolerate .xml paths where we removed the wrapper XML
+        // becuase this is a resolved path, only works when the bare model
+        // is in the same location.
+
+        // NOTE: there is seperate logic to handle this situation, in the ModelRegistry,
+        // for the DelayedModelLoadCallback case. (See fileNameIsFGDataModelXML)]
+        // Would be nice to share the implementation but inside an OSG RegistryCallback,
+        // it's tricky to work with SGPaths as our code here does.
+        auto b = isModelWithRemovedXMLWrapper(path);
+        if (b) {
+            modelpath = b.value_or(SGPath{});
+            texturepath = b.value_or(SGPath{});
+            SG_LOG(SG_IO, SG_DEV_WARN, "Requested model which previously used an XML wrapper:" << path 
+                << " mapped to " << modelpath);
+        } else {
+            simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::XMLModelLoad,
+                                   "Failed to load model XML: not found", path);
+            return std::make_tuple(0, (osg::Node*) nullptr);
+        }
     }
 
     osg::ref_ptr<SGReaderWriterOptions> options;
     options = SGReaderWriterOptions::copyOrCreate(dbOptions);
 
-    SGPath modelpath(path);
-    SGPath texturepath(path);
+
     SGPath modelDir(modelpath.dir());
     int animationcount = 0;
 
