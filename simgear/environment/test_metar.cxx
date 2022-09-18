@@ -129,6 +129,12 @@ void test_LOWK_failure()
 #endif
 }
 
+void test_LFBT_failure()
+{
+    // https://sourceforge.net/p/flightgear/codetickets/2765/
+    SGMetar m1("2022/09/15 17:00 LFBT 151700Z AUTO 21008KT 9999 -RA FEW060/// SCT076/// OVC088/// ///CB 20/16 Q1014 TEMPO 27015G25KT 4000 -TSRA");
+}
+
 int main(int argc, char* argv[])
 {
     try {
@@ -141,6 +147,7 @@ int main(int argc, char* argv[])
         test_clouds_without_height();
         test_GLRB_failure();
         test_LOWK_failure();
+        test_LFBT_failure();
     } catch (sg_exception& e) {
         cerr << "got exception:" << e.getMessage() << endl;
         return -1;
