@@ -512,11 +512,14 @@ void SGMetar::normalizeData()
     char* dest = src;
     for (; (*dest++ = *src++);) {
         while (*src == ' ' && src[1] == ' ')
-			src++;
+            src++;
     }
-    for (dest--; isspace(*--dest); ) ;
-	*++dest = ' ';
-	*++dest = '\0';
+
+    for (dest--; isspace(*--dest); )
+        ;
+
+    *++dest = ' ';
+    *++dest = '\0';
 }
 
 
