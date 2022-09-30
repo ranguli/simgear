@@ -80,7 +80,8 @@ public:
         _instantiateMaterialEffects(false),
         _autoTooltipsMaster(false),
         _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL)
+        _LoadOriginHint(ORIGIN_MODEL),
+        _vertexOrderXYZ(false)
     { }
     SGReaderWriterOptions(const SGReaderWriterOptions& options,
                           const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) : osgDB::Options(options, copyop),
@@ -163,6 +164,11 @@ public:
     void setAutoTooltipsMasterMax(int autoTooltipsMasterMax)
     { _autoTooltipsMasterMax = autoTooltipsMasterMax; }
 
+    // the VertexOrderXYZ defines the sorting rule to use for
+    // axis objects in animations.
+    bool getVertexOrderXYZ() const                  { return _vertexOrderXYZ; }
+    void setVertexOrderXYZ(bool vertexOrderXYZ)     { _vertexOrderXYZ = vertexOrderXYZ; }
+
     static SGReaderWriterOptions* copyOrCreate(const osgDB::Options* options);
     static SGReaderWriterOptions* fromPath(const SGPath& path);
 
@@ -210,6 +216,7 @@ private:
     SGGeod _geod;
     mutable LoadOriginHint _LoadOriginHint;
     ErrorContext _errorContext;
+    bool _vertexOrderXYZ; // used for axis objects in animations
 };
 
 }

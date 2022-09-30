@@ -523,6 +523,10 @@ sgLoad3DModel_internal(const SGPath& path,
     osg::ref_ptr<SGModelData> data = options->getModelData();
     options->setModelData(0);
 
+    // remeber the current value of the vertex order setting 
+    // because an included <model> may change this.
+    bool currentVertexOrderXYZ = options->getVertexOrderXYZ();
+
     osg::ref_ptr<osg::Node> model;
     osg::ref_ptr<osg::Group> group;
     SGPropertyNode_ptr props = new SGPropertyNode;
@@ -551,6 +555,13 @@ sgLoad3DModel_internal(const SGPath& path,
             return std::make_tuple(0, (osg::Node *) NULL);
         }
 
+        if (props->hasChild("defaults")) {
+            SGPropertyNode_ptr defaultsNode = props->getNode("defaults");
+            if (defaultsNode->hasChild("axis-animation-vertex-order-xyz"))
+                options->setVertexOrderXYZ(true);
+            if (defaultsNode->hasChild("axis-animation-vertex-order-x"))
+                options->setVertexOrderXYZ(false);
+        }
         if (props->hasValue("/path")) {
             string modelPathStr = props->getStringValue("/path");
             modelpath = SGModelLib::findDataFile(modelPathStr, NULL, modelDir);
@@ -844,6 +855,9 @@ sgLoad3DModel_internal(const SGPath& path,
     }
 
     animationcount += animation_nodes.size();
+
+    // restore the vertex order in case a submodel changed it.
+    options->setVertexOrderXYZ(currentVertexOrderXYZ);
 
     if (!needTransform && group->getNumChildren() < 2) {
         model = group->getChild(0);

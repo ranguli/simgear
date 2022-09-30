@@ -97,7 +97,7 @@ class LineCollector : public osg::NodeVisitor {
     };
 
 public:
-    LineCollector() : osg::NodeVisitor(osg::NodeVisitor::NODE_VISITOR, osg::NodeVisitor::TRAVERSE_ALL_CHILDREN) { }
+    LineCollector(bool orderXYZ, bool swapAxis) : osg::NodeVisitor(osg::NodeVisitor::NODE_VISITOR, osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), _orderXYZ(orderXYZ), _swapAxis(swapAxis){ }
 
     virtual void apply(osg::Geode& geode)
     {
@@ -141,14 +141,37 @@ public:
         SGVec3f tv1(toSG(_matrix.preMult(v1)));
         SGVec3f tv2(toSG(_matrix.preMult(v2)));
 
-        // Get the ends in the right order based on their 
-        // lowest coordinates in x,y,z
-        if (compareVec3(v1, v2))
-            _lineSegments.push_back(SGLineSegmentf(tv1, tv2));
+        if (_orderXYZ)
+        {
+            // Get the ends in the right order based on their 
+            // lowest coordinates in x,y,z
+            // This gives us a definitive vertex order in all cases
+            // whereas previously when X was equal the order would
+            // effectively be determined by the order of the vertices in the
+            // model file.
+            if (compareVec3(v1, v2))
+                addLineSegment(tv1, tv2);
+            else
+                addLineSegment(tv2, tv1);
+        }
         else
-            _lineSegments.push_back(SGLineSegmentf(tv2, tv1));
+        {
+            // 2020.3 and prior: sort only by X
+            if (tv1[0] > tv2[0])
+                addLineSegment(tv1, tv2);
+            else
+                addLineSegment(tv2, tv1);
+        }
     }
-
+    
+    // add a line segment handling axis swapping.
+    void addLineSegment(SGVec3f v1, SGVec3f v2)
+    {
+        if (_swapAxis)
+            _lineSegments.push_back(SGLineSegmentf(v2, v1));
+        else
+            _lineSegments.push_back(SGLineSegmentf(v1, v2));
+    }
     void addBVHElements(osg::Node& node, simgear::BVHLineGeometry::Type type)
     {
         if (_lineSegments.empty())
@@ -180,6 +203,8 @@ public:
 private:
     osg::Matrix _matrix;
     std::vector<SGLineSegmentf> _lineSegments;
+    bool _orderXYZ; /// 2020.3 and prior sorting vertex ordering rules (Only compare X component of vector)
+    bool _swapAxis; // invert the vector direction.
 };
 
 /**
@@ -730,11 +755,12 @@ const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node *
     std::string axis_object_name = std::string();
     bool can_warn = true;
 
-    if (_configNode->hasValue("axis/object-name"))
-    {
-        axis_object_name = _configNode->getStringValue("axis/object-name");
+    const SGPropertyNode* axisNode =_configNode->getNode("axis");
+
+    if (axisNode->hasValue("object-name")) {
+        axis_object_name = axisNode->getStringValue("object-name");
     }
-    else if (!_configNode->getNode("axis")) {
+    else if (!axisNode) {
         axis_object_name = _configNode->getStringValue("object-name") + std::string("-axis");
         // for compatibility we will not warn if no axis object can be found when there was nothing 
         // specified - as the axis could just be the default at the origin
@@ -760,12 +786,41 @@ const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node *
             if (object_group)
             {
                 /*
+                 * work out which vertex sorting rule to use.
+                 * - specified in the axis node
+                 * - or when not specified use the <defaults> value in the options.
+                 */
+                bool orderXYZ = false; 
+
+                // check to see if this node specifies the vertex sorting rule
+                if (axisNode != nullptr && axisNode->hasChild("order-by-xyz"))
+                    orderXYZ = true;
+                else if (axisNode != nullptr && axisNode->hasChild("order-by-x"))
+                    orderXYZ = false;
+                else {
+                    // no local definition so use the <defaults> specified vertex order.
+                    const SGReaderWriterOptions* wOpts = dynamic_cast<const SGReaderWriterOptions*>(modelData.getOptions());
+                    if (wOpts)
+                        orderXYZ = wOpts->getVertexOrderXYZ();
+                }
+
+                /*
+                 * Check to see if we need to swap the axis direction (i.e. the 
+                 * collected line segment vertices).
+                 * This helps to avoid having to negate the rotations to get the
+                 * required direction.
+                 */
+                bool swapAxis = false;
+                if (axisNode != nullptr && axisNode->hasChild("swap-axis-direction")) {
+                    swapAxis = true;
+                }
+                /*
                  * we have found the object group (for the axis). This should be two vertices
                  * Now process this (with the line collector) to get the vertices.
                  * Once we have that we can then calculate the center and the affected axes.
                  */
                 object_group->setNodeMask(0xffffffff);
-                LineCollector lineCollector;
+                LineCollector lineCollector(orderXYZ, swapAxis);
                 object_group->accept(lineCollector);
                 std::vector<SGLineSegmentf> segs = lineCollector.getLineSegments();
 
