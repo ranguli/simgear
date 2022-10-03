@@ -1408,7 +1408,6 @@ private:
     std::string _name;
     SGPropertyNode* _parent;
     simgear::PropertyList _children;
-    mutable std::string _buffer;
     simgear::props::Type _type;
     bool _tied;
     int _attr = NO_ATTR;
