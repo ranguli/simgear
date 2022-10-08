@@ -79,6 +79,24 @@ struct BuildingBoundingBoxCallback : public Drawable::ComputeBoundingBoxCallback
             Vec3 pt = (*pos)[v];
             bb.expandBy(pt);
         }
+
+        // This BB is the convex hull of the building position - which are a set of points defining the front, center of
+        // the building.  We therefore need to expand the BB to account for the buildings have width, depth and height.
+
+        float BUILDING_RADIUS = 10.0;
+
+        bb.expandBy(bb.xMin() - BUILDING_RADIUS, bb.yMin() - BUILDING_RADIUS, bb.zMin() - BUILDING_RADIUS);
+        bb.expandBy(bb.xMin() - BUILDING_RADIUS, bb.yMin() - BUILDING_RADIUS, bb.zMax() + BUILDING_RADIUS);
+
+        bb.expandBy(bb.xMin() - BUILDING_RADIUS, bb.yMax() + BUILDING_RADIUS, bb.zMin() - BUILDING_RADIUS);
+        bb.expandBy(bb.xMin() - BUILDING_RADIUS, bb.yMax() + BUILDING_RADIUS, bb.zMax() + BUILDING_RADIUS);
+
+        bb.expandBy(bb.xMax() + BUILDING_RADIUS, bb.yMin() - BUILDING_RADIUS, bb.zMin() - BUILDING_RADIUS);
+        bb.expandBy(bb.xMax() + BUILDING_RADIUS, bb.yMin() - BUILDING_RADIUS, bb.zMax() + BUILDING_RADIUS);
+
+        bb.expandBy(bb.xMax() + BUILDING_RADIUS, bb.yMax() + BUILDING_RADIUS, bb.zMin() - BUILDING_RADIUS);
+        bb.expandBy(bb.xMax() + BUILDING_RADIUS, bb.yMax() + BUILDING_RADIUS, bb.zMax() + BUILDING_RADIUS);
+
         return bb;
     }
 };
