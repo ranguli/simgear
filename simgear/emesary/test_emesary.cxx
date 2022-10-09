@@ -55,7 +55,7 @@ class TestThreadRecipient : public simgear::Emesary::IReceiver
     simgear::Emesary::ITransmitter* transmitter;
 public:
     TestThreadRecipient(simgear::Emesary::ITransmitter* _transmitter, bool addDuringReceive) 
-        : transmitter(_transmitter), addDuringReceive(addDuringReceive), receiveCount(0), ourType("TestThread")
+        : transmitter(_transmitter), ourType("TestThread"), addDuringReceive(addDuringReceive), receiveCount(0)
     {
         r1 = new TestThreadBaseRecipient();
     }
@@ -89,8 +89,8 @@ public:
 class EmesaryTestThread : public SGThread
 {
 public:
-    EmesaryTestThread(simgear::Emesary::ITransmitter* transmitter, bool _addDuringReceive) : addDuringReceive(_addDuringReceive), transmitter(transmitter) {
-
+    EmesaryTestThread(simgear::Emesary::ITransmitter* transmitter, bool _addDuringReceive)
+        : transmitter(transmitter), addDuringReceive(_addDuringReceive) {
     }
 protected:
     simgear::Emesary::ITransmitter* transmitter;
@@ -218,7 +218,7 @@ public:
 
     virtual simgear::Emesary::ReceiptStatus Receive(simgear::Emesary::INotificationPtr n)
     {
-        if (n->GetType() == "Test")
+        if (std::string{n->GetType()} == std::string{"Test"})
         {
             auto tbn = dynamic_pointer_cast<TestBaseNotification>(n);
             SG_CHECK_EQUAL(receiveCount, tbn->index);
@@ -295,7 +295,7 @@ void testEmesaryMultipleRecipients()
             SG_CHECK_EQUAL(0, r->receiveCount);
             });
     }
-    SG_CHECK_NE(rcount, globalTransmitter->SentMessageCount());
+    SG_CHECK_NE(rcount, static_cast<int>(globalTransmitter->SentMessageCount()));
 
     rcount = globalTransmitter->SentMessageCount();
     {

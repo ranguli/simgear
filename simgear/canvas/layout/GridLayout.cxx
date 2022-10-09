@@ -79,13 +79,13 @@ void GridLayout::addItem(const LayoutItemRef& item)
     if (isValidLocation(item->gridLocation())) {
         // re-dimension as required
         const auto itemEnd = item->gridEnd();
-        if (itemEnd.x() >= numColumns()) {
+        if (itemEnd.x() >= static_cast<int>(numColumns())) {
             // expand columns
             _dimensions.x() = itemEnd.x() + 1;
             _columns.resize(_dimensions.x());
         }
 
-        if (itemEnd.y() >= numRows()) {
+        if (itemEnd.y() >= static_cast<int>(numRows())) {
             // expand rows
             _dimensions.y() = itemEnd.y() + 1;
             _rows.resize(_dimensions.y());
@@ -149,7 +149,7 @@ SGVec2i GridLayout::innerFindUnusedLocation(const SGVec2i& curLoc)
 void GridLayout::updateCells()
 {
     const auto dim = _dimensions.x() * _dimensions.y();
-    if (_cells.size() == dim) {
+    if (static_cast<int>(_cells.size()) == dim) {
         return;
     }
 
@@ -317,7 +317,7 @@ size_t GridLayout::numColumns() const
 //----------------------------------------------------------------------------
 void GridLayout::setRowStretch(size_t index, int stretch)
 {
-    if (index >= _dimensions.y()) {
+    if (static_cast<int>(index) >= _dimensions.y()) {
         throw sg_range_exception("GridLayout::setRowStretch: invalid row");
     }
 
@@ -339,7 +339,7 @@ void GridLayout::setRowStretch(size_t index, int stretch)
 
 void GridLayout::setColumnStretch(size_t index, int stretch)
 {
-    if (index >= _dimensions.x()) {
+    if (static_cast<int>(index) >= _dimensions.x()) {
         throw sg_range_exception("GridLayout::setColumnStretch: invalid column");
     }
 
@@ -591,14 +591,14 @@ void GridLayout::doLayout(const SGRecti& geom)
 
     SGVec2i totalMinSize = {0, 0},
             totalPreferredSize = {0, 0};
-    for (auto row = 0; row < _rows.size(); ++row) {
+    for (auto row = 0; row < static_cast<int>(_rows.size()); ++row) {
         totalMinSize.y() += _rows.at(row).minSize;
         totalPreferredSize.y() += _rows.at(row).hintSize;
         rowStretchTotal += _rows.at(row).calcStretch;
         availHeight -= _rows.at(row).padding;
     }
 
-    for (auto col = 0; col < _columns.size(); ++col) {
+    for (auto col = 0; col < static_cast<int>(_columns.size()); ++col) {
         totalMinSize.x() += _columns.at(col).minSize;
         totalPreferredSize.x() += _columns.at(col).hintSize;
         columnStretchTotal += _columns.at(col).calcStretch;
@@ -627,7 +627,7 @@ void GridLayout::doLayout(const SGRecti& geom)
     }
 
     // distribute according to stretch factors
-    for (auto col = 0; col < _columns.size(); ++col) {
+    for (auto col = 0; col < static_cast<int>(_columns.size()); ++col) {
         auto& c = _columns[col];
         c.calcSize = havePreferredWidth ? c.hintSize : c.minSize;
         c.calcSize += (toDistribute.x() * c.calcStretch) / columnStretchTotal;
@@ -642,7 +642,7 @@ void GridLayout::doLayout(const SGRecti& geom)
 
     // re-calcualate row min/preferred now? Or is it not dependant?
 
-    for (auto row = 0; row < _rows.size(); ++row) {
+    for (auto row = 0; row < static_cast<int>(_rows.size()); ++row) {
         auto& r = _rows[row];
         r.calcSize = havePreferredHeight ? r.hintSize : r.minSize;
         r.calcSize += (toDistribute.y() * r.calcStretch) / rowStretchTotal;
