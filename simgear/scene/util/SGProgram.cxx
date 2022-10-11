@@ -55,7 +55,7 @@ void SGProgram::apply(osg::State& state) const
         if (!infoLog.empty()) {
             // log all the shader source file names, to help in debugging link errors
             std::ostringstream os;
-            for (uint i = 0; i < getNumShaders(); ++i) {
+            for (unsigned int i = 0; i < getNumShaders(); ++i) {
                 const auto shader = getShader(i);
                 os << "\t" << shader->getFileName() << "\n";
             }
@@ -66,7 +66,7 @@ void SGProgram::apply(osg::State& state) const
                                    _effectFilePath);
         }
 
-        for (uint i = 0; i < getNumShaders(); ++i) {
+        for (unsigned int i = 0; i < getNumShaders(); ++i) {
             const auto shader = getShader(i);
             auto pcs = shader->getPCS(state);
 
