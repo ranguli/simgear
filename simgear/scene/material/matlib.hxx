@@ -32,6 +32,7 @@
 #include <simgear/structure/SGSharedPtr.hxx>
 #include <osg/Texture2DArray>
 #include <osg/Texture1D>
+#include "Atlas.hxx"
 
 #include <memory>
 #include <string>		// Standard C++ string library
@@ -57,60 +58,8 @@ public:
     //   represent the textures referenced by the texture-set in the material
     // - the texture indexes index into the Atlas itself.
  
-    // Mapping of landclass numbers to indexes within the atlas
-    // materialLookup
-    typedef std::map<int, int> AtlasIndex;
-
-    // Mapping of texture filenames to their index in the Atlas image itself.
-    typedef std::map<std::string, unsigned int> TextureMap;
-
-    // The Texture array itself
-    typedef osg::ref_ptr<osg::Texture2DArray> AtlasImage;
-    typedef std::map<int, bool> WaterAtlas;
-
-    // Maximum number of textures per texture-set for the Atlas.
-    static const unsigned int MAX_TEXTURES = 22;
-
-    // Maximum number of material entries in the atlas
-    static const unsigned int MAX_MATERIALS = 64;
-
-    // Standard textures, used by water shader in particular.
-    // Indexes are hardcoded in Shaders/ws30-water.frag
-    inline static const std::string STANDARD_TEXTURES[] = {
-        "Textures/Terrain/water.png",
-        "Textures/Water/water-reflection-ws30.png",
-        "Textures/Water/waves-ver10-nm-ws30.png",
-        "Textures/Water/water_sine_nmap-ws30.png",
-        "Textures/Water/water-reflection-grey-ws30.png",
-        "Textures/Water/sea_foam-ws30.png",
-        "Textures/Water/perlin-noise-nm.png",
-
-        // The following two textures are large and don't have an alpha channel.  Ignoring for now.
-        //"Textures/Globe/ocean_depth_1.png",
-        //"Textures/Globe/globe_colors.jpg",
-        "Textures/Terrain/packice-overlay.png"
-    };
-
-    typedef struct {
-        AtlasIndex index;
-        AtlasImage image;
-        osg::ref_ptr<osg::Uniform> textureLookup1;
-        osg::ref_ptr<osg::Uniform> textureLookup2;
-        osg::ref_ptr<osg::Uniform> dimensions;
-        osg::ref_ptr<osg::Uniform> ambient;
-        osg::ref_ptr<osg::Uniform> diffuse;
-        osg::ref_ptr<osg::Uniform> specular;
-
-        osg::ref_ptr<osg::Uniform> materialParams1;
-        osg::ref_ptr<osg::Uniform> materialParams2;
-        osg::ref_ptr<osg::Uniform> materialParams3;
-
-        WaterAtlas waterAtlas;
-        TextureMap textureMap;
-    } Atlas;
-
     // Constructor
-    SGMaterialCache (Atlas atlas);
+    SGMaterialCache();
 
     // Insertion
     void insert( const std::string& name, SGSharedPtr<SGMaterial> material );
@@ -120,9 +69,8 @@ public:
     SGMaterial *find( const std::string& material ) const;
     SGMaterial *find( int material ) const;
 
-    Atlas getAtlas() { return _atlas; };
-
-    void addAtlasUniforms(osg::StateSet* stateset);
+    void setAtlas(osg::ref_ptr<simgear::Atlas> atlas) { _atlas = atlas; };
+    osg::ref_ptr<simgear::Atlas> getAtlas() { return _atlas; };
 
     // Destructor
     ~SGMaterialCache ( void );
@@ -130,7 +78,7 @@ public:
 private:
     typedef std::map < std::string, SGSharedPtr<SGMaterial> > material_cache;
     material_cache cache;
-    Atlas _atlas;
+    osg::ref_ptr<simgear::Atlas> _atlas;
 
     const std::string getNameFromLandclass(int lc) const {
         return std::string("WS30_").append(std::to_string(lc));
@@ -140,6 +88,10 @@ private:
 // Material management class
 class SGMaterialLib : public SGReferenced
 {
+
+public:
+    typedef std::map <const std::string, osg::ref_ptr<simgear::Atlas> > atlas_map;
+
 
 private:
     class MatLibPrivate;
@@ -160,11 +112,10 @@ private:
     material_map matlib;
     landclass_map landclasslib;
 
-    typedef std::map < std::string, SGMaterialCache::Atlas > atlas_map;
-    atlas_map _atlasCache;
-    
     // Get a (cached) texture atlas for this material cache
-    SGMaterialCache::Atlas getMaterialTextureAtlas(SGVec2f center, const simgear::SGReaderWriterOptions* options);
+    osg::ref_ptr<simgear::Atlas> getOrCreateAtlas(SGMaterialLib::landclass_map, SGVec2f center, const simgear::SGReaderWriterOptions* const_options);
+    static atlas_map _atlasCache;
+    static std::mutex _atlasCacheMutex;
 
     SGMaterial* internalFind(const std::string& material, const SGVec2f center) const;
 

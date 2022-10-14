@@ -759,7 +759,7 @@ void VertexNormalGenerator::computeNormals()
 void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel)
 {
     osg::Image* landclassImage = 0;
-    SGMaterialCache::Atlas atlas;
+    osg::ref_ptr<Atlas> atlas;
 
     Terrain* terrain = _terrainTile->getTerrain();
     osgTerrain::Layer* elevationLayer = _terrainTile->getElevationLayer();
@@ -992,10 +992,10 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
             
             if (separateWaterMesh && landclassImage && matlib) {
                 // If we are generating a separate water mesh, the work out which of the vertices are in appropriate watery materials.
-                if (i00>=0) w00 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i00]).r() * 255.0))];
-                if (i01>=0) w01 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i01]).r() * 255.0))];
-                if (i10>=0) w10 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i10]).r() * 255.0))];
-                if (i11>=0) w11 = atlas.waterAtlas[int(round(landclassImage->getColor((*texcoords)[i11]).r() * 255.0))];
+                if (i00>=0) w00 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i00]).r() * 255.0)));
+                if (i01>=0) w01 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i01]).r() * 255.0)));
+                if (i10>=0) w10 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i10]).r() * 255.0)));
+                if (i11>=0) w11 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i11]).r() * 255.0)));
             }
 
             unsigned int numValid = 0;
@@ -1344,15 +1344,14 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
 
         SGMaterialCache* matCache = matlib->generateMatCache(loc, _options);
-        SGMaterialCache::Atlas atlas = matCache->getAtlas();
-        SGMaterialCache::AtlasIndex atlasIndex = atlas.index;
+        osg::ref_ptr<Atlas> atlas = matCache->getAtlas();
 
-        // Set the "g" color channel to an index into the atlas index.
+        // Set the "g" color channel to an index into the atlas for the landclass.
         for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
             for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
                 osg::Vec4d c = image->getColor(s, t);
-                int i = int(round(c.x() * 255.0));
-                c.set(c.x(), (double) (atlasIndex[i] / 255.0), c.z(), c.w() );
+                int i = int(std::round(c.x() * 255.0));
+                c.set(c.x(), (double) (atlas->getIndex(i) / 255.0), c.z(), c.w() );
                 image->setColor(c, s, t);
             }
         }
@@ -1383,12 +1382,12 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
 
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(1, atlas.image, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(7, waterTexture, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
         stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
         stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
-        matCache->addAtlasUniforms(stateset);
+        atlas->addUniforms(stateset);
         //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
     }
 }
@@ -1598,7 +1597,7 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
             unsigned int tx = (unsigned int) (image->s() * t.x()) % image->s();
             unsigned int ty = (unsigned int) (image->t() * t.y()) % image->t();
             const osg::Vec4 tc = image->getColor(tx, ty);
-            const int land_class = int(round(tc.x() * 255.0));
+            const int land_class = int(std::round(tc.x() * 255.0));
 
             if (land_class != current_land_class) {
                 // Use temporal locality to reduce material lookup by caching

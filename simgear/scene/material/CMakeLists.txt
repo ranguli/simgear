@@ -1,4 +1,5 @@
 set(HEADERS 
+    Atlas.hxx
     Effect.hxx
     EffectBuilder.hxx
     EffectCullVisitor.hxx
@@ -14,6 +15,7 @@ set(HEADERS
     )
 
 set(SOURCES 
+    Atlas.cxx
     Effect.cxx
     EffectBuilder.cxx
     EffectCullVisitor.cxx
