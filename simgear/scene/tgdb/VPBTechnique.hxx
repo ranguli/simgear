@@ -132,15 +132,15 @@ class VPBTechnique : public TerrainTechnique
         virtual osg::Vec3d computeCenterModel(BufferData& buffer, Locator* masterLocator);
         const virtual SGGeod computeCenterGeod(BufferData& buffer, Locator* masterLocator);
 
-        virtual void generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel);
+        virtual void generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache);
 
-        virtual void applyColorLayers(BufferData& buffer, Locator* masterLocator);
+        virtual void applyColorLayers(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
 
         virtual double det2(const osg::Vec2d a, const osg::Vec2d b);
 
-        virtual void applyMaterials(BufferData& buffer, Locator* masterLocator);
+        virtual void applyMaterials(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
 
-        virtual void applyLineFeatures(BufferData& buffer, Locator* masterLocator);
+        virtual void applyLineFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
         virtual void generateLineFeature(BufferData& buffer, 
             Locator* masterLocator, 
             LineFeatureBin::LineFeature road, 
@@ -157,7 +157,7 @@ class VPBTechnique : public TerrainTechnique
             bool light_edge_offset,
             double elevation_offset_m);
 
-        virtual void applyAreaFeatures(BufferData& buffer, Locator* masterLocator);
+        virtual void applyAreaFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
         virtual void generateAreaFeature(BufferData& buffer, 
             Locator* masterLocator, 
             AreaFeatureBin::AreaFeature area, 

@@ -158,9 +158,18 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     osg::Vec3d centerModel = computeCenterModel(*buffer, masterLocator);
 
+    // Generate a set of material definitions for this location.
+    SGMaterialLibPtr matlib  = _options->getMaterialLib();
+    const SGGeod loc = computeCenterGeod(*buffer, masterLocator);
+    osg::ref_ptr<SGMaterialCache> matcache;
+    if (matlib) {
+      SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
+      matcache = _options->getMaterialLib()->generateMatCache(loc, _options);
+    }
+
     if ((dirtyMask & TerrainTile::IMAGERY_DIRTY)==0)
     {
-        generateGeometry(*buffer, masterLocator, centerModel);
+        generateGeometry(*buffer, masterLocator, centerModel, matcache);
 
         osg::ref_ptr<BufferData> read_buffer = _currentBufferData;
 
@@ -171,20 +180,20 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
         }
         else
         {
-            applyColorLayers(*buffer, masterLocator);
-            applyLineFeatures(*buffer, masterLocator);
-            applyAreaFeatures(*buffer, masterLocator);
-            applyMaterials(*buffer, masterLocator);
+            applyColorLayers(*buffer, masterLocator, matcache);
+            applyLineFeatures(*buffer, masterLocator, matcache);
+            applyAreaFeatures(*buffer, masterLocator, matcache);
+            applyMaterials(*buffer, masterLocator, matcache);
         }
     }
     else
     {
-        generateGeometry(*buffer, masterLocator, centerModel);
+        generateGeometry(*buffer, masterLocator, centerModel, matcache);
         
-        applyColorLayers(*buffer, masterLocator);
-        applyLineFeatures(*buffer, masterLocator);
-        applyAreaFeatures(*buffer, masterLocator);
-        applyMaterials(*buffer, masterLocator);
+        applyColorLayers(*buffer, masterLocator, matcache);
+        applyLineFeatures(*buffer, masterLocator, matcache);
+        applyAreaFeatures(*buffer, masterLocator, matcache);
+        applyMaterials(*buffer, masterLocator, matcache);
     }
 
     if (buffer->_transform.valid()) buffer->_transform->setThreadSafeRefUnref(true);
@@ -756,7 +765,7 @@ void VertexNormalGenerator::computeNormals()
     }
 }
 
-void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel)
+void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache)
 {
     osg::Image* landclassImage = 0;
     osg::ref_ptr<Atlas> atlas;
@@ -768,19 +777,13 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     // Determine the correct Effect for this, based on a material lookup taking into account
     // the lat/lon of the center.
-    SGMaterialLibPtr matlib  = _options->getMaterialLib();
-    const SGGeod loc = computeCenterGeod(buffer, masterLocator);
-
     SGPropertyNode_ptr landEffectProp = new SGPropertyNode();
     SGPropertyNode_ptr waterEffectProp = new SGPropertyNode();
 
-    if (matlib) {
-      SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
-      SGMaterialCache* matcache = _options->getMaterialLib()->generateMatCache(loc, _options);
+    if (matcache) {
       atlas = matcache->getAtlas();
       SGMaterial* landmat = matcache->find("ws30land");
       SGMaterial* watermat = matcache->find("ws30water");
-      delete matcache;
 
       if (landmat && watermat) {
         makeChild(landEffectProp.ptr(), "inherits-from")->setStringValue(landmat->get_effect_name());
@@ -990,7 +993,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
             bool w10 = false;
             bool w11 = false;
             
-            if (separateWaterMesh && landclassImage && matlib) {
+            if (separateWaterMesh && landclassImage && atlas) {
                 // If we are generating a separate water mesh, the work out which of the vertices are in appropriate watery materials.
                 if (i00>=0) w00 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i00]).r() * 255.0)));
                 if (i01>=0) w01 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i01]).r() * 255.0)));
@@ -1276,7 +1279,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     }
 }
 
-void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
+void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
 {   
 
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
@@ -1343,8 +1346,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator)
         const SGGeod loc = computeCenterGeod(buffer, masterLocator);
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
 
-        SGMaterialCache* matCache = matlib->generateMatCache(loc, _options);
-        osg::ref_ptr<Atlas> atlas = matCache->getAtlas();
+        Atlas* atlas = matcache->getAtlas();
 
         // Set the "g" color channel to an index into the atlas for the landclass.
         for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
@@ -1397,8 +1399,9 @@ double VPBTechnique::det2(const osg::Vec2d a, const osg::Vec2d b)
     return a.x() * b.y() - b.x() * a.y();
 }
 
-void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
+void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
 {
+    if (!matcache) return;
     pc_init(2718281);
 
     // Define all possible handlers
@@ -1420,13 +1423,9 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
         return;
     }
 
-    SGMaterialLibPtr matlib  = _options->getMaterialLib();
     SGMaterial* mat = 0;
 
-    if (!matlib) return;
-
     const SGGeod loc = computeCenterGeod(buffer, masterLocator);
-    SGMaterialCache* matcache = matlib->generateMatCache(loc, _options);
 
     osg::Vec3d up = buffer._transform->getMatrix().getTrans();
     up.normalize();
@@ -1672,8 +1671,13 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator)
     }
 }
 
-void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
+void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
 {
+    if (! matcache) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate roads");
+        return;
+    }    
+
     unsigned int line_features_lod_range = 6;
     float minWidth = 9999.9;
 
@@ -1695,13 +1699,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Generating roads of width > " << minWidth << " for tile LoD level " << tileLevel);
 
-    const SGMaterialLibPtr matlib  = _options->getMaterialLib();
     SGMaterial* mat = 0;
-
-    if (! matlib) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate roads");
-        return;
-    }    
 
     // Get all appropriate roads.  We assume that the VPB terrain tile is smaller than a Bucket size.
     LightBin lightbin;
@@ -1712,8 +1710,6 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator)
     auto roads = std::find_if(_lineFeatureLists.begin(), _lineFeatureLists.end(), [bucket](BucketLineFeatureBinList b){return (b.first == bucket);});
 
     if (roads == _lineFeatureLists.end()) return;
-
-    SGMaterialCache* matcache = matlib->generateMatCache(loc, _options);
 
     for (; roads != _lineFeatureLists.end(); ++roads) {
         const LineFeatureBinList roadBins = roads->second;
@@ -1926,8 +1922,13 @@ void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocato
     }
 }
 
-void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator)
+void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
 {
+    if (! matcache) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate areas");
+        return;
+    }    
+
     unsigned int area_features_lod_range = 6;
     float minArea = 1000.0;
 
@@ -1948,14 +1949,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator)
         return;
     }
 
-    const SGMaterialLibPtr matlib  = _options->getMaterialLib();
     SGMaterial* mat = 0;
-
-    if (! matlib) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate areas");
-        return;
-    }    
-
 
     // Get all appropriate areas.  We assume that the VPB terrain tile is smaller than a Bucket size.
     const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
@@ -1964,8 +1958,6 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator)
     auto areas = std::find_if(_areaFeatureLists.begin(), _areaFeatureLists.end(), [bucket](BucketAreaFeatureBinList b){return (b.first == bucket);});
 
     if (areas == _areaFeatureLists.end()) return;
-
-    SGMaterialCache* matcache = _options->getMaterialLib()->generateMatCache(loc, _options);
 
     for (; areas != _areaFeatureLists.end(); ++areas) {
         const AreaFeatureBinList areaBins = areas->second;
