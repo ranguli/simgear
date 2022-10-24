@@ -1699,6 +1699,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Generating roads of width > " << minWidth << " for tile LoD level " << tileLevel);
 
+    Atlas* atlas = matcache->getAtlas();
     SGMaterial* mat = 0;
 
     // Get all appropriate roads.  We assume that the VPB terrain tile is smaller than a Bucket size.
@@ -1773,6 +1774,9 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             osg::StateSet* stateset = geode->getOrCreateStateSet();
             stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
             stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+
+            stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
+            atlas->addUniforms(stateset);
 
             buffer._transform->addChild(geode);
             addRandomObjectsConstraint(geode);
