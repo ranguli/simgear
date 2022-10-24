@@ -1000,6 +1000,31 @@ public:
     }
 };
 
+class SetPagedLODPriorityVisitor : public osg::NodeVisitor
+{
+public:
+    SetPagedLODPriorityVisitor(float priority):
+        osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+        _priority(priority) {}
+
+    void apply(osg::Node& node)
+    {
+        osg::PagedLOD* plod = dynamic_cast<osg::PagedLOD*>(&node);
+        if (plod)
+        {
+            for (unsigned int i = 0; i < plod->getNumPriorityScales(); ++i) {
+                plod->setPriorityScale(i ,_priority);
+            }
+        }
+        else
+        {
+            traverse(node);
+        }
+    }
+
+    float _priority;
+};
+
 struct OSGOptimizePolicy : public OptimizeModelPolicy {
 
     
@@ -1021,6 +1046,10 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
             // Clean out any existing osgTerrain techniques
             CleanTechniqueVisitor ctv;
             optimized->accept(ctv);
+
+            // Increase the priority of loading terrain tiles over other PagedLoD (AI, scenery objects etc)
+            SetPagedLODPriorityVisitor splpv(4.0);
+            optimized->accept(splpv);
 
             SGSceneFeatures* features = SGSceneFeatures::instance();
 
