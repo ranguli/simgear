@@ -238,7 +238,7 @@ public:
             if (!nameList.empty()) {
                 osg::ref_ptr<const osgDB::Options> options;
                 options = getOptions(pagedLOD.getDatabaseOptions(), pagedLOD.getDatabasePath());
-                SGSphered boundingSphere(toVec3d(toSG(pagedLOD.getCenter())), pagedLOD.getRadius());
+                SGSphered boundingSphere(toVec3d(toSG(pagedLOD.getBound().center())), pagedLOD.getBound().radius());
                 nodeBin.addNode(new BVHPageNodeOSG(nameList, boundingSphere, options.get()));
             }
             _nodeBin.addNode(nodeBin.getNode(_localToWorldMatrix));
