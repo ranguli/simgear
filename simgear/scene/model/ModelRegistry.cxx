@@ -828,6 +828,7 @@ struct ACOptimizePolicy : public OptimizeModelPolicy {
     Node* optimize(Node* node, const string& fileName,
                    const Options* opt)
     {
+        SG_LOG(SG_IO, SG_DEBUG, "AC Optimizing Started " << fileName);
         ref_ptr<Node> optimized
             = OptimizeModelPolicy::optimize(node, fileName, opt);
         Group* group = dynamic_cast<Group*>(optimized.get());
@@ -851,6 +852,7 @@ struct ACOptimizePolicy : public OptimizeModelPolicy {
             optimized = instantiateEffects(optimized.get(), sgopt);
         }
 
+        SG_LOG(SG_IO, SG_DEBUG, "AC Optimizing Finished " << fileName);
         return optimized.release();
     }
 };
@@ -945,7 +947,7 @@ class FindTopMostNodeOfTypeVisitor : public osg::NodeVisitor
 {
 public:
     FindTopMostNodeOfTypeVisitor():
-        osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+        osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN),
         _foundNode(0)
     {}
 
@@ -956,7 +958,7 @@ public:
         {
             _foundNode = result;
         }
-        else
+        else if (! dynamic_cast<osg::PagedLOD*>(&node))
         {
             traverse(node);
         }
@@ -1000,31 +1002,6 @@ public:
     }
 };
 
-class SetPagedLODPriorityVisitor : public osg::NodeVisitor
-{
-public:
-    SetPagedLODPriorityVisitor(float priority):
-        osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
-        _priority(priority) {}
-
-    void apply(osg::Node& node)
-    {
-        osg::PagedLOD* plod = dynamic_cast<osg::PagedLOD*>(&node);
-        if (plod)
-        {
-            for (unsigned int i = 0; i < plod->getNumPriorityScales(); ++i) {
-                plod->setPriorityScale(i ,_priority);
-            }
-        }
-        else
-        {
-            traverse(node);
-        }
-    }
-
-    float _priority;
-};
-
 struct OSGOptimizePolicy : public OptimizeModelPolicy {
 
     
@@ -1039,55 +1016,19 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
         ref_ptr<Node> optimized = node;
 
         const SGReaderWriterOptions* sgopt = SGReaderWriterOptions::copyOrCreate(opt);
+        SG_LOG(SG_IO, SG_DEBUG, "OSG Optimizing Started " << fileName);
 
         if (fileName.find("ws_") != string::npos) {
             // Currently the only way we have to identify WS3.0 / VirtualPlanetBuilder files is by the filename
 
-            // Clean out any existing osgTerrain techniques
-            CleanTechniqueVisitor ctv;
-            optimized->accept(ctv);
-
-            // Increase the priority of loading terrain tiles over other PagedLoD (AI, scenery objects etc)
-            SetPagedLODPriorityVisitor splpv(4.0);
-            optimized->accept(splpv);
-
             SGSceneFeatures* features = SGSceneFeatures::instance();
-
             osg::ref_ptr<osgTerrain::Terrain> terrain = findTopMostNodeOfType<osgTerrain::Terrain>(optimized.get());
-            osg::ref_ptr<osgTerrain::TerrainTile> terrainTile = findTopMostNodeOfType<osgTerrain::TerrainTile>(optimized.get());
 
             if (terrain != NULL) {
                 // Top level.  This is likely to have the default GeometryTechnique already assigned which we need to replace with our own
                 terrain->setSampleRatio(features->getVPBSampleRatio());
                 terrain->setVerticalScale(features->getVPBVerticalScale());
                 terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt, fileName));
-                if (terrainTile != NULL) {
-                    terrainTile->setTerrainTechnique(new VPBTechnique(sgopt, fileName));
-                    terrainTile->setDirty(true);
-                } else {
-                    SG_LOG(SG_TERRAIN, SG_ALERT, "VPB TerrainTile not found");
-                }
-            } else {
-                // no Terrain node present insert one above the loaded model.  
-                terrain = new osgTerrain::Terrain;
-                terrain->setSampleRatio(features->getVPBSampleRatio());
-                terrain->setVerticalScale(features->getVPBVerticalScale());
-                terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt, fileName));
-
-                // if CoordinateSystemNode is present copy it's contents into the Terrain, and discard it.
-                osg::CoordinateSystemNode* csn = findTopMostNodeOfType<osg::CoordinateSystemNode>(optimized.get());
-                if (csn)
-                {
-                    terrain->set(*csn);
-                    for(unsigned int i=0; i<csn->getNumChildren();++i)
-                    {
-                        terrain->addChild(csn->getChild(i));
-                    }
-                }
-                else
-                {
-                    terrain->addChild(optimized.get());
-                }
             }
 
             // We don't want any textures compressed, as these contain landclass information that doesn't
@@ -1117,6 +1058,7 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
             optimized = instantiateEffects(optimized.get(), sgopt);
         }
 
+        SG_LOG(SG_IO, SG_DEBUG, "OSG Optimizing Finished " << fileName);
         return optimized.release();
     }
 };

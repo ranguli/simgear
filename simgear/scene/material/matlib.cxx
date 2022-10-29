@@ -243,12 +243,11 @@ SGMaterial *SGMaterialLib::find( int lc, const SGGeod& center ) const
     return find(materialName, center);
 }
 
-SGMaterialCache *SGMaterialLib::generateMatCache(SGVec2f center, const simgear::SGReaderWriterOptions* options)
+SGMaterialCache *SGMaterialLib::generateMatCache(SGVec2f center, const simgear::SGReaderWriterOptions* options, bool generateAtlas)
 {
 
     SGMaterialCache* newCache = new SGMaterialCache();
-    newCache->setAtlas(SGMaterialLib::getOrCreateAtlas(landclasslib, center, options));
-
+    if (generateAtlas) newCache->setAtlas(SGMaterialLib::getOrCreateAtlas(landclasslib, center, options));
     std::lock_guard<std::mutex> g(d->mutex);
     material_map::const_reverse_iterator it = matlib.rbegin();
     for (; it != matlib.rend(); ++it) {
@@ -264,10 +263,10 @@ SGMaterialCache *SGMaterialLib::generateMatCache(SGVec2f center, const simgear::
     return newCache;
 }
 
-SGMaterialCache *SGMaterialLib::generateMatCache(SGGeod center, const simgear::SGReaderWriterOptions* options)
+SGMaterialCache *SGMaterialLib::generateMatCache(SGGeod center, const simgear::SGReaderWriterOptions* options, bool generateAtlas)
 {
 	SGVec2f c = SGVec2f(center.getLongitudeDeg(), center.getLatitudeDeg());
-	return SGMaterialLib::generateMatCache(c, options);
+	return SGMaterialLib::generateMatCache(c, options, generateAtlas);
 }
 
 

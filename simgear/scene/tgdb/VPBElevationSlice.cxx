@@ -956,11 +956,6 @@ void VPBElevationSlice::computeIntersections(osg::Node* scene, osg::Node::NodeMa
 
         constructor.copyPoints(_intersections, _distanceHeightIntersections);
     }
-    else
-    {
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "No intersections found.");
-    }
-
 }
 
 VPBElevationSlice::Vec3dList VPBElevationSlice::computeVPBElevationSlice(osg::Node* scene, const osg::Vec3d& startPoint, const osg::Vec3d& endPoint, const osg::Vec3d& upVector, osg::Node::NodeMask traversalMask)

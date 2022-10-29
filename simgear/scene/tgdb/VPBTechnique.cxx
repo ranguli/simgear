@@ -163,8 +163,11 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
     const SGGeod loc = computeCenterGeod(*buffer, masterLocator);
     osg::ref_ptr<SGMaterialCache> matcache;
     if (matlib) {
-      SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
-      matcache = _options->getMaterialLib()->generateMatCache(loc, _options);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
+        matcache = _options->getMaterialLib()->generateMatCache(loc, _options, true);
+        if (!matcache) SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to create materials cache for  " << loc);
+    } else {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to create materials lib for  " << loc);
     }
 
     if ((dirtyMask & TerrainTile::IMAGERY_DIRTY)==0)
@@ -211,6 +214,8 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
     }
 
     _terrainTile->setDirtyMask(0);
+
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << dirtyMask);
 }
 
 Locator* VPBTechnique::computeMasterLocator()

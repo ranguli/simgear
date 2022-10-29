@@ -66,7 +66,7 @@ void CheckSceneryVisitor::apply(osg::ProxyNode& node)
             osg::NodePath nodePath = getNodePath();
             DatabaseRequestHandler* db = getDatabaseRequestHandler();
             const osg::FrameStamp* fs = getFrameStamp();
-            db->requestNodeFile(node.getFileName(i), nodePath, 1.0 /*priority*/, fs,
+            db->requestNodeFile(node.getFileName(i), nodePath, 5.0 /* High priority*/, fs,
                                 node.getDatabaseRequest(i), node.getDatabaseOptions());
             setLoaded(false);
         }
@@ -86,15 +86,17 @@ void CheckSceneryVisitor::apply(osg::PagedLOD& node)
             if (i < node.getNumChildren() && node.getChild(i))
                 continue;
 
-            // if the DatabasePager would load LODs while the splashscreen
-            // is there, we could just wait for the models to be loaded
-            // by only setting setLoaded(false) here
-            osg::NodePath nodePath = getNodePath();
-            DatabaseRequestHandler* db = getDatabaseRequestHandler();
-            const osg::FrameStamp* fs = getFrameStamp();
-            db->requestNodeFile(node.getFileName(i), nodePath, 1.0 /*priority*/, fs,
-                                node.getDatabaseRequest(i), node.getDatabaseOptions());
-            setLoaded(false);
+            if ((dist > node.getMinRange(i)) && (dist < node.getMaxRange(i))) {
+                // if the DatabasePager would load LODs while the splashscreen
+                // is there, we could just wait for the models to be loaded
+                // by only setting setLoaded(false) here
+                osg::NodePath nodePath = getNodePath();
+                DatabaseRequestHandler* db = getDatabaseRequestHandler();
+                const osg::FrameStamp* fs = getFrameStamp();
+                db->requestNodeFile(node.getFileName(i), nodePath, 5.0 /* High priority*/, fs,
+                                    node.getDatabaseRequest(i), node.getDatabaseOptions());
+                setLoaded(false);
+            }
         }
     }
     traverse(node);

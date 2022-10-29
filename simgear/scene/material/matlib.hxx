@@ -145,8 +145,8 @@ public:
      * cache of the valid materials based on the current state and a given position.
      */
 
-    SGMaterialCache *generateMatCache( SGVec2f center, const simgear::SGReaderWriterOptions* options);
-    SGMaterialCache *generateMatCache( SGGeod center, const simgear::SGReaderWriterOptions* options);
+    SGMaterialCache *generateMatCache( SGVec2f center, const simgear::SGReaderWriterOptions* options, bool generatAtlas = false);
+    SGMaterialCache *generateMatCache( SGGeod center, const simgear::SGReaderWriterOptions* options, bool generatAtlas = false);
 
     material_map_iterator begin() { return matlib.begin(); }
     const_material_map_iterator begin() const { return matlib.begin(); }
