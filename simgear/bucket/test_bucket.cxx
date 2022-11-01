@@ -35,12 +35,12 @@ using std::endl;
 
 void testBucketSpans()
 {
-    SG_CHECK_EQUAL(sg_bucket_span(0.0), 0.125);
-    SG_CHECK_EQUAL(sg_bucket_span(-20), 0.125);
-    SG_CHECK_EQUAL(sg_bucket_span(-40), 0.25);
-    SG_CHECK_EQUAL(sg_bucket_span(89.9), 12.0);
-    SG_CHECK_EQUAL(sg_bucket_span(88.1), 4.0);
-    SG_CHECK_EQUAL(sg_bucket_span(-89.9), 12.0);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(0.0), 0.125);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(-20), 0.125);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(-40), 0.25);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(89.9), 12.0);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(88.1), 4.0);
+    SG_CHECK_EQUAL(SGBucket::sg_bucket_span(-89.9), 12.0);
 }
 
 void testBasic()

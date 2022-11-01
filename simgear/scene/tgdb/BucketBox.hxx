@@ -429,7 +429,7 @@ private:
     { return size*0.125; }
 
     static unsigned _bucketSpanAtOffset(unsigned offset)
-    { return (unsigned)(8*sg_bucket_span(_offsetToLatitudeDeg(offset) + 0.0625) + 0.5); }
+    { return (unsigned)(8*SGBucket::sg_bucket_span(_offsetToLatitudeDeg(offset) + 0.0625) + 0.5); }
 
     static SGGeod _offsetToGeod(unsigned offset0, unsigned offset1, double elev)
     { return SGGeod::fromDegM(_offsetToLongitudeDeg(offset0), _offsetToLatitudeDeg(offset1), elev); }

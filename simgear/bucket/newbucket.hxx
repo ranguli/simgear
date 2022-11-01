@@ -56,38 +56,6 @@
 #define SG_HALF_BUCKET_SPAN ( 0.5 * SG_BUCKET_SPAN )
 
 
-// return the horizontal tile span factor based on latitude
-static double sg_bucket_span( double l ) {
-    if ( l >= 89.0 ) {
-	return 12.0;
-    } else if ( l >= 86.0 ) {
-	return 4.0;
-    } else if ( l >= 83.0 ) {
-	return 2.0;
-    } else if ( l >= 76.0 ) {
-	return 1.0;
-    } else if ( l >= 62.0 ) {
-	return 0.5;
-    } else if ( l >= 22.0 ) {
-	return 0.25;
-    } else if ( l >= -22.0 ) {
-	return 0.125;
-    } else if ( l >= -62.0 ) {
-	return 0.25;
-    } else if ( l >= -76.0 ) {
-	return 0.5;
-    } else if ( l >= -83.0 ) {
-	return 1.0;
-    } else if ( l >= -86.0 ) {
-	return 2.0;
-    } else if ( l >= -89.0 ) {
-	return 4.0;
-    } else {
-	return 12.0;
-    }
-}
-
-
 /**
  * A class to manage world scenery tiling.
  * This class encapsulates the world tiling scheme.  It provides ways
@@ -221,12 +189,12 @@ public:
      * @return the center lon of a tile.
      */
     inline double get_center_lon() const {
-	double span = sg_bucket_span( lat + y / 8.0 + SG_HALF_BUCKET_SPAN );
+	const double span = get_width();
 
 	if ( span >= 1.0 ) {
-	    return lon + get_width() / 2.0;
+	    return lon + span / 2.0;
 	} else {
-	    return lon + x * span + get_width() / 2.0;
+	    return lon + x * span + span / 2.0;
 	}
     }
 
@@ -271,7 +239,8 @@ public:
     { return SGGeod::fromDeg(get_center_lon(), get_center_lat()); }
 
     /**
-     * @return the center of the bucket in geodetic coordinates.
+     * @return the corner of the bucket in geodetic coordinates:
+     * (0) south-west, (1) south-east, (2) north-east, (3) north-west
      */
     SGGeod get_corner(unsigned num) const
     {
@@ -280,6 +249,11 @@ public:
         return SGGeod::fromDeg(get_center_lon() + lonFac*get_width(),
                                get_center_lat() + latFac*get_height());
     }
+
+    /**
+     * return the horizontal tile span factor based on latitude
+    */
+    static double sg_bucket_span(double l);
 
     // Informational methods.
 

@@ -377,6 +377,36 @@ double SGBucket::get_height_m() const {
     return SG_BUCKET_SPAN * degree_height;
 }
 
+double SGBucket::sg_bucket_span( double l ) {
+    if ( l >= 89.0 ) {
+        return 12.0;
+    } else if ( l >= 86.0 ) {
+        return 4.0;
+    } else if ( l >= 83.0 ) {
+        return 2.0;
+    } else if ( l >= 76.0 ) {
+        return 1.0;
+    } else if ( l >= 62.0 ) {
+        return 0.5;
+    } else if ( l >= 22.0 ) {
+        return 0.25;
+    } else if ( l >= -22.0 ) {
+        return 0.125;
+    } else if ( l >= -62.0 ) {
+        return 0.25;
+    } else if ( l >= -76.0 ) {
+        return 0.5;
+    } else if ( l >= -83.0 ) {
+        return 1.0;
+    } else if ( l >= -86.0 ) {
+        return 2.0;
+    } else if ( l >= -89.0 ) {
+        return 4.0;
+    } else {
+        return 12.0;
+    }
+}
+
 unsigned int SGBucket::siblings( int dx, int dy, std::vector<SGBucket>& buckets ) const 
 {
     if (!isValid()) {
@@ -472,7 +502,7 @@ SGBucket sgBucketOffset( double dlon, double dlat, int dx, int dy ) {
     result.set_bucket( dlon, clat );
 
     // find the lon span for the new latitude
-    double span = sg_bucket_span( clat );
+    double span = SGBucket::sg_bucket_span( clat );
 
     // walk dx units in the lon direction
     double tmp = dlon + dx * span;
@@ -514,11 +544,11 @@ void sgBucketDiff( const SGBucket& b1, const SGBucket& b2, int *dx, int *dy ) {
     // To handle crossing the bucket size boundary
     //  we need to account for different size buckets.
 
-    if ( sg_bucket_span(c1_lat) <= sg_bucket_span(c2_lat) )
+    if ( SGBucket::sg_bucket_span(c1_lat) <= SGBucket::sg_bucket_span(c2_lat) )
     {
-	span = sg_bucket_span(c1_lat);
+	span = SGBucket::sg_bucket_span(c1_lat);
     } else {
-	span = sg_bucket_span(c2_lat);
+	span = SGBucket::sg_bucket_span(c2_lat);
     }
 
     diff_lon = b2.get_center_lon() - b1.get_center_lon();
@@ -548,7 +578,7 @@ void sgGetBuckets( const SGGeod& min, const SGGeod& max, std::vector<SGBucket>& 
     double lon, lat, span;
 
     for (lat = min.getLatitudeDeg(); lat < max.getLatitudeDeg()+SG_BUCKET_SPAN; lat += SG_BUCKET_SPAN) {
-        span = sg_bucket_span( lat );
+        span = SGBucket::sg_bucket_span( lat );
         for (lon = min.getLongitudeDeg(); lon <= max.getLongitudeDeg(); lon += span)
         {
             SGBucket b(SGGeod::fromDeg(lon, lat));
