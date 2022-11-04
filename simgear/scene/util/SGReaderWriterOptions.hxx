@@ -59,7 +59,8 @@ public:
         _instantiateMaterialEffects(false),
         _autoTooltipsMaster(false),
         _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL)
+        _LoadOriginHint(ORIGIN_MODEL),
+        _vertexOrderXYZ(false)
     { }
     SGReaderWriterOptions(const std::string& str) :
         osgDB::Options(str),
@@ -69,7 +70,8 @@ public:
         _instantiateMaterialEffects(false),
         _autoTooltipsMaster(false),
         _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL)
+        _LoadOriginHint(ORIGIN_MODEL),
+        _vertexOrderXYZ(false)
     { }
     SGReaderWriterOptions(const osgDB::Options& options,
                           const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) :
@@ -99,7 +101,8 @@ public:
                                                                                    _autoTooltipsMaster(options._autoTooltipsMaster),
                                                                                    _autoTooltipsMasterMax(options._autoTooltipsMasterMax),
                                                                                    _LoadOriginHint(ORIGIN_MODEL),
-                                                                                   _errorContext(options._errorContext)
+                                                                                   _errorContext(options._errorContext),
+                                                                                   _vertexOrderXYZ(false)
     { }
 
     META_Object(simgear, SGReaderWriterOptions);
