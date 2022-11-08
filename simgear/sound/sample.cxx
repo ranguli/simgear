@@ -93,7 +93,7 @@ SGSoundSample::SGSoundSample(const string& file, const SGPath& dir) :
 { }
 
 // constructor
-SGSoundSample::SGSoundSample( std::unique_ptr<unsigned char, decltype(free)*>& data,
+SGSoundSample::SGSoundSample( std::unique_ptr<unsigned char, decltype(free)*> data,
                               int len, int freq, int format )
 {
     SG_LOG( SG_SOUND, SG_DEBUG, "In memory sounds sample" );

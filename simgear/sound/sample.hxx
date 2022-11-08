@@ -30,6 +30,7 @@
 #ifndef _SG_SAMPLE_HXX
 #define _SG_SAMPLE_HXX 1
 
+#include <memory>
 #include <string>
 
 #include <simgear/math/SGMath.hxx>
@@ -285,7 +286,7 @@ public:
      * @param freq Frequency of the provided data (bytes per second)
      * @param format SimGear format id of the data
      */
-    SGSoundSample( std::unique_ptr<unsigned char, decltype(free)*>& data,
+    SGSoundSample( std::unique_ptr<unsigned char, decltype(free)*> data,
                    int len, int freq,
                    int format = SG_SAMPLE_MONO8 );
 
@@ -368,7 +369,7 @@ public:
      * @param data Pointer to a memory block containg this audio sample data.
        This pointer will be set to nullptr after calling this function.
      */
-    inline void set_data( std::unique_ptr<unsigned char, decltype(free)*>& data ) {
+    inline void set_data( std::unique_ptr<unsigned char, decltype(free)*> data ) {
         _data = std::move(data);
     }
 
