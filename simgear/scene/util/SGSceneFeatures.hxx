@@ -73,9 +73,6 @@ public:
     float getVPBVerticalScale() const { return _VPBVerticalScale; }
     void  setVPBVerticalScale(const float val) { _VPBVerticalScale = val; }
 
-    bool  getVPBSeparateWaterMesh() const { return _VPBSeparateWaterMesh; }
-    void  setVPBSeparateWaterMesh(const bool val) { _VPBSeparateWaterMesh = val; }
-
     void setEnablePointSpriteLights(bool enable)
     {
         _pointSpriteLights = enable;
@@ -162,7 +159,6 @@ private:
     bool _distanceAttenuationLights;
     int  _textureFilter;
     bool _VPBActive;
-    bool _VPBSeparateWaterMesh;
     float _VPBConstraintGap;
     float _VPBRangeFactor;
     float _VPBMaxRange;

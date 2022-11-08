@@ -783,33 +783,24 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     // Determine the correct Effect for this, based on a material lookup taking into account
     // the lat/lon of the center.
     SGPropertyNode_ptr landEffectProp = new SGPropertyNode();
-    SGPropertyNode_ptr waterEffectProp = new SGPropertyNode();
 
     if (matcache) {
       atlas = matcache->getAtlas();
       SGMaterial* landmat = matcache->find("ws30land");
-      SGMaterial* watermat = matcache->find("ws30water");
 
-      if (landmat && watermat) {
+      if (landmat) {
         makeChild(landEffectProp.ptr(), "inherits-from")->setStringValue(landmat->get_effect_name());
-        makeChild(waterEffectProp.ptr(), "inherits-from")->setStringValue(watermat->get_effect_name());
       } else {
         SG_LOG( SG_TERRAIN, SG_ALERT, "Unable to get effect for VPB - no matching material in library");
         makeChild(landEffectProp.ptr(), "inherits-from")->setStringValue("Effects/model-default");
-        makeChild(waterEffectProp.ptr(), "inherits-from")->setStringValue("Effects/model-default");
       }
     } else {
         SG_LOG( SG_TERRAIN, SG_ALERT, "Unable to get effect for VPB - no material library available");
         makeChild(landEffectProp.ptr(), "inherits-from")->setStringValue("Effects/model-default");
-        makeChild(waterEffectProp.ptr(), "inherits-from")->setStringValue("Effects/model-default");
     }
 
     buffer._landGeode = new EffectGeode();
-    buffer._waterGeode = new EffectGeode();
-    if(buffer._transform.valid()) {
-        buffer._transform->addChild(buffer._landGeode.get());
-        buffer._transform->addChild(buffer._waterGeode.get());
-    }
+    if (buffer._transform.valid()) buffer._transform->addChild(buffer._landGeode.get());
 
     buffer._landGeometry = new osg::Geometry;
     buffer._landGeode->addDrawable(buffer._landGeometry.get());
@@ -817,13 +808,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     osg::ref_ptr<Effect> landEffect = makeEffect(landEffectProp, true, _options);
     buffer._landGeode->setEffect(landEffect.get());
     buffer._landGeode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
-
-    buffer._waterGeometry = new osg::Geometry;
-    buffer._waterGeode->addDrawable(buffer._waterGeometry.get());
-  
-    osg::ref_ptr<Effect> waterEffect = makeEffect(waterEffectProp, true, _options);
-    buffer._waterGeode->setEffect(waterEffect.get());
-    buffer._waterGeode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
 
     unsigned int numRows = 20;
     unsigned int numColumns = 20;
@@ -837,7 +821,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     double scaleHeight = SGSceneFeatures::instance()->getVPBVerticalScale();
     double sampleRatio = SGSceneFeatures::instance()->getVPBSampleRatio();
     double constraint_gap = SGSceneFeatures::instance()->getVPBConstraintGap();
-    bool   separateWaterMesh = SGSceneFeatures::instance()->getVPBSeparateWaterMesh();
 
     unsigned int minimumNumColumns = 16u;
     unsigned int minimumNumRows = 16u;
@@ -870,24 +853,20 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     // allocate and assign vertices
     buffer._landGeometry->setVertexArray(VNG._vertices.get());
-    buffer._waterGeometry->setVertexArray(VNG._vertices.get());
 
     // allocate and assign normals
     buffer._landGeometry->setNormalArray(VNG._normals.get(), osg::Array::BIND_PER_VERTEX);
-    buffer._waterGeometry->setNormalArray(VNG._normals.get(), osg::Array::BIND_PER_VERTEX);
 
     // allocate and assign color
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
     (*colors)[0].set(1.0f,1.0f,1.0f,1.0f);
 
     buffer._landGeometry->setColorArray(colors.get(), osg::Array::BIND_OVERALL);
-    buffer._waterGeometry->setColorArray(colors.get(), osg::Array::BIND_OVERALL);
 
     // allocate and assign texture coordinates
     auto texcoords = new osg::Vec2Array;
     VNG.populateCenter(elevationLayer, texcoords);
     buffer._landGeometry->setTexCoordArray(0, texcoords);
-    buffer._waterGeometry->setTexCoordArray(0, texcoords);
 
     if (terrain && terrain->getEqualizeBoundaries())
     {
@@ -969,12 +948,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     buffer._landGeometry->addPrimitiveSet(landElements.get());
 
-    osg::ref_ptr<osg::DrawElements> waterElements = smallTile ?
-        static_cast<osg::DrawElements*>(new osg::DrawElementsUShort(GL_TRIANGLES)) :
-        static_cast<osg::DrawElements*>(new osg::DrawElementsUInt(GL_TRIANGLES));
-    waterElements->reserveElements((numRows-1) * (numColumns-1) * 6);
-    buffer._waterGeometry->addPrimitiveSet(waterElements.get());
-
     unsigned int i, j;
     for(j=0; j<numRows-1; ++j)
     {
@@ -992,20 +965,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
                 std::swap(i10,i11);
             }
 
-            // Determine if this quad or triangle should be water or not, and therefore which geometry to add it to.
-            bool w00 = false;
-            bool w01 = false;
-            bool w10 = false;
-            bool w11 = false;
-            
-            if (separateWaterMesh && landclassImage && atlas) {
-                // If we are generating a separate water mesh, the work out which of the vertices are in appropriate watery materials.
-                if (i00>=0) w00 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i00]).r() * 255.0)));
-                if (i01>=0) w01 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i01]).r() * 255.0)));
-                if (i10>=0) w10 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i10]).r() * 255.0)));
-                if (i11>=0) w11 = atlas->isWater(int(std::round(landclassImage->getColor((*texcoords)[i11]).r() * 255.0)));
-            }
-
             unsigned int numValid = 0;
             if (i00>=0) ++numValid;
             if (i01>=0) ++numValid;
@@ -1014,8 +973,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
             if (numValid==4)
             {
-                osg::ref_ptr<osg::DrawElements> elements;
-
                 // optimize which way to put the diagonal by choosing to
                 // place it between the two corners that have the least curvature
                 // relative to each other.
@@ -1024,44 +981,31 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
                 if (dot_00_11 > dot_01_10)
                 {
-                    elements = (w01 && w00 && w11) ? waterElements : landElements;
-                    elements->addElement(i01);
-                    elements->addElement(i00);
-                    elements->addElement(i11);
+                    landElements->addElement(i01);
+                    landElements->addElement(i00);
+                    landElements->addElement(i11);
 
-                    elements = (w00 && w10 && w11) ? waterElements : landElements;
-                    elements->addElement(i00);
-                    elements->addElement(i10);
-                    elements->addElement(i11);
+                    landElements->addElement(i00);
+                    landElements->addElement(i10);
+                    landElements->addElement(i11);
                 }
                 else
                 {
-                    elements = (w01 && w00 && w10) ? waterElements : landElements;
-                    elements->addElement(i01);
-                    elements->addElement(i00);
-                    elements->addElement(i10);
+                    landElements->addElement(i01);
+                    landElements->addElement(i00);
+                    landElements->addElement(i10);
 
-                    elements = (w01 && w10 && w11) ? waterElements : landElements;
-                    elements->addElement(i01);
-                    elements->addElement(i10);
-                    elements->addElement(i11);
+                    landElements->addElement(i01);
+                    landElements->addElement(i10);
+                    landElements->addElement(i11);
                 }
             }
             else if (numValid==3)
             {
-                // If this is a triangle, we need to look for exactly 3 our of the four
-                // vertices to be in water, as the fourth will be false, as above.
-                unsigned int water_count = 0;
-                if (w00) water_count++;
-                if (w01) water_count++;
-                if (w10) water_count++;
-                if (w11) water_count++;
-
-                osg::ref_ptr<osg::DrawElements> elements = (water_count == 3) ? waterElements : landElements;
-                if (i00>=0) elements->addElement(i00);
-                if (i01>=0) elements->addElement(i01);
-                if (i11>=0) elements->addElement(i11);
-                if (i10>=0) elements->addElement(i10);
+                if (i00>=0) landElements->addElement(i00);
+                if (i01>=0) landElements->addElement(i01);
+                if (i11>=0) landElements->addElement(i11);
+                if (i10>=0) landElements->addElement(i10);
             }
         }
     }
@@ -1223,22 +1167,16 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
         }
     }
 
-    waterElements->resizeElements(waterElements->getNumIndices());
     landElements->resizeElements(landElements->getNumIndices());
 
     buffer._landGeometry->setUseDisplayList(false);
     buffer._landGeometry->setUseVertexBufferObjects(true);
-    buffer._waterGeometry->setUseDisplayList(false);
-    buffer._waterGeometry->setUseVertexBufferObjects(true);
     buffer._landGeode->runGenerators(buffer._landGeometry);
-    buffer._waterGeode->runGenerators(buffer._waterGeometry);
 
     // Tile-specific information for the shaders
     osg::StateSet *landStateSet = buffer._landGeode->getOrCreateStateSet();
-    osg::StateSet *waterStateSet = buffer._waterGeode->getOrCreateStateSet();
     osg::ref_ptr<osg::Uniform> level = new osg::Uniform("tile_level", _terrainTile->getTileID().level);
     landStateSet->addUniform(level);
-    waterStateSet->addUniform(level);
 
     // Determine the x and y texture scaling.  Has to be performed after we've generated all the vertices.
     // Because the earth is round, each tile is not a rectangle.  Apart from edge cases like the poles, the
@@ -1264,10 +1202,8 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     osg::ref_ptr<osg::Uniform> twu = new osg::Uniform("fg_tileWidth", buffer._width);
     landStateSet->addUniform(twu);
-    waterStateSet->addUniform(twu);
     osg::ref_ptr<osg::Uniform> thu = new osg::Uniform("fg_tileHeight", buffer._height);
     landStateSet->addUniform(thu);
-    waterStateSet->addUniform(thu);
 
     // Force build of KD trees?
     if (osgDB::Registry::instance()->getBuildKdTreesHint()==osgDB::ReaderWriter::Options::BUILD_KDTREES &&
@@ -1278,7 +1214,6 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
         //OSG_NOTICE<<"osgTerrain::VPBTechnique::build kd tree"<<std::endl;
         osg::ref_ptr<osg::KdTreeBuilder> builder = osgDB::Registry::instance()->getKdTreeBuilder()->clone();
         buffer._landGeode->accept(*builder);
-        buffer._waterGeode->accept(*builder);
         //osg::Timer_t after = osg::Timer::instance()->tick();
         //OSG_NOTICE<<"KdTree build time "<<osg::Timer::instance()->delta_m(before, after)<<std::endl;
     }

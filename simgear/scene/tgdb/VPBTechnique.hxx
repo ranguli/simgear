@@ -118,9 +118,7 @@ class VPBTechnique : public TerrainTechnique
 
             osg::ref_ptr<osg::MatrixTransform>  _transform;
             osg::ref_ptr<EffectGeode>           _landGeode;
-            osg::ref_ptr<EffectGeode>           _waterGeode;
             osg::ref_ptr<osg::Geometry>         _landGeometry;
-            osg::ref_ptr<osg::Geometry>         _waterGeometry;
             float                               _width;
             float                               _height;
 
