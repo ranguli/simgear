@@ -81,8 +81,14 @@ protected:
                     const std::string& suffix = "",
                     const SGVec3d& def = SGVec3d::zeros() ) const;
 
-  void readRotationCenterAndAxis(osg::Node *rootNode, SGVec3d& center, SGVec3d& axis, simgear::SGTransientModelData &modelData) const;
-  const SGLineSegment<double>* setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, simgear::SGTransientModelData &modelData) const;
+  void readRotationCenterAndAxis(osg::Node* rootNode, SGVec3d& center, SGVec3d& axis,
+                                 simgear::SGTransientModelData& modelData,
+                                 const std::string& centerName = "center",
+                                 const std::string& axisName = "axis") const;
+
+  const SGLineSegment<double>* setCenterAndAxisFromObject(osg::Node* rootNode, SGVec3d& center, SGVec3d& axis,
+                                                          simgear::SGTransientModelData& modelData,
+                                                          const std::string& axisName = "axis") const;
 
   SGExpressiond* readOffsetValue(const char* tag_name) const;
 

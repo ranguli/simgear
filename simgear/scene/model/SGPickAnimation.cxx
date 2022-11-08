@@ -870,8 +870,8 @@ SGSliderAnimation::SGSliderAnimation(simgear::SGTransientModelData &modelData) :
     SGSharedPtr<SGExpressiond> value = read_value(modelData.getConfigNode(), modelData.getModelRoot(), "-m",
                                                   -SGLimitsd::max(), SGLimitsd::max());
     _animationValue = value->simplify();
-    
-    _axis = readTranslateAxis(modelData.getConfigNode());
+    SGVec3d garbage = SGVec3d::zeros();
+    readRotationCenterAndAxis(modelData.getNode(), garbage, _axis, modelData);
 }
 
 osg::Group*

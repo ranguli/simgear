@@ -43,6 +43,7 @@ class SGTrackToAnimation:
 
     osg::Group     *_target_group,
                    *_slave_group;
+    SGVec3d _node_center, _slave_center, _target_center, _lock_axis, _track_axis;
 
     void log(sgDebugPriority p, const std::string& msg) const;
 };

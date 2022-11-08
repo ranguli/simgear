@@ -750,22 +750,23 @@ protected:
  * This function will take action when axis has an object-name tag and the corresponding object
  * can be found within the hierarchy.
  */
-const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node *rootNode, SGVec3d& center, SGVec3d &axis, simgear::SGTransientModelData &modelData) const
+const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node* rootNode,
+                                                                     SGVec3d& center, SGVec3d& axis, simgear::SGTransientModelData& modelData,
+                                                                     const std::string& axisName) const
 {
     std::string axis_object_name = std::string();
     bool can_warn = true;
 
-    const SGPropertyNode* axisNode =_configNode->getNode("axis");
+    const SGPropertyNode* axisNode = _configNode->getNode(axisName);
 
     if (axisNode->hasValue("object-name")) {
         axis_object_name = axisNode->getStringValue("object-name");
-    }
-    else if (!axisNode) {
-        axis_object_name = _configNode->getStringValue("object-name") + std::string("-axis");
+    } else if (!axisNode) {
+        axis_object_name = _configNode->getStringValue("object-name") + std::string("-" + axisName);
         // for compatibility we will not warn if no axis object can be found when there was nothing 
         // specified - as the axis could just be the default at the origin
         // so if there is a [objectname]-axis use it, otherwise fallback to the previous behaviour
-        can_warn = false; 
+        can_warn = false;
     }
 
     if (!axis_object_name.empty())
@@ -866,32 +867,31 @@ const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node *
 }
 //------------------------------------------------------------------------------
 // factored out to share with SGKnobAnimation
-void SGAnimation::readRotationCenterAndAxis(osg::Node *_rootNode, SGVec3d& center,
-                                             SGVec3d& axis, simgear::SGTransientModelData &modelData) const
+void SGAnimation::readRotationCenterAndAxis(osg::Node* _rootNode, SGVec3d& center,
+                                            SGVec3d& axis, simgear::SGTransientModelData& modelData,
+                                            const std::string& centerName,
+                                            const std::string& axisName) const
 {
   center = SGVec3d::zeros();
-  if (setCenterAndAxisFromObject(_rootNode, center, axis, modelData))
-  {
+  if (setCenterAndAxisFromObject(_rootNode, center, axis, modelData, axisName)) {
       if (8 * SGLimitsd::min() < norm(axis))
           axis = normalize(axis);
       return;
   }
 
-  if( _configNode->hasValue("axis/x1-m") )
-  {
-    SGVec3d v1 = readVec3("axis", "1-m"), // axis/[xyz]1-m
-            v2 = readVec3("axis", "2-m"); // axis/[xyz]2-m
-    center = 0.5*(v1+v2);
-    axis = v2 - v1;
+  if (_configNode->hasValue(axisName + "/x1-m")) {
+      SGVec3d v1 = readVec3(axisName, "1-m"), // axis/[xyz]1-m
+          v2 = readVec3(axisName, "2-m");     // axis/[xyz]2-m
+      center = 0.5 * (v1 + v2);
+      axis = v2 - v1;
+  } else {
+      axis = readVec3(axisName);
   }
-  else
-  {
-    axis = readVec3("axis");
-  }
+
   if( 8 * SGLimitsd::min() < norm(axis) )
     axis = normalize(axis);
 
-  center = readVec3("center", "-m", center);
+  center = readVec3(centerName, "-m", center);
 }
 
 //------------------------------------------------------------------------------

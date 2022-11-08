@@ -146,11 +146,11 @@ class SGTrackToAnimation::UpdateCallback:
     {
       setName("SGTrackToAnimation::UpdateCallback");
 
-      _node_center = toOsg( anim->readVec3("center", "-m") );
-      _slave_center = toOsg( anim->readVec3("slave-center", "-m") );
-      _target_center = toOsg( anim->readVec3("target-center", "-m") );
-      _lock_axis = toOsg( anim->readVec3("lock-axis") );
-      _track_axis = toOsg( anim->readVec3("track-axis") );
+      _node_center = toOsg(anim->_node_center);
+      _slave_center = toOsg(anim->_slave_center);
+      _target_center = toOsg(anim->_target_center);
+      _lock_axis = toOsg(anim->_lock_axis);
+      _track_axis = toOsg(anim->_track_axis);
 
       if( _lock_axis.normalize() == 0.0 )
       {
@@ -392,6 +392,12 @@ SGTrackToAnimation::SGTrackToAnimation(simgear::SGTransientModelData &modelData)
     modelData.getNode()->accept(slave_finder);
     _slave_group = slave_finder.getGroup();
   }
+  SGVec3d garbage = SGVec3d::zeros();
+  readRotationCenterAndAxis(modelData.getNode(), _node_center, garbage, modelData, "center", "center");
+  readRotationCenterAndAxis(modelData.getNode(), _slave_center, garbage, modelData, "slave-center", "slave-center");
+  readRotationCenterAndAxis(modelData.getNode(), _target_center, garbage, modelData, "target-center", "target-center");
+  readRotationCenterAndAxis(modelData.getNode(), garbage, _lock_axis, modelData, "lock-axis", "lock-axis");
+  readRotationCenterAndAxis(modelData.getNode(), garbage, _track_axis, modelData, "track-axis", "track-axis");
 }
 
 //------------------------------------------------------------------------------
