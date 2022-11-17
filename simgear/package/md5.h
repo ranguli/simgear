@@ -23,6 +23,8 @@
 typedef unsigned char    u_int8_t;
 typedef unsigned int     u_int32_t;
 typedef unsigned __int64 u_int64_t;
+#else
+#include <sys/types.h>
 #endif
      
 #define	MD5_BLOCK_LENGTH		64
