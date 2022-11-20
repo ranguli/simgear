@@ -772,13 +772,10 @@ void VertexNormalGenerator::computeNormals()
 
 void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache)
 {
-    osg::Image* landclassImage = 0;
     osg::ref_ptr<Atlas> atlas;
 
     Terrain* terrain = _terrainTile->getTerrain();
     osgTerrain::Layer* elevationLayer = _terrainTile->getElevationLayer();
-    osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
-    if (colorLayer) landclassImage = colorLayer->getImage();
 
     // Determine the correct Effect for this, based on a material lookup taking into account
     // the lat/lon of the center.
@@ -1223,6 +1220,8 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
 {   
 
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
+    Atlas* atlas = matcache->getAtlas();
+
     bool photoScenery = false;
 
     if (propertyNode) {
@@ -1258,11 +1257,33 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         }
 
         if (found) {
+
+            osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
+
             // Set up the texture with wrapping of UV to reduce black edges at tile boundaries.
             osg::Texture2D* texture = SGLoadTexture2D(SGPath(orthotexture), _options, true, true);
-            osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
+            texture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+            texture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
             stateset->setTextureAttributeAndModes(0, texture);
+            stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
+
+            // Generate a water texture so we can use the water shader
+            osg::ref_ptr<osg::Texture2D> waterTexture  = new osg::Texture2D;
+            waterTexture->setImage(generateWaterTexture(atlas));
+            waterTexture->setMaxAnisotropy(16.0f);
+            waterTexture->setResizeNonPowerOfTwoHint(false);
+            waterTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+            waterTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+            waterTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+            waterTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+            // Overload of the coast texture
+            stateset->setTextureAttributeAndModes(7, waterTexture);
+
             stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, true));
+            stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer, masterLocator))))));
+            stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
+            atlas->addUniforms(stateset);
+
         } else {
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Unable to find " << orthotexture);
             photoScenery = false;
@@ -1271,8 +1292,6 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
 
     if (!photoScenery) {
         // Either photoscenery is turned off, or we failed to find a suitable texture.
-        SGMaterialLibPtr matlib  = _options->getMaterialLib();
-        if (!matlib) return;
 
         osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
         if (!colorLayer) return;
@@ -1280,20 +1299,12 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         osg::Image* image = colorLayer->getImage();
         if (!image || ! image->valid()) return;
 
-        // First time generating this texture, so process to change landclass IDs to texure indexes.
-        SGPropertyNode_ptr landEffectProp;
-
-        const SGGeod loc = computeCenterGeod(buffer, masterLocator);
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
-
-        Atlas* atlas = matcache->getAtlas();
-
         // Set the "g" color channel to an index into the atlas for the landclass.
         for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
             for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
                 osg::Vec4d c = image->getColor(s, t);
                 int i = int(std::round(c.x() * 255.0));
-                c.set(c.x(), (double) (atlas->getIndex(i) / 255.0), c.z(), c.w() );
+                c.set(c.x(), (double) (atlas->getIndex(i) / 255.0), atlas->isWater(i) ? 1.0 : 0.0, c.z());
                 image->setColor(c, s, t);
             }
         }
@@ -1313,21 +1324,21 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
         texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
-        osg::ref_ptr<osg::Texture2D> waterTexture  = new osg::Texture2D;
-        waterTexture->setImage(generateWaterTexture(buffer, masterLocator));
-        waterTexture->setMaxAnisotropy(16.0f);
-        waterTexture->setResizeNonPowerOfTwoHint(false);
-        waterTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        waterTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        waterTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-        waterTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+        osg::ref_ptr<osg::Texture2D> coastTexture  = new osg::Texture2D;
+        coastTexture->setImage(generateCoastTexture(buffer, masterLocator));
+        coastTexture->setMaxAnisotropy(16.0f);
+        coastTexture->setResizeNonPowerOfTwoHint(false);
+        coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(7, waterTexture, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(7, coastTexture, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
-        stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
+        stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer, masterLocator))))));
         stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
         atlas->addUniforms(stateset);
         //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
@@ -2030,8 +2041,32 @@ void VPBTechnique::generateAreaFeature(BufferData& buffer, Locator* masterLocato
     }
 }
 
-osg::Image* VPBTechnique::generateWaterTexture(BufferData& buffer, Locator* masterLocator) {
+osg::Image* VPBTechnique::generateWaterTexture(Atlas* atlas) {  
     osg::Image* waterTexture = new osg::Image();
+
+    osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
+    if (!colorLayer) return waterTexture;
+
+    osg::Image* image = colorLayer->getImage();
+    if (!image || ! image->valid()) return waterTexture;
+
+    waterTexture->allocateImage(image->s(), image->t(), 1, GL_RGBA, GL_FLOAT);
+
+    // Set the r color channel to indicate if this is water or not
+    for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
+        for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {            
+            osg::Vec4d c = image->getColor(s, t);
+            int i = int(std::round(c.x() * 255.0));
+            waterTexture->setColor(osg::Vec4f(atlas->isWater(i) ? 1.0f : 0.0f,0.0f,0.0f,0.0f), s, t);
+        }
+    }
+
+    return waterTexture;
+}
+
+
+osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* masterLocator) {
+    osg::Image* coastTexture = new osg::Image();
 
     unsigned int coast_features_lod_range = 4;
     unsigned int waterTextureSize = 2048;
@@ -2049,15 +2084,15 @@ osg::Image* VPBTechnique::generateWaterTexture(BufferData& buffer, Locator* mast
 
     if (tileLevel < coast_features_lod_range) {
         // Do not generate coasts for tiles too far away
-        waterTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        waterTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
-        return waterTexture;
+        coastTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+        return coastTexture;
     }
 
-    waterTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
+    coastTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
     for (unsigned int y = 0; y < waterTextureSize; ++y) {
         for (unsigned int x = 0; x < waterTextureSize; ++x) {
-            waterTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
+            coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
         }
     }
 
@@ -2068,7 +2103,7 @@ osg::Image* VPBTechnique::generateWaterTexture(BufferData& buffer, Locator* mast
     const SGBucket bucket = SGBucket(loc);
     auto coasts = std::find_if(_coastFeatureLists.begin(), _coastFeatureLists.end(), [bucket](BucketCoastlineBinList b){return (b.first == bucket);});
 
-    if (coasts == _coastFeatureLists.end()) return waterTexture;
+    if (coasts == _coastFeatureLists.end()) return coastTexture;
 
     // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
     osg::Vec3d up = world;
@@ -2088,13 +2123,13 @@ osg::Image* VPBTechnique::generateWaterTexture(BufferData& buffer, Locator* mast
                 if (clipped.size() > 1) {                    
                     // We need at least two points to render a line.
                     LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
-                    addCoastline(masterLocator, waterTexture, line, waterTextureSize, tileSize, coastWidth);
+                    addCoastline(masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
                 }
             }
         }
     }
 
-    return waterTexture;
+    return coastTexture;
 }
 
 // Update the color of a particular texture pixel, clipping to the texture and not over-writing a larger value.

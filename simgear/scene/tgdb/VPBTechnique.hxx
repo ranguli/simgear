@@ -167,7 +167,8 @@ class VPBTechnique : public TerrainTechnique
             unsigned int xsize,
             unsigned int ysize);
 
-        virtual osg::Image* generateWaterTexture(BufferData& buffer, Locator* masterLocator);
+        virtual osg::Image* generateCoastTexture(BufferData& buffer, Locator* masterLocator);
+        virtual osg::Image* generateWaterTexture(Atlas* atlas);
         virtual void addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
         virtual void updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y);
         virtual void writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy);
