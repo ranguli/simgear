@@ -645,14 +645,19 @@ void DefaultCachePolicy::addToCache(const string& fileName,
 // opts |= osgUtil::Optimizer::COPY_SHARED_NODES;
 // opts |= osgUtil::Optimizer::TESSELATE_GEOMETRY;
 // opts |= osgUtil::Optimizer::OPTIMIZE_TEXTURE_SETTINGS;
+//
+// There two significantly slow down reading of large disconnected .ac files (180k vertex - 30s)
+// for no apparent framerate benefit as modern graphics cards don't have a shared
+// vertex cache anymore:
+// opts |= osgUtil::Optimizer::VERTEX_POSTTRANSFORM
+// opts |= osgUtil::Optimizer::VERTEX_PRETRANSFORM
 
 OptimizeModelPolicy::OptimizeModelPolicy(const string& extension) :
     _osgOptions(Optimizer::SHARE_DUPLICATE_STATE
                 | Optimizer::MERGE_GEOMETRY
                 | Optimizer::FLATTEN_STATIC_TRANSFORMS
                 | Optimizer::INDEX_MESH
-                | Optimizer::VERTEX_POSTTRANSFORM
-                | Optimizer::VERTEX_PRETRANSFORM)
+    )
 {
 }
 
