@@ -1,4 +1,4 @@
-// tileentry.hxx -- routines to handle an individual scenery tile
+// ReaderWriterSTG.hxx -- routines to handle an individual scenery tile
 //
 // Written by Curtis Olson, started May 1998.
 //

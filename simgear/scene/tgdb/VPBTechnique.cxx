@@ -147,6 +147,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_writeBufferMutex);
 
+    auto start = std::chrono::system_clock::now();
     osg::ref_ptr<TerrainTile> tile = _terrainTile;
 
     osgTerrain::TileID tileID = tile->getTileID();
@@ -215,7 +216,8 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     _terrainTile->setDirtyMask(0);
 
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << dirtyMask);
+    std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << elapsed_seconds.count() << " seconds");
 }
 
 Locator* VPBTechnique::computeMasterLocator()

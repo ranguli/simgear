@@ -662,7 +662,11 @@ osg::Node* OptimizeModelPolicy::optimize(osg::Node* node,
                                          const bool compressTextures)
 {
     osgUtil::Optimizer optimizer;
+
+    auto start = std::chrono::system_clock::now();
     optimizer.optimize(node, _osgOptions);
+    std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
+    SG_LOG(SG_IO, SG_DEBUG, "Optimization of " << fileName << " took " << elapsed_seconds.count());
 
     // Make sure the data variance of sharable objects is set to
     // STATIC so that textures will be globally shared.
@@ -828,7 +832,6 @@ struct ACOptimizePolicy : public OptimizeModelPolicy {
     Node* optimize(Node* node, const string& fileName,
                    const Options* opt)
     {
-        SG_LOG(SG_IO, SG_DEBUG, "AC Optimizing Started " << fileName);
         ref_ptr<Node> optimized
             = OptimizeModelPolicy::optimize(node, fileName, opt);
         Group* group = dynamic_cast<Group*>(optimized.get());
@@ -852,7 +855,6 @@ struct ACOptimizePolicy : public OptimizeModelPolicy {
             optimized = instantiateEffects(optimized.get(), sgopt);
         }
 
-        SG_LOG(SG_IO, SG_DEBUG, "AC Optimizing Finished " << fileName);
         return optimized.release();
     }
 };
@@ -1016,7 +1018,6 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
         ref_ptr<Node> optimized = node;
 
         const SGReaderWriterOptions* sgopt = SGReaderWriterOptions::copyOrCreate(opt);
-        SG_LOG(SG_IO, SG_DEBUG, "OSG Optimizing Started " << fileName);
 
         if (fileName.find("ws_") != string::npos) {
             // Currently the only way we have to identify WS3.0 / VirtualPlanetBuilder files is by the filename
@@ -1030,10 +1031,6 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
                 terrain->setVerticalScale(features->getVPBVerticalScale());
                 terrain->setTerrainTechniquePrototype(new VPBTechnique(sgopt, fileName));
             }
-
-            // We don't want any textures compressed, as these contain landclass information that doesn't
-            // interpolate well.
-            optimized = OptimizeModelPolicy::optimize(optimized, fileName, opt, false);
         } else {
             optimized = OptimizeModelPolicy::optimize(optimized, fileName, opt, true);
         }
@@ -1058,7 +1055,6 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
             optimized = instantiateEffects(optimized.get(), sgopt);
         }
 
-        SG_LOG(SG_IO, SG_DEBUG, "OSG Optimizing Finished " << fileName);
         return optimized.release();
     }
 };
