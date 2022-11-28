@@ -125,13 +125,13 @@ double pc_norm();
 /**
  * Return a 32-bit random number from a noise map.
  */
-unsigned int pc_map_rand32(const int x, const int y, const int idx);
+unsigned int pc_map_rand32(const unsigned int x, const unsigned int y, const unsigned int idx);
 
 /**
  * Return a double precision floating point random number
  * between [0.0, 1.0) from a noise map.
  */
-double pc_map_rand(const int x, const int y, const int idx);
+double pc_map_rand(const unsigned int x, const unsigned int y, const unsigned int idx);
 
 /**
  * Return a double precision floating point random number
@@ -139,7 +139,7 @@ double pc_map_rand(const int x, const int y, const int idx);
  * average zero and standard deviation of one from a noise
  * map.
  */
-double pc_map_norm(const int x, const int y, const int idx);
+double pc_map_norm(const unsigned int x, const unsigned int y, const unsigned int idx);
 
 
 #ifdef __cplusplus
