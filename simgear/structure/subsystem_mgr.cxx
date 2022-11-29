@@ -1073,16 +1073,6 @@ SGSubsystemMgr::add(const char* subsystemClassId)
 }
 
 void
-SGSubsystemMgr::add(SGSubsystem *subsystem)
-{
-    const char *subsystemClassId = subsystem->subsystemClassId().c_str();
-    SG_LOG(SG_GENERAL, SG_DEBUG, "Adding subsystem " << subsystemClassId);
-    auto group = defaultGroupFor(subsystemClassId);
-    auto updateInterval = defaultUpdateIntervalFor(subsystemClassId);
-    get_group(group)->set_subsystem(subsystemClassId, subsystem, updateInterval);
-}
-
-void
 SGSubsystemMgr::add (const char * name, SGSubsystem * subsystem,
                      GroupType group, double min_time_sec)
 {
