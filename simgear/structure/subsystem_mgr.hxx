@@ -545,6 +545,8 @@ public:
 
     virtual void add(const char* subsystemClassId);
 
+    virtual void add(SGSubsystem *subsystem);
+
     virtual void add (const char * name,
                       SGSubsystem * subsystem,
                       GroupType group = GENERAL,
