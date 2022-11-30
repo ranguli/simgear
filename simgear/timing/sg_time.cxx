@@ -229,7 +229,7 @@ void SGTime::update( const SGGeod& location, time_t ct, long int warp )
 
 
 // Given lon/lat, update timezone information and local_offset
-void SGTime::updateLocal(const SGGeod& aLocation, const SGPath& root)
+bool SGTime::updateLocal(const SGGeod& aLocation, const SGPath& root)
 {
     SGGeod location(aLocation);
     if (!aLocation.isValid()) {
@@ -244,7 +244,7 @@ void SGTime::updateLocal(const SGGeod& aLocation, const SGPath& root)
         // Shuttle + Hubble, see this bug report:
         // https://sourceforge.net/p/flightgear/codetickets/2780/
         SG_LOG(SG_ENVIRONMENT, SG_ALERT, "SGTime::updateLocal: Timezone not found for location: " << location);
-        return;
+        return false;
     }
 
     description = nearestTz->getDescription();
@@ -269,7 +269,10 @@ void SGTime::updateLocal(const SGGeod& aLocation, const SGPath& root)
     //      << zonename << endl;
     } else {
       SG_LOG(SG_EVENT, SG_ALERT, "Timezone file not found: " << zs);
+      return false;
     }
+
+    return true;
 }
 
 
