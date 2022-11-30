@@ -22,8 +22,8 @@
 #include "from_nasal.hxx"
 #include "to_nasal.hxx"
 
+#include <simgear/std/type_traits.hxx>
 #include <simgear/structure/map.hxx>
-#include <boost/core/enable_if.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
 namespace nasal
@@ -107,8 +107,8 @@ namespace nasal
       template<class T, class Key>
       T get(const Key& name) const
       {
-        BOOST_STATIC_ASSERT(( boost::is_convertible<Key, naRef>::value
-                           || boost::is_convertible<Key, std::string>::value
+        static_assert(( std::is_convertible<Key, naRef>::value
+                           || std::is_convertible<Key, std::string>::value
                            ));
 
         return from_nasal<T>(_context, get(name));
@@ -126,8 +126,8 @@ namespace nasal
                              >::type
       get(const Key& name) const
       {
-        BOOST_STATIC_ASSERT(( boost::is_convertible<Key, naRef>::value
-                           || boost::is_convertible<Key, std::string>::value
+        static_assert(( std::is_convertible<Key, naRef>::value
+                           || std::is_convertible<Key, std::string>::value
                            ));
 
         return from_nasal_helper(_context, get(name), static_cast<Sig*>(0));
