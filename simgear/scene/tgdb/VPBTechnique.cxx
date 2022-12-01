@@ -1661,23 +1661,21 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
     const SGGeod loc = SGGeod::fromCart(toSG(world));
     const SGBucket bucket = SGBucket(loc);
     string material_name = "";
-    auto roads = std::find_if(_lineFeatureLists.begin(), _lineFeatureLists.end(), [bucket](BucketLineFeatureBinList b){return (b.first == bucket);});
+    for (auto roads = _lineFeatureLists.begin(); roads != _lineFeatureLists.end(); ++roads) {
+        auto r = *roads;
+        if (r.first != bucket) continue;
+        LineFeatureBinList roadBins = r.second;
 
-    if (roads == _lineFeatureLists.end()) return;
-
-    for (; roads != _lineFeatureLists.end(); ++roads) {
-        const LineFeatureBinList roadBins = roads->second;
-
-        for (auto rb = roadBins.begin(); rb != roadBins.end(); ++rb)
+        for (LineFeatureBinList::iterator rb = roadBins.begin(); rb != roadBins.end(); ++rb)
         {
-            if (material_name != rb->getMaterial()) {
+            if (material_name != (*rb)->getMaterial()) {
                 // Cache the material to reduce lookups.
-                mat = matcache->find(rb->getMaterial());
-                material_name = rb->getMaterial();
+                mat = matcache->find((*rb)->getMaterial());
+                material_name = (*rb)->getMaterial();
             }
 
             if (!mat) {
-                SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << rb->getMaterial() << " at " << loc << " " << bucket);
+                SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << (*rb)->getMaterial() << " at " << loc << " " << bucket);
                 continue;
             }    
 
@@ -1690,19 +1688,21 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             const double elevation_offset_m = mat->get_line_feature_offset_m();
 
             //  Generate a geometry for this set of roads.
-            osg::Vec3Array* v = new osg::Vec3Array;
-            osg::Vec2Array* t = new osg::Vec2Array;
-            osg::Vec3Array* n = new osg::Vec3Array;
-            osg::Vec4Array* c = new osg::Vec4Array;
-            osg::Vec3Array* lights = new osg::Vec3Array;
+            osg::ref_ptr<osg::Vec3Array> v = new osg::Vec3Array;
+            osg::ref_ptr<osg::Vec2Array> t = new osg::Vec2Array;
+            osg::ref_ptr<osg::Vec3Array> n = new osg::Vec3Array;
+            osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array;
+            osg::ref_ptr<osg::Vec3Array> lights = new osg::Vec3Array;
 
-            auto lineFeatures = rb->getLineFeatures();
+            auto lineFeatures = (*rb)->getLineFeatures();
 
             for (auto r = lineFeatures.begin(); r != lineFeatures.end(); ++r) {
                 if (r->_width > minWidth) generateLineFeature(buffer, masterLocator, *r, world, v, t, n, lights, x0, x1, ysize, light_edge_spacing, light_edge_height, light_edge_offset, elevation_offset_m);
             }
 
-            if (v->size() == 0) continue;
+            if (v->size() == 0) {
+                continue;
+            }
 
             c->push_back(osg::Vec4(1.0,1.0,1.0,1.0));
 
@@ -1912,19 +1912,17 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
     const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
     const SGGeod loc = SGGeod::fromCart(toSG(world));
     const SGBucket bucket = SGBucket(loc);
-    auto areas = std::find_if(_areaFeatureLists.begin(), _areaFeatureLists.end(), [bucket](BucketAreaFeatureBinList b){return (b.first == bucket);});
+    for (auto areas = _areaFeatureLists.begin(); areas != _areaFeatureLists.end(); ++areas) {
+        if (areas->first != bucket) continue;
 
-    if (areas == _areaFeatureLists.end()) return;
-
-    for (; areas != _areaFeatureLists.end(); ++areas) {
         const AreaFeatureBinList areaBins = areas->second;
 
         for (auto rb = areaBins.begin(); rb != areaBins.end(); ++rb)
         {
-            mat = matcache->find(rb->getMaterial());
+            mat = matcache->find((*rb)->getMaterial());
 
             if (!mat) {
-                SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << rb->getMaterial() << " at " << loc << " " << bucket);
+                SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << (*rb)->getMaterial() << " at " << loc << " " << bucket);
                 continue;
             }    
 
@@ -1946,7 +1944,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
             geometry->setUseDisplayList( false );
             geometry->setUseVertexBufferObjects( true );
 
-            auto areaFeatures = rb->getAreaFeatures();
+            auto areaFeatures = (*rb)->getAreaFeatures();
 
             for (auto r = areaFeatures.begin(); r != areaFeatures.end(); ++r) {
                 if (r->_area > minArea) generateAreaFeature(buffer, masterLocator, *r, world, geometry, v, t, n, xsize, ysize);
@@ -2103,22 +2101,19 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
     float tileSize = sqrt(buffer._width * buffer._width + buffer._height * buffer._height);
     const SGGeod loc = SGGeod::fromCart(toSG(world));
     const SGBucket bucket = SGBucket(loc);
-    auto coasts = std::find_if(_coastFeatureLists.begin(), _coastFeatureLists.end(), [bucket](BucketCoastlineBinList b){return (b.first == bucket);});
-
-    if (coasts == _coastFeatureLists.end()) return coastTexture;
-
     // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
     osg::Vec3d up = world;
     up.normalize();
 
     TileBounds tileBounds(masterLocator, up);
 
-    for (; coasts != _coastFeatureLists.end(); ++coasts) {
+    for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
+        if (coasts->first != bucket) continue;
         const CoastlineBinList coastBins = coasts->second;
 
         for (auto rb = coastBins.begin(); rb != coastBins.end(); ++rb)
         {
-            auto coastFeatures = rb->getCoastlines();
+            auto coastFeatures = (*rb)->getCoastlines();
 
             for (auto r = coastFeatures.begin(); r != coastFeatures.end(); ++r) {
                 auto clipped = tileBounds.clipToTile(r->_nodes);
@@ -2479,11 +2474,39 @@ void VPBTechnique::addCoastlineList(SGBucket bucket, CoastlineBinList coastline)
 void VPBTechnique::unloadFeatures(SGBucket bucket)
 {
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Erasing all features with entry " << bucket);
-    const std::lock_guard<std::mutex> lock(VPBTechnique::_lineFeatureLists_mutex); // Lock the _lineFeatureLists for this scope
-    // C++ 20...
-    //std::erase_if(_lineFeatureLists, [bucket](BucketLineFeatureBinList p) { return p.first == bucket; } );
-    //std::erase_if(_lineFeatureLists, [bucket](BucketAreaFeatureBinList p) { return p.first == bucket; } );
-    //std::erase_if(_coastFeatureLists, [bucket](BucketCoastlineBinList p) { return p.first == bucket; } );
+
+    {
+        const std::lock_guard<std::mutex> locklines(VPBTechnique::_lineFeatureLists_mutex); // Lock the _lineFeatureLists for this scope
+        for (auto lf = _lineFeatureLists.begin(); lf != _lineFeatureLists.end(); ++lf) {
+            if (lf->first == bucket) {
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Unloading  line feature for " << bucket);
+                auto linefeatureBinList = lf->second;
+                linefeatureBinList.clear();
+            }
+        }
+    }
+
+    {
+        const std::lock_guard<std::mutex> lockareas(VPBTechnique::_areaFeatureLists_mutex); // Lock the _areaFeatureLists for this scope
+        for (auto lf = _areaFeatureLists.begin(); lf != _areaFeatureLists.end(); ++lf) {
+            if (lf->first == bucket) {
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Unloading  area feature for " << bucket);
+                auto areafeatureBinList = lf->second;
+                areafeatureBinList.clear();
+            }
+        }
+    }
+
+    {
+        const std::lock_guard<std::mutex> lockcoasts(VPBTechnique::_coastFeatureLists_mutex); // Lock the _coastFeatureLists for this scope
+        for (auto lf = _coastFeatureLists.begin(); lf != _coastFeatureLists.end(); ++lf) {
+            if (lf->first == bucket) {
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Unloading  area feature for " << bucket);
+                auto coastfeatureBinList = lf->second;
+                coastfeatureBinList.clear();
+            }
+        }
+    }
 }
 
 

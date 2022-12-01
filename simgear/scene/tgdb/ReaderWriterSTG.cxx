@@ -786,7 +786,7 @@ struct ReaderWriterSTG::_ModelBin {
                 for (const auto& b : _lineFeatureListList) {
                     // add the lineFeatures to the list
                     const auto path = SGPath(b._filename);
-                    lineFeatures.push_back(LineFeatureBin(path, b._material));
+                    lineFeatures.push_back(new LineFeatureBin(path, b._material));
                 }
 
                 VPBTechnique::addLineFeatureList(bucket, lineFeatures);
@@ -799,7 +799,7 @@ struct ReaderWriterSTG::_ModelBin {
                 for (const auto& b : _areaFeatureListList) {
                     // add the lineFeatures to the list
                     const auto path = SGPath(b._filename);
-                    areaFeatures.push_back(AreaFeatureBin(path, b._material));
+                    areaFeatures.push_back(new AreaFeatureBin(path, b._material));
                 }
 
                 VPBTechnique::addAreaFeatureList(bucket, areaFeatures);
@@ -812,7 +812,7 @@ struct ReaderWriterSTG::_ModelBin {
                 for (const auto& b : _coastFeatureListList) {
                     // add the lineFeatures to the list
                     const auto path = SGPath(b._filename);
-                    coastFeatures.push_back(CoastlineBin(path));
+                    coastFeatures.push_back(new CoastlineBin(path));
                 }
 
                 VPBTechnique::addCoastlineList(bucket, coastFeatures);

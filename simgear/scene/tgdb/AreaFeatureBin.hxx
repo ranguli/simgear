@@ -33,7 +33,7 @@
 
 namespace simgear
 {
-class AreaFeatureBin {
+class AreaFeatureBin : public osg::Referenced {
 public:
     AreaFeatureBin() = default;
     AreaFeatureBin(const SGPath& absoluteFileName, const std::string material);
@@ -73,7 +73,7 @@ private:
     const std::string _material;
 };
 
-typedef std::list<AreaFeatureBin> AreaFeatureBinList;
+typedef std::list<osg::ref_ptr<AreaFeatureBin>> AreaFeatureBinList;
 
 }
 

@@ -33,7 +33,7 @@
 
 namespace simgear
 {
-class LineFeatureBin {
+class LineFeatureBin : public osg::Referenced {
 public:
     LineFeatureBin() = default;
     LineFeatureBin(const SGPath& absoluteFileName, const std::string material);
@@ -73,7 +73,7 @@ private:
     const std::string _material;
 };
 
-typedef std::list<LineFeatureBin> LineFeatureBinList;
+typedef std::list<osg::ref_ptr<LineFeatureBin>> LineFeatureBinList;
 
 }
 

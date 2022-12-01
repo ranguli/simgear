@@ -33,7 +33,7 @@
 
 namespace simgear
 {
-class CoastlineBin {
+class CoastlineBin : public osg::Referenced {
 public:
     CoastlineBin() = default;
     CoastlineBin(const SGPath& absoluteFileName);
@@ -62,7 +62,7 @@ private:
     CoastlineList _coastFeatureList;
 };
 
-typedef std::list<CoastlineBin> CoastlineBinList;
+typedef std::list<osg::ref_ptr<CoastlineBin>> CoastlineBinList;
 
 }
 
