@@ -154,10 +154,9 @@ SGLightFactory::getLightDrawable(const SGLightBin::Light& light)
 osg::Drawable*
 SGLightFactory::getLightDrawable(const SGDirectionalLightBin::Light& light, bool useTriangles)
 {
-  osg::Vec3Array* vertices = new osg::Vec3Array;
-  osg::Vec4Array* colors = new osg::Vec4Array;
-
   if (useTriangles) {
+    osg::Vec3Array* vertices = new osg::Vec3Array(3);
+    osg::Vec4Array* colors = new osg::Vec4Array(3);
     SGVec4f visibleColor(light.color);
     SGVec4f invisibleColor(visibleColor[0], visibleColor[1],
                            visibleColor[2], 0);
