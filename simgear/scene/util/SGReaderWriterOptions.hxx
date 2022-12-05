@@ -100,9 +100,9 @@ public:
                                                                                    _sceneryPathSuffixes(options._sceneryPathSuffixes),
                                                                                    _autoTooltipsMaster(options._autoTooltipsMaster),
                                                                                    _autoTooltipsMasterMax(options._autoTooltipsMasterMax),
-                                                                                   _LoadOriginHint(ORIGIN_MODEL),
+                                                                                   _LoadOriginHint(options._LoadOriginHint),
                                                                                    _errorContext(options._errorContext),
-                                                                                   _vertexOrderXYZ(false)
+                                                                                   _vertexOrderXYZ(options._vertexOrderXYZ)
     { }
 
     META_Object(simgear, SGReaderWriterOptions);
