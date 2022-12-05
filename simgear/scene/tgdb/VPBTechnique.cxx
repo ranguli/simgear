@@ -1607,7 +1607,7 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, os
                 const osg::Vec3 vp = v_x * pointInTriangle.x() + v_y * pointInTriangle.y() + v_0;
                 const osg::Vec3 upperPoint = vp + up * 100;
                 const osg::Vec3 lowerPoint = vp - up * 100;
-                if (checkAgainstRandomObjectsConstraints(_randomObjectsConstraintGroup, lowerPoint, upperPoint))
+                if (checkAgainstRandomObjectsConstraints(buffer, lowerPoint, upperPoint))
                     continue;
 
                 const osg::Matrixd localToGeocentricTransform = buffer._transform->getMatrix();
@@ -1655,6 +1655,8 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
     Atlas* atlas = matcache->getAtlas();
     SGMaterial* mat = 0;
 
+    if (! buffer._lineFeatures) buffer._lineFeatures = new osg::Group();
+
     // Get all appropriate roads.  We assume that the VPB terrain tile is smaller than a Bucket size.
     LightBin lightbin;
     const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
@@ -1688,11 +1690,11 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             const double elevation_offset_m = mat->get_line_feature_offset_m();
 
             //  Generate a geometry for this set of roads.
-            osg::ref_ptr<osg::Vec3Array> v = new osg::Vec3Array;
-            osg::ref_ptr<osg::Vec2Array> t = new osg::Vec2Array;
-            osg::ref_ptr<osg::Vec3Array> n = new osg::Vec3Array;
-            osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array;
-            osg::ref_ptr<osg::Vec3Array> lights = new osg::Vec3Array;
+            osg::Vec3Array* v = new osg::Vec3Array;
+            osg::Vec2Array* t = new osg::Vec2Array;
+            osg::Vec3Array* n = new osg::Vec3Array;
+            osg::Vec4Array* c = new osg::Vec4Array(1);
+            osg::Vec3Array* lights = new osg::Vec3Array;
 
             auto lineFeatures = (*rb)->getLineFeatures();
 
@@ -1731,8 +1733,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
             atlas->addUniforms(stateset);
 
-            buffer._transform->addChild(geode);
-            addRandomObjectsConstraint(geode);
+            buffer._lineFeatures->addChild(geode);
 
             if (lights->size() > 0) {
                 const double size = mat->get_light_edge_size_cm();
@@ -1749,6 +1750,11 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
                     [&, size, intensity, color, direction, horiz, vertical] (osg::Vec3f p) { lightbin.insert(toSG(p), size, intensity, 1, color, direction, horiz, vertical); } );
             }
         }
+    }
+
+    if (buffer._lineFeatures->getNumChildren() > 0) {
+        // We have some line features, so add them
+        buffer._transform->addChild(buffer._lineFeatures.get());
     }
 
     if (lightbin.getNumLights() > 0) buffer._transform->addChild(createLights(lightbin, osg::Matrix::identity(), _options));
@@ -1933,7 +1939,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
             osg::Vec3Array* v = new osg::Vec3Array;
             osg::Vec2Array* t = new osg::Vec2Array;
             osg::Vec3Array* n = new osg::Vec3Array;
-            osg::Vec4Array* c = new osg::Vec4Array;
+            osg::Vec4Array* c = new osg::Vec4Array(1);
 
             osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
             geometry->setVertexArray(v);
@@ -2399,35 +2405,17 @@ bool VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3
 }
 
 
-// Add an osg object representing a contraint on the terrain mesh. The generated
-// terrain mesh will not include any random objects intersecting with the
-// constraint model.
-void VPBTechnique::addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint)
-{ 
-    _randomObjectsConstraintGroup->addChild(constraint.get());
-}
-
-bool VPBTechnique::checkAgainstRandomObjectsConstraints(
-    osg::ref_ptr<osg::Group> constraintGroup, osg::Vec3d origin,
-    osg::Vec3d vertex)
+bool VPBTechnique::checkAgainstRandomObjectsConstraints(BufferData& buffer, osg::Vec3d origin, osg::Vec3d vertex)
 {
-    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
-    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
-    osgUtil::IntersectionVisitor visitor(intersector.get());
-    constraintGroup->accept(visitor);
-    return intersector->containsIntersections();
-}
-
-// Remove a previously added constraint.  E.g on model unload.
-void VPBTechnique::removeRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint)
-{ 
-    _randomObjectsConstraintGroup->removeChild(constraint.get());
-}
-
-// Remove all the constraints, which will still be referenced by the terrain tile itself.
-void VPBTechnique::clearRandomObjectsConstraints()
-{ 
-    _randomObjectsConstraintGroup->removeChildren(0, _randomObjectsConstraintGroup->getNumChildren());
+    if (buffer._lineFeatures) {
+        osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
+        intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
+        osgUtil::IntersectionVisitor visitor(intersector.get());
+        buffer._lineFeatures->accept(visitor);
+        return intersector->containsIntersections();
+    } else {
+        return false;
+    }
 }
 
 void VPBTechnique::clearConstraints()

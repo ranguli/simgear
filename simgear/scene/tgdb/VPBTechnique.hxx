@@ -114,11 +114,13 @@ class VPBTechnique : public TerrainTechnique
         class BufferData : public osg::Referenced
         {
         public:
-            BufferData() {}
+            BufferData() : _transform(0), _landGeode(0), _landGeometry(0), _lineFeatures(0), _width(0.0), _height(0.0)            
+            {}
 
             osg::ref_ptr<osg::MatrixTransform>  _transform;
             osg::ref_ptr<EffectGeode>           _landGeode;
             osg::ref_ptr<osg::Geometry>         _landGeometry;
+            osg::ref_ptr<osg::Group>            _lineFeatures;
             float                               _width;
             float                               _height;
 
@@ -175,16 +177,10 @@ class VPBTechnique : public TerrainTechnique
 
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up);
 
-        // Random Objects constraints ensure that random objects like trees,
-        // lights, buildings etc do not appear on roads. Unlike the elevation constraints,
-        // we only use these internally and during generation of this particular tile.
-        virtual void addRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
-        virtual void removeRandomObjectsConstraint(osg::ref_ptr<osg::Node> constraint);
         // Check a given vertex against any constraints  E.g. to ensure we
         // don't get objects like trees sprouting from roads or runways.
-        bool checkAgainstRandomObjectsConstraints(osg::ref_ptr<osg::Group> constraintGroup,
+        bool checkAgainstRandomObjectsConstraints(BufferData& buffer, 
                                                   osg::Vec3d origin, osg::Vec3d vertex);
-        virtual void clearRandomObjectsConstraints();
 
         OpenThreads::Mutex                  _writeBufferMutex;
         osg::ref_ptr<BufferData>            _currentBufferData;
@@ -202,7 +198,6 @@ class VPBTechnique : public TerrainTechnique
 
         inline static osg::ref_ptr<osg::Group>  _elevationConstraintGroup = new osg::Group();
         inline static std::mutex _elevationConstraintMutex;  // protects the _elevationConstraintGroup;
-
 
         typedef std::pair<SGBucket, LineFeatureBinList> BucketLineFeatureBinList;
         typedef std::pair<SGBucket, AreaFeatureBinList> BucketAreaFeatureBinList;
