@@ -311,10 +311,7 @@ namespace simgear {
                 }
             }
 
-            bool success = ImageUtils::copyAsSubImage(sub_image, composite_image, s_offset, t_offset);
-            if (!success) {
-                SG_LOG(SG_OSG, SG_ALERT, "Failed to copy part of composite orthophoto. Part of the image on the aiport may be missing.");
-            }
+            composite_image->copySubImage(s_offset, t_offset, 0, sub_image);
         }
 
         int max_texture_size = SGSceneFeatures::instance()->getMaxTextureSize();
