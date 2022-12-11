@@ -50,7 +50,7 @@ public:
 private:
     unsigned int _interval;
     std::atomic<unsigned int> _timer;
-    std::atomic<bool> _running;
+    std::atomic<int> _running;
     std::thread _thread;
 
     void loop()

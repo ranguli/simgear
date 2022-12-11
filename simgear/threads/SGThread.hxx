@@ -171,10 +171,10 @@ private:
     bool _terminated;
     int last_await_time;
 
-    std::atomic<bool> dataReady;
-    std::atomic<bool> complete;
-    std::atomic<bool> process_ran;
-    std::atomic<bool> process_running;
+    std::atomic<int> dataReady;
+    std::atomic<int> complete;
+    std::atomic<int> process_ran;
+    std::atomic<int> process_running;
 
 public:
     SGExclusiveThread();
