@@ -1022,7 +1022,7 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
     {
         ref_ptr<Node> optimized = node;
 
-        const SGReaderWriterOptions* sgopt = SGReaderWriterOptions::copyOrCreate(opt);
+        osg::ref_ptr<simgear::SGReaderWriterOptions> sgopt = SGReaderWriterOptions::copyOrCreate(opt);
 
         if (fileName.find("ws_") != string::npos) {
             // Currently the only way we have to identify WS3.0 / VirtualPlanetBuilder files is by the filename
@@ -1093,7 +1093,7 @@ typedef ModelRegistryCallback<IVEProcessPolicy, DefaultCachePolicy,
     OSGSubstitutePolicy, BuildLeafBVHPolicy>
     IVECallback;
 
-typedef ModelRegistryCallback<IVEProcessPolicy, DefaultCachePolicy,
+typedef ModelRegistryCallback<IVEProcessPolicy, NoCachePolicy,
     OSGOptimizePolicy,
     OSGSubstitutePolicy, BuildLeafBVHPolicy>
     OSGCallback;
