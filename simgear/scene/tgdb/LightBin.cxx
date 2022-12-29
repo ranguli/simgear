@@ -80,7 +80,9 @@ double LightBin::getAverageIntensity() const
     return _aggregated_intensity / getNumLights();
 }
 
-LightBin::LightBin(const SGPath& absoluteFileName) {
+LightBin::LightBin(const SGPath& absoluteFileName) :
+    _aggregated_size(0.0), _aggregated_intensity(0.0)  
+{ 
     if (!absoluteFileName.exists()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Light list file " << absoluteFileName << " does not exist.");
         return;

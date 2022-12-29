@@ -193,6 +193,8 @@ Effect* makeEffect(SGPropertyNode* prop,
             key.unmerged = prop;
             if (options) {
                 key.paths = options->getDatabasePathList();
+            } else {
+                key.paths = osgDB::FilePathList();
             }
             Effect::Cache* cache = 0;
             Effect::Cache::iterator itr;
