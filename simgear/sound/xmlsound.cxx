@@ -357,7 +357,7 @@ SGXmlSound::update (double dt)
        }
    }
 
-   if (!condition || _sample->test_out_of_range())
+   if (!condition)
    {
        if ((_mode != SGXmlSound::IN_TRANSIT) || (_stopping > MAX_TRANSIT_TIME))
        {
@@ -376,6 +376,22 @@ SGXmlSound::update (double dt)
        }
 
        return;
+   }
+
+   if (_sample->test_out_of_range())
+   {
+       // When out of range, sample is not played, but logic
+       // (playing condition, _dt_*) is updated as if we were playing it.
+       //
+       // Exception: for mode ONCE, sample immediately finishes when going out of range
+       // (even if the sample is long, you can not go out of range, then back in range to hear the end of it).
+
+       if (_sample->is_playing()) {
+           SG_LOG(SG_SOUND, SG_DEBUG, "Stopping audio after " << _dt_play
+                  << " sec: " << _name << " (out of range)");
+
+           _sample->stop();
+       }
    }
 
    //
@@ -408,19 +424,35 @@ SGXmlSound::update (double dt)
    //
    if (!_active) {
 
-      if (_mode == SGXmlSound::ONCE)
-         _sample->play(false);
+      if (!_sample->test_out_of_range()) {
+          if (_mode == SGXmlSound::ONCE)
+             _sample->play_once();
+          else
+             _sample->play_looped();
 
-      else
-         _sample->play(true);
-
-      SG_LOG(SG_SOUND, SG_DEBUG, "Playing audio after " << _dt_stop
-                                   << " sec: " << _name);
-      SG_LOG(SG_SOUND, SG_DEBUG,
-                         "Playing " << ((_mode == ONCE) ? "once" : "looped"));
+          SG_LOG(SG_SOUND, SG_DEBUG, "Playing audio after " << _dt_stop
+                                       << " sec: " << _name);
+          SG_LOG(SG_SOUND, SG_DEBUG, "Playing " << ((_mode == ONCE) ? "once" : "looped"));
+      }
 
       _active = true;
       _dt_stop = 0.0;
+   }
+
+   // Remark: at this point of the function, _active is always true
+   // The sample might not be playing if
+   // - it was played once and stopped, or
+   // - it went out of range
+
+   //
+   // If a looped sample stopped playing but is still active,
+   // it can only be because it went out of range. If needed, restart it.
+   //
+   if (!_sample->is_playing() && _mode != SGXmlSound::ONCE && !_sample->test_out_of_range())
+   {
+       _sample->play_looped();
+
+       SG_LOG(SG_SOUND, SG_DEBUG, "Restarting sample (was out of range): " << _name);
    }
 
    //
