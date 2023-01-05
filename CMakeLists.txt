@@ -313,7 +313,9 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 if (CLANG)
     # Boost redeclares class members
-    set(WARNING_FLAGS_CXX "-Wall -fPIC -Wno-overloaded-virtual -Wno-redeclared-class-member")
+    # OSG doesn't use override but we subclass from it, so we will
+    # have inconsistent overrides until it's fixed
+    set(WARNING_FLAGS_CXX "-Wall -fPIC -Wno-overloaded-virtual -Wno-redeclared-class-member -Wno-inconsistent-missing-override")
     set(WARNING_FLAGS_C   "-Wall -fPIC")
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
     # fix Boost compilation :(
