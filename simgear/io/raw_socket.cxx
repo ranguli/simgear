@@ -322,10 +322,10 @@ const char* IPAddress::getHost () const
     
   static char buf [32];
 	long x = ntohl(addr->sin_addr.s_addr);
-	sprintf(buf, "%d.%d.%d.%d",
-		(int) (x>>24) & 0xff, (int) (x>>16) & 0xff,
-		(int) (x>> 8) & 0xff, (int) (x>> 0) & 0xff );
-  return buf;
+    snprintf(buf, 32, "%d.%d.%d.%d",
+             (int)(x >> 24) & 0xff, (int)(x >> 16) & 0xff,
+             (int)(x >> 8) & 0xff, (int)(x >> 0) & 0xff);
+    return buf;
 }
 
 unsigned int IPAddress::getIP () const

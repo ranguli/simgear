@@ -1649,7 +1649,7 @@ struct SGPropertyNodeImpl
             case props::STRING:
             case props::UNSPECIFIED: {
                 char buf[128];
-                sprintf(buf, "%d", value);
+                snprintf(buf, 128, "%d", value);
                 result = set_string(exclusive, node, buf);
                 break;
             }
@@ -1705,7 +1705,7 @@ struct SGPropertyNodeImpl
             case props::STRING:
             case props::UNSPECIFIED: {
                 char buf[128];
-                sprintf(buf, "%ld", value);
+                snprintf(buf, 128, "%ld", value);
                 result = set_string(exclusive, node, buf);
                 break;
             }
@@ -1761,7 +1761,7 @@ struct SGPropertyNodeImpl
             case props::STRING:
             case props::UNSPECIFIED: {
                 char buf[128];
-                sprintf(buf, "%f", value);
+                snprintf(buf, 128, "%f", value);
                 result = set_string(exclusive, node, buf);
                 break;
             }
@@ -1817,7 +1817,7 @@ struct SGPropertyNodeImpl
             case props::STRING:
             case props::UNSPECIFIED: {
                 char buf[128];
-                sprintf(buf, "%f", value);
+                snprintf(buf, 128, "%f", value);
                 result = set_string(exclusive, node, buf);
                 break;
             }
