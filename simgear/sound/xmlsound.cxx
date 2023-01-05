@@ -337,31 +337,27 @@ SGXmlSound::init( SGPropertyNode *root,
 void
 SGXmlSound::update (double dt)
 {
-   double curr_value = 0.0;
-
    //
-   // If the state changes to false, stop playing.
+   // Sound trigger condition:
+   // - if a condition is defined, test it.
+   // - for mode IN_TRANSIT, check that the property changed
+   // - otherwise just check the property
    //
-   if (_property)
-       curr_value = _property->getDoubleValue();
+   bool condition = false;
+   if (_condition)
+       condition = _condition->test();
+   else if (_property)
+   {
+       if (_mode == SGXmlSound::IN_TRANSIT) {
+           double curr_value = _property->getDoubleValue();
+           condition = (curr_value != _prev_value);
+           _prev_value = curr_value;
+       } else {
+           condition = _property->getBoolValue();
+       }
+   }
 
-   // If a condition is defined, test whether it is FALSE,
-   // else
-   //   if a property is defined then test if it's value is FALSE
-   //      or if the mode is IN_TRANSIT then
-   //            test whether the current value matches the previous value,
-   // else
-   //   check if out of range.
-   if ( 							// Lisp, anyone?
-       (_condition && !_condition->test()) ||
-       (!_condition && _property &&
-        (
-         !curr_value ||
-         ( (_mode == SGXmlSound::IN_TRANSIT) && (curr_value == _prev_value) )
-         )
-        ) ||
-        _sample->test_out_of_range()
-       )
+   if (!condition || _sample->test_out_of_range())
    {
        if ((_mode != SGXmlSound::IN_TRANSIT) || (_stopping > MAX_TRANSIT_TIME))
        {
@@ -401,7 +397,6 @@ SGXmlSound::update (double dt)
       // clear the delay timer.
       //
       _dt_play += dt;
-      _prev_value = curr_value;
       _stopping = 0.0;
    }
 
