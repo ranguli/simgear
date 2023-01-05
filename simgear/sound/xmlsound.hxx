@@ -119,6 +119,16 @@ public:
   virtual void update (double dt);
 
   /**
+   * Compute sample volume
+   */
+  double volume();
+
+  /**
+   * Compute sample pitch
+   */
+  double pitch();
+
+  /**
    * Start taking action on the pre-defined events.
    */
   void start() {

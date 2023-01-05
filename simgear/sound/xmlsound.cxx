@@ -404,15 +404,43 @@ SGXmlSound::update (double dt)
       return;
 
    //
-   // Update the volume
+   // Do we need to start playing the sample?
    //
-   int i;
+   if (!_active) {
+
+      if (_mode == SGXmlSound::ONCE)
+         _sample->play(false);
+
+      else
+         _sample->play(true);
+
+      SG_LOG(SG_SOUND, SG_DEBUG, "Playing audio after " << _dt_stop
+                                   << " sec: " << _name);
+      SG_LOG(SG_SOUND, SG_DEBUG,
+                         "Playing " << ((_mode == ONCE) ? "once" : "looped"));
+
+      _active = true;
+      _dt_stop = 0.0;
+   }
+
+   //
+   // Change sample state
+   //
+   if (_sample->is_playing())
+   {
+       _sample->set_volume(volume());
+       _sample->set_pitch(pitch());
+   }
+}
+
+double SGXmlSound::volume()
+{
    int max = _volume.size();
    double volume = 1.0;
    double volume_offset = 0.0;
    bool expr = false;
 
-   for(i = 0; i < max; i++) {
+   for(int i = 0; i < max; i++) {
       double v = 1.0;
 
       if (_volume[i].expr) {
@@ -457,16 +485,25 @@ SGXmlSound::update (double dt)
           }
       }
    }
-   
-   //
-   // Update the pitch
-   //
-   max = _pitch.size();
+
+   double vol = volume_offset + volume;
+   if (vol > 1.0) {
+      SG_LOG(SG_SOUND, SG_DEBUG, "Sound volume too large for '"
+              << _name << "':  " << vol << "  ->  clipping to 1.0");
+      vol = 1.0;
+   }
+
+   return vol;
+}
+
+double SGXmlSound::pitch()
+{
+   int max = _pitch.size();
    double pitch = 1.0;
    double pitch_offset = 0.0;
+   bool expr = false;
 
-   expr = false;
-   for(i = 0; i < max; i++) {
+   for(int i = 0; i < max; i++) {
       double p = 1.0;
 
       if (_pitch[i].expr) {
@@ -506,37 +543,5 @@ SGXmlSound::update (double dt)
       }
    }
 
-   //
-   // Change sample state
-   //
-
-   double vol = volume_offset + volume;
-   if (vol > 1.0) {
-      SG_LOG(SG_SOUND, SG_DEBUG, "Sound volume too large for '"
-              << _name << "':  " << vol << "  ->  clipping to 1.0");
-      vol = 1.0;
-   }
-   _sample->set_volume(vol);
-   _sample->set_pitch( pitch_offset + pitch );
-
-
-   //
-   // Do we need to start playing the sample?
-   //
-   if (!_active) {
-
-      if (_mode == SGXmlSound::ONCE)
-         _sample->play(false);
-
-      else
-         _sample->play(true);
-
-      SG_LOG(SG_SOUND, SG_DEBUG, "Playing audio after " << _dt_stop
-                                   << " sec: " << _name);
-      SG_LOG(SG_SOUND, SG_DEBUG,
-                         "Playing " << ((_mode == ONCE) ? "once" : "looped"));
-
-      _active = true;
-      _dt_stop = 0.0;
-   }
+   return pitch_offset + pitch;
 }
