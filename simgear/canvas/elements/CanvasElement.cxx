@@ -400,6 +400,8 @@ namespace canvas
       // TODO log warning?
       return pos;
 
+    // this looks heavy, but both updateMatrix and getInverseMatrix
+    // use dirty flags to cache the matrices, so it's actually efficient
     updateMatrix();
     const osg::Matrix& m = _scene_group->getInverseMatrix();
     return osg::Vec2f
@@ -407,6 +409,51 @@ namespace canvas
       m(0, 0) * pos[0] + m(1, 0) * pos[1] + m(3, 0),
       m(0, 1) * pos[0] + m(1, 1) * pos[1] + m(3, 1)
     );
+  }
+
+
+  //----------------------------------------------------------------------------
+  osg::Vec2f Element::posFromLocal(const osg::Vec2f& pos) const
+  {
+    if (!_scene_group) {
+      // TODO log warning?
+      return pos;
+    }
+
+    updateMatrix();
+    const osg::Matrix& m = _scene_group->getMatrix();
+    return osg::Vec2f(
+        m(0, 0) * pos[0] + m(1, 0) * pos[1] + m(3, 0),
+        m(0, 1) * pos[0] + m(1, 1) * pos[1] + m(3, 1));
+  }
+
+
+  //----------------------------------------------------------------------------
+
+  osg::Vec2f Element::canvasToLocal(const osg::Vec2f& pos) const
+  {
+    ElementPtr parent = getParent();
+    if (parent) {
+      return posToLocal(parent->canvasToLocal(pos));
+    }
+
+    // no parent, we are the root group presumably. Maybe this is overkill
+    // because we can assume no tranformation on the root group but I'm not
+    // certain of that.
+    return posToLocal(pos);
+  }
+
+  //----------------------------------------------------------------------------
+
+  osg::Vec2f Element::localToCanvas(const osg::Vec2f& pos) const
+  {
+    const auto ppos = posFromLocal(pos);
+    ElementPtr parent = getParent();
+    if (parent) {
+      return parent->localToCanvas(ppos);
+    }
+
+    return ppos;
   }
 
   //----------------------------------------------------------------------------

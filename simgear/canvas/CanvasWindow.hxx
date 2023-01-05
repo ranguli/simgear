@@ -99,7 +99,9 @@ namespace canvas
 
       bool handleEvent(const EventPtr& event) override;
 
-    protected:
+      SGVec2<float> toScreenPosition(const osg::Vec2f& pos = {}) const;
+
+  protected:
 
       enum Attributes
       {
@@ -125,6 +127,10 @@ namespace canvas
                           _resize_status;
 
       CSSBorder _decoration_border;
+
+      /// @brief offset from the Windows position to the content canvas
+      /// This is zero when no decoration is set.
+      SGVec2<float> _contentOffset;
 
       void parseDecorationBorder(const std::string& str);
       void updateDecoration();

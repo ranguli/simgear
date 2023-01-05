@@ -151,6 +151,26 @@ namespace canvas
        */
       osg::Vec2f posToLocal(const osg::Vec2f& pos) const;
 
+      /**
+       * @brief transform position from local coordinates
+       * 
+       * @param pos - in coordinates of this element
+       * @return osg::Vec2f  in coordinates of parent Group
+       */
+      osg::Vec2f posFromLocal(const osg::Vec2f& pos) const;
+
+      /**
+       * Transform from coordinates of our Canvas, to this
+       * Element's local coordinates
+      */
+      osg::Vec2f canvasToLocal(const osg::Vec2f& pos) const;
+
+      /**
+       * Transform from our local coordinates into those
+       * of our Canvas
+      */
+      osg::Vec2f localToCanvas(const osg::Vec2f& pos) const;
+
       void childAdded(SGPropertyNode* parent, SGPropertyNode* child) override;
       void childRemoved(SGPropertyNode* parent, SGPropertyNode* child) override;
       void valueChanged(SGPropertyNode* child) override;

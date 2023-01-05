@@ -107,6 +107,15 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
+
+  SGVec2<float> Window::toScreenPosition(const osg::Vec2f& pos) const
+  {
+    const auto windowPos = getPosition();
+    return windowPos + toSG(pos) + _contentOffset;
+  }
+
+
+  //----------------------------------------------------------------------------
   const SGRect<float> Window::getScreenRegion() const
   {
     return getPosition() + getRegion();
@@ -254,7 +263,7 @@ namespace canvas
       setSrcCanvas(content);
       set<int>("size[0]", content_view.width());
       set<int>("size[1]", content_view.height());
-
+      _contentOffset = {};
       _image_content.reset();
       _image_shadow.reset();
       if( _canvas_decoration )
@@ -309,6 +318,8 @@ namespace canvas
     _canvas_decoration->setSizeY( outer_height );
     _canvas_decoration->setViewWidth( outer_width );
     _canvas_decoration->setViewHeight( outer_height );
+
+    _contentOffset = SGVec2f{border.l, border.t};
 
     set<int>("size[0]", outer_width - shad2);
     set<int>("size[1]", outer_height - shad2);
