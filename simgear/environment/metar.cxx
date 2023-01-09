@@ -432,13 +432,13 @@ std::string SGMetar::getDescription(int tabstops) const
 		if ((s = rwy.getExtentString()) && strlen(s))
 			surface.push_back(s);
 		if ((d = rwy.getDepth()) != NaN) {
-			sprintf(buf, "%.1lf mm", d * 1000.0);
+			snprintf(buf, 256, "%.1lf mm", d * 1000.0);
 			surface.push_back(buf);
 		}
 		if ((s = rwy.getFrictionString()) && strlen(s))
 			surface.push_back(s);
 		if ((d = rwy.getFriction()) != NaN) {
-			sprintf(buf, "friction: %.2lf", d);
+			snprintf(buf, 256, "friction: %.2lf", d);
 			surface.push_back(buf);
 		}
 
