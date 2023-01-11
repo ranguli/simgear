@@ -84,7 +84,7 @@ public:
 
     typedef std::vector<Light> LightList;
 
-    LightBin() = default;
+    LightBin();
     LightBin(const SGPath& absoluteFileName);
 
     ~LightBin() = default;

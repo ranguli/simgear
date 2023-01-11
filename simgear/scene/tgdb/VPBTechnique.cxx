@@ -151,7 +151,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
     osg::ref_ptr<TerrainTile> tile = _terrainTile;
 
     osgTerrain::TileID tileID = tile->getTileID();
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << dirtyMask);
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << dirtyMask << " _currentBufferData? " << (_currentBufferData != 0));
 
     osg::ref_ptr<BufferData> buffer = new BufferData;
 
@@ -217,7 +217,8 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
     _terrainTile->setDirtyMask(0);
 
     std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << elapsed_seconds.count() << " seconds");
+    VPBTechnique::updateStats(tileID.level, elapsed_seconds.count());
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << elapsed_seconds.count() << " seconds.  Average " << VPBTechnique::getMeanLoadTime(tileID.level));
 }
 
 Locator* VPBTechnique::computeMasterLocator()
@@ -1431,11 +1432,6 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, os
      clon, osg::Vec3d(0.0, 0.0, 1.0),
      0.0, osg::Vec3d(1.0, 0.0, 0.0));
 
-    const osg::Matrix rotation_vertices_g = osg::Matrix::rotate(
-     M_PI / 2 - lat, osg::Vec3d(0.0, 1.0, 0.0),
-     lon, osg::Vec3d(0.0, 0.0, 1.0),
-     0.0, osg::Vec3d(1.0, 0.0, 0.0));
-
     // Compute lat/lon deltas for each handler
     std::vector<std::pair<double, double>> deltas;
     for (const auto handler : handlers) {
@@ -1693,7 +1689,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             osg::Vec3Array* v = new osg::Vec3Array;
             osg::Vec2Array* t = new osg::Vec2Array;
             osg::Vec3Array* n = new osg::Vec3Array;
-            osg::Vec4Array* c = new osg::Vec4Array(1);
+            osg::Vec4Array* c = new osg::Vec4Array;
             osg::Vec3Array* lights = new osg::Vec3Array;
 
             auto lineFeatures = (*rb)->getLineFeatures();
@@ -1703,6 +1699,11 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             }
 
             if (v->size() == 0) {
+                v->unref();
+                t->unref();
+                n->unref();
+                c->unref();
+                lights->unref();
                 continue;
             }
 
@@ -1730,7 +1731,6 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
             stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
 
-            stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
             atlas->addUniforms(stateset);
 
             buffer._lineFeatures->addChild(geode);
@@ -1749,6 +1749,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
                 std::for_each(lights->begin(), lights->end(), 
                     [&, size, intensity, color, direction, horiz, vertical] (osg::Vec3f p) { lightbin.insert(toSG(p), size, intensity, 1, color, direction, horiz, vertical); } );
             }
+            lights->unref();
         }
     }
 
@@ -2497,4 +2498,19 @@ void VPBTechnique::unloadFeatures(SGBucket bucket)
     }
 }
 
+void VPBTechnique::updateStats(int tileLevel, float loadTime) {
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_stats_mutex); // Lock the _stats_mutex for this scope
+    if (_loadStats.find(tileLevel) == _loadStats.end()) {
+        _loadStats[tileLevel] = LoadStat(1, loadTime);
+    } else {
+        _loadStats[tileLevel].first++;
+        _loadStats[tileLevel].second +=loadTime;
+    }
+}
 
+float VPBTechnique::getMeanLoadTime(int tileLevel) {
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_stats_mutex); // Lock the _stats_mutex for this scope
+    if (_loadStats.find(tileLevel) == _loadStats.end()) return 0.0;
+
+    return _loadStats[tileLevel].second / _loadStats[tileLevel].first;
+}

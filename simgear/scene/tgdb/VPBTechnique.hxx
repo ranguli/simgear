@@ -177,6 +177,9 @@ class VPBTechnique : public TerrainTechnique
 
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up);
 
+        static void updateStats(int tileLevel, float loadTime);
+        static float getMeanLoadTime(int tileLevel);
+
         // Check a given vertex against any constraints  E.g. to ensure we
         // don't get objects like trees sprouting from roads or runways.
         bool checkAgainstRandomObjectsConstraints(BufferData& buffer, 
@@ -211,6 +214,10 @@ class VPBTechnique : public TerrainTechnique
 
         inline static std::list<BucketCoastlineBinList>  _coastFeatureLists;
         inline static std::mutex _coastFeatureLists_mutex;  // protects the _areaFeatureLists;
+
+        inline static std::mutex _stats_mutex; // Protects the loading statistics
+        typedef std::pair<uint, float> LoadStat;
+        inline static std::map<int, LoadStat> _loadStats;
 
         inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
         inline static const char* MODEL_OFFSET   = "fg_modelOffset";

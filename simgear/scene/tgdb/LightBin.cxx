@@ -80,6 +80,11 @@ double LightBin::getAverageIntensity() const
     return _aggregated_intensity / getNumLights();
 }
 
+LightBin::LightBin() :
+    _aggregated_size(0.0), _aggregated_intensity(0.0)  
+{
+}
+
 LightBin::LightBin(const SGPath& absoluteFileName) :
     _aggregated_size(0.0), _aggregated_intensity(0.0)  
 { 
