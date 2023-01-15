@@ -216,7 +216,7 @@ class VPBTechnique : public TerrainTechnique
         inline static std::mutex _coastFeatureLists_mutex;  // protects the _areaFeatureLists;
 
         inline static std::mutex _stats_mutex; // Protects the loading statistics
-        typedef std::pair<uint, float> LoadStat;
+        typedef std::pair<unsigned int, float> LoadStat;
         inline static std::map<int, LoadStat> _loadStats;
 
         inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
