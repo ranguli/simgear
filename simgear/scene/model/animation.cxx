@@ -474,6 +474,7 @@ SGAnimation::SGAnimation(simgear::SGTransientModelData &modelData) :
     modelData.getConfigNode()->getChildren("object-name");
   for (unsigned i = 0; i < objectNames.size(); ++i)
     _objectNames.push_back(objectNames[i]->getStringValue());
+  _objectNamesRemaining = _objectNames;
 }
 
 SGAnimation::~SGAnimation()

@@ -48,6 +48,15 @@ protected:
   SGSharedPtr<SGCondition const> _condition;
 
   virtual void setupCallbacks(SGSceneUserData* ud, osg::Group* parent);
+
+  /**
+   * Can the animation be safely repeated / nested without changing the
+   * behaviour.
+   * If not, then we may have to be careful not to break compatibility with
+   * Aircraft which expect brokenness under certain circumstances.
+   */
+  virtual bool isRepeatable() const;
+
 private:
   class PickCallback;
   class VncCallback;
@@ -89,7 +98,9 @@ protected:
     SGSharedPtr<SGCondition const> _condition;
 
     virtual void setupCallbacks(SGSceneUserData* ud, osg::Group* parent);
-    
+
+    bool isRepeatable() const override;
+
 private:
     class UpdateCallback;
     
@@ -108,7 +119,9 @@ protected:
     virtual osg::Group* createMainGroup(osg::Group* pr);
     
     virtual void setupCallbacks(SGSceneUserData* ud, osg::Group* parent);
-    
+
+    bool isRepeatable() const override;
+
 private:
     class UpdateCallback;
     

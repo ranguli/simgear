@@ -411,7 +411,10 @@ SGPickAnimation::apply(osg::Group& group)
   }
 
   group.traverse(*this);
-  
+
+  // Find whether this animation can be harmlessly repeated
+  bool repeatable = isRepeatable();
+
   // iterate over all group children
   int i = group.getNumChildren() - 1;
   for (; 0 <= i; --i) {
@@ -422,7 +425,36 @@ SGPickAnimation::apply(osg::Group& group)
       
     std::list<std::string>::iterator it = std::find(_objectNames.begin(), _objectNames.end(), child->getName());
     if (it != _objectNames.end()) {
-      //_objectNames.erase(it);
+      // Erasing child name from _objectNames should never have been commented
+      // out. Now animations are installed multiple times if the objects they
+      // refer to occur multiple times in the scene graph.
+      if (repeatable) {
+        // Repeating some animations is harmless, so we can stop doing it
+        // without breaking compatibility.
+        _objectNames.erase(it);
+      } else {
+        // Repeating other animations however multiplies their effect.
+        // Detect if we've already installed the animation on this object name,
+        // and warn loudly that this is deprecated behaviour that will change.
+        auto it2 = std::find(_objectNamesRemaining.begin(), _objectNamesRemaining.end(), child->getName());
+        if (it2 != _objectNamesRemaining.end()) {
+          // First install of animation
+          _objectNamesRemaining.erase(it2);
+        } else {
+          static bool secondaryWarning = false;
+          if (!secondaryWarning) {
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Deprecation Alert: Since 2013, knob & slider animations are duplicated if they already take part in an effect,");
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    resulting in exaggerated motion. This incorrect behaviour will be removed in a future version, which will reduce");
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    the motion of these objects. Aircraft can work around the issue and silence this warning by rearranging the XML");
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    so that the animation node comes before the effect node. You may need to double the animation factor or");
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    property-adjust ranges to match the current range of motion. The affected object names will be logged below.");
+            secondaryWarning = true;
+          }
+          SG_LOG(SG_GENERAL, SG_DEV_ALERT,
+                 "Warning: Duplication of " << getType() << " animation on object \"" << child->getName() << "\" is deprecated behaviour (see above).");
+        }
+      }
+
       install(*child);
       
       osg::ref_ptr<osg::Group> renderGroup, pickGroup;      
@@ -504,6 +536,12 @@ SGPickAnimation::setupCallbacks(SGSceneUserData* ud, osg::Group* parent)
   for (unsigned int i = 0; i < actions.size(); ++i) {
     ud->addPickCallback(new VncCallback(actions[i], getModelRoot(), parent, _condition));
   }
+}
+
+bool SGPickAnimation::isRepeatable() const
+{
+    // Pure pick handling doesn't move anything
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -827,6 +865,14 @@ SGKnobAnimation::setupCallbacks(SGSceneUserData* ud, osg::Group*)
   ud->setPickCallback(new KnobSliderPickCallback(getConfig(), getModelRoot(), _condition));
 }
 
+bool SGKnobAnimation::isRepeatable() const
+{
+    // For the animation to move anything, there must be an axis and a
+    // non-const-zero animation value.
+    return (!_axis.x() && !_axis.y() && !_axis.z()) ||
+           (_animationValue->isConst() && _animationValue->getValue() == 0);
+}
+
 void SGKnobAnimation::setAlternateMouseWheelDirection(bool aToggle)
 {
     static_knobMouseWheelAlternateDirection = aToggle;
@@ -891,6 +937,14 @@ void
 SGSliderAnimation::setupCallbacks(SGSceneUserData* ud, osg::Group*)
 {
   ud->setPickCallback(new KnobSliderPickCallback(getConfig(), getModelRoot(), _condition));
+}
+
+bool SGSliderAnimation::isRepeatable() const
+{
+    // For the animation to move anything, there must be an axis and a
+    // non-const-zero animation value.
+    return (!_axis.x() && !_axis.y() && !_axis.z()) ||
+           (_animationValue->isConst() && _animationValue->getValue() == 0);
 }
 
 /*
