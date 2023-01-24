@@ -68,11 +68,7 @@ namespace canvas
 
       canvas::Text *_text_element;
 
-#if OSG_VERSION_LESS_THAN(3,5,6)
-     void computePositions(unsigned int contextID) const override;
-#else
      void computePositionsImplementation() override;
-#endif
 };
 
   class TextLine
@@ -123,21 +119,25 @@ namespace canvas
 
     _quads = &text->_textureGlyphQuadMap.begin()->second;
 
-#if OSG_VERSION_LESS_THAN(3,5,6)
-    GlyphQuads::LineNumbers const& line_numbers = _quads->_lineNumbers;
-    GlyphQuads::LineNumbers::const_iterator begin_it =
-      std::lower_bound(line_numbers.begin(), line_numbers.end(), _line);
+    auto refCoords = _text->getCoords();
+    osgText::TextBase::Coords::element_type &coords = *refCoords.get();
+    const auto lineHeight = text->getCharacterHeight() + _text->getLineSpacing();
 
-    if( begin_it == line_numbers.end() || *begin_it != _line )
-      // empty line or past last line
-      return;
-
-    _begin = begin_it - line_numbers.begin();
-    _end = std::upper_bound(begin_it, line_numbers.end(), _line)
-         - line_numbers.begin();
-#else
-  // TODO: Need 3.5.6 version of this
-#endif
+    bool foundBegin = false;
+    for (size_t i = 0; i <= coords.size(); i += 4) {
+      const auto lineIndex = static_cast<size_t>(floorf(coords[i].y() / lineHeight));
+      if (lineIndex == _line) {
+        if (!foundBegin) {
+          _begin = _end = i / 4;
+          foundBegin = true;
+        } else {
+          _end = i / 4;
+        }
+      } else if (foundBegin) {
+        // next line, we're done
+          break;
+      }
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -155,34 +155,28 @@ namespace canvas
   //----------------------------------------------------------------------------
   osg::Vec2 TextLine::cursorPos(size_t i) const
   {
-    if( !_quads )
-      return osg::Vec2(0, 0);
-
     if( i > size() )
       // Position after last character if out of range (TODO better exception?)
       i = size();
 
     osg::Vec2 pos(0, _text->_offset.y() + _line * _text->lineHeight());
 
-    if( empty() )
+    if( empty() ) {
       return pos;
+    }
 
-#if OSG_VERSION_GREATER_OR_EQUAL(3,5,6)
-    // TODO: need 3.5.6 version of this.
-#else
-      GlyphQuads::Coords2 refCoords = _quads->_coords;
-      GlyphQuads::Coords2::element_type &coords = *refCoords.get();
+      osgText::TextBase::Coords refCoords = _text->getCoords();
+      osgText::TextBase::Coords::element_type &coords = *refCoords.get();
 
       size_t global_i = _begin + i;
 
-      if (global_i == _begin)
+      if (global_i == _begin) {
           // before first character of line
           pos.x() = coords[_begin * 4].x();
-      else if (global_i == _end)
+      } else if (global_i == _end) {
           // After Last character of line
           pos.x() = coords[(_end - 1) * 4 + 2].x();
-      else
-      {
+    } else {
           float prev_l = coords[(global_i - 1) * 4].x(),
               prev_r = coords[(global_i - 1) * 4 + 2].x(),
               cur_l = coords[global_i * 4].x();
@@ -195,8 +189,6 @@ namespace canvas
               // position at center between characters
               pos.x() = 0.5 * (prev_r + cur_l);
       }
-#endif
-
     return pos;
   }
 
@@ -206,12 +198,8 @@ namespace canvas
     if (empty())
       return cursorPos(0);
 
-#if OSG_VERSION_GREATER_OR_EQUAL(3,5,6)
-  // TODO: need 3.5.7 version of this.
-	return cursorPos(0);
-#else
-    GlyphQuads::Coords2 refCoords = _quads->_coords;
-    GlyphQuads::Coords2::element_type &coords = *refCoords.get();
+    osgText::TextBase::Coords refCoords = _text->getCoords();
+    osgText::TextBase::Coords::element_type &coords = *refCoords.get();
 
     GlyphQuads::Glyphs const& glyphs = _quads->_glyphs;
 
@@ -233,7 +221,6 @@ namespace canvas
     }
 
     return cursorPos(i - _begin);
-#endif
   }
 
   //----------------------------------------------------------------------------
@@ -643,78 +630,11 @@ namespace canvas
     return bb;
   }
 
-#if OSG_VERSION_LESS_THAN(3,5,6)
-  void Text::TextOSG::computePositions(unsigned int contextID) const
-  {
-    if( _textureGlyphQuadMap.empty() || _layout == VERTICAL )
-      return osgText::Text::computePositions(contextID);
-
-    // TODO check when it can be larger
-    assert( _textureGlyphQuadMap.size() == 1 );
-
-    const GlyphQuads& quads = _textureGlyphQuadMap.begin()->second;
-    const GlyphQuads::Glyphs& glyphs = quads._glyphs;
-    GlyphQuads::Coords2 refCoords = quads._coords;
-    GlyphQuads::Coords2::element_type &coords = *refCoords.get();
-
-    const GlyphQuads::LineNumbers& line_numbers = quads._lineNumbers;
-
-    float wr = _characterHeight / getCharacterAspectRatio();
-
-    size_t cur_line = static_cast<size_t>(-1);
-    for(size_t i = 0; i < glyphs.size(); ++i)
-    {
-      // Check horizontal offsets
-
-      bool first_char = cur_line != line_numbers[i];
-      cur_line = line_numbers[i];
-
-      bool last_char = (i + 1 == glyphs.size())
-                    || (cur_line != line_numbers[i + 1]);
-
-      if( first_char || last_char )
-      {
-        // From osg/src/osgText/Text.cpp:
-        //
-        // osg::Vec2 upLeft = local+osg::Vec2(0.0f-fHorizQuadMargin, ...);
-        // osg::Vec2 lowLeft = local+osg::Vec2(0.0f-fHorizQuadMargin, ...);
-        // osg::Vec2 lowRight = local+osg::Vec2(width+fHorizQuadMargin, ...);
-        // osg::Vec2 upRight = local+osg::Vec2(width+fHorizQuadMargin, ...);
-
-        float left = coords[i * 4].x(),
-              right = coords[i * 4 + 2].x(),
-              width = glyphs[i]->getWidth() * wr;
-
-        // (local + width + fHoriz) - (local - fHoriz) = width + 2*fHoriz | -width
-        float margin = 0.5f * (right - left - width),
-              cursor_x = left + margin
-                       - glyphs[i]->getHorizontalBearing().x() * wr;
-
-        if( first_char )
-        {
-          if( cur_line == 0 || cursor_x < _textBB._min.x() )
-            _textBB._min.x() = cursor_x;
-        }
-
-        if( last_char )
-        {
-          float cursor_w = cursor_x + glyphs[i]->getHorizontalAdvance() * wr;
-
-          if( cur_line == 0 || cursor_w > _textBB._max.x() )
-            _textBB._max.x() = cursor_w;
-        }
-      }
-    }
-
-    return osgText::Text::computePositions(contextID);
-  }
-
-#else
   void Text::TextOSG::computePositionsImplementation()
   {
     TextBase::computePositionsImplementation();
   }
-#endif
+
  //----------------------------------------------------------------------------
 
   //----------------------------------------------------------------------------
