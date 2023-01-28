@@ -2089,8 +2089,8 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
         coastWidth =               static_lod->getFloatValue("coastline-width", coastWidth);
     }
 
-    if (tileLevel < coast_features_lod_range) {
-        // Do not generate coasts for tiles too far away
+    if ((_coastFeatureLists.size() == 0 ) || (tileLevel < coast_features_lod_range)) {
+        // Do not generate coasts for tiles too far away, or if we definitely don't have any to write
         coastTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
         coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
         return coastTexture;
@@ -2114,6 +2114,8 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
 
     TileBounds tileBounds(masterLocator, up);
 
+    bool coastsFound = false;
+
     for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
         if (coasts->first != bucket) continue;
         const CoastlineBinList coastBins = coasts->second;
@@ -2128,9 +2130,18 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
                     // We need at least two points to render a line.
                     LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
                     addCoastline(masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
+                    coastsFound = true;
                 }
             }
         }
+    }
+
+    if (! coastsFound) {
+        // No coasts found, so save some memory
+        coastTexture->unref();
+        osg::Image* coastTexture = new osg::Image();
+        coastTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
     }
 
     return coastTexture;
