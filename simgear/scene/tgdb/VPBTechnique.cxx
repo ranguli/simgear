@@ -1707,7 +1707,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
                 continue;
             }
 
-            c->push_back(osg::Vec4(1.0,1.0,1.0,1.0));
+            c->push_back(osg::Vec4d(1.0,1.0,1.0,1.0));
 
             osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
             geometry->setVertexArray(v);
