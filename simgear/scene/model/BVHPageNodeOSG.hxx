@@ -41,7 +41,7 @@ public:
     void setBoundingSphere(const SGSphered& sphere);
 
     static SGSharedPtr<BVHNode>
-    load(const std::string& name, const osg::ref_ptr<const osg::Referenced>& options);
+    load(const std::string& name, const osg::ref_ptr<const osg::Referenced>& options, bool forceFlatter=false);
 
 protected:
     virtual SGSphered computeBoundingSphere() const;

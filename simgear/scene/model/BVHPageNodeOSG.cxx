@@ -351,7 +351,7 @@ private:
 };
 
 SGSharedPtr<BVHNode>
-BVHPageNodeOSG::load(const std::string& name, const osg::ref_ptr<const osg::Referenced>& options)
+BVHPageNodeOSG::load(const std::string& name, const osg::ref_ptr<const osg::Referenced>& options, bool forceFlatten)
 {
     osg::ref_ptr<osg::Node> node;
     node = osgDB::readRefNodeFile(name, dynamic_cast<const osgDB::Options*>(options.get()));
@@ -359,7 +359,7 @@ BVHPageNodeOSG::load(const std::string& name, const osg::ref_ptr<const osg::Refe
     if (!node.valid())
         return SGSharedPtr<BVHNode>();
 
-    bool flatten = (node->getBound()._radius < 30000);
+    bool flatten = forceFlatten || (node->getBound()._radius < 30000);
     _NodeVisitor nodeVisitor(flatten);
     if (flatten)
         nodeVisitor.setCenter(node->getBound()._center);
