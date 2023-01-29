@@ -117,11 +117,11 @@ void OceanMesh::calcMesh(const SGVec3d& cartCenter, const SGQuatd& orient,
                          double clon, double clat,
                          double height, double width, double tex_width)
 {
-    // Calculate vertices. By splitting the tile up into 4 quads on a
+    // Calculate vertices. By splitting the tile up into a number of quads on a
     // side we avoid curvature-of-the-earth problems; the error should
     // be less than .5 meters.
-    double longInc = width * .25;
-    double latInc = height * .25;
+    double longInc = width / (lonPoints - 1);
+    double latInc = height / (latPoints - 1);
     double startLat = clat - height * .5;
     double startLon = clon - width * .5;
     for (int j = 0; j < latPoints; j++) {
@@ -273,14 +273,14 @@ void fillDrawElementsWithApron(short height, short width,
 }
 }
 
-osg::Node* SGOceanTile(const SGBucket& b, SGMaterialLib *matlib, int latPoints, int lonPoints)
-{
+osg::Node* SGOceanTile(double clat, double clon, double width, double height, SGMaterialLib *matlib, int latPoints, int lonPoints) {
     Effect *effect = 0;
 
     double tex_width = 1000.0;
-  
+    SGGeod center = SGGeod::fromDeg(clon, clat);
+
     // find Ocean material in the properties list
-    osg::ref_ptr<SGMaterialCache> matcache = matlib->generateMatCache(b.get_center(), 0);
+    osg::ref_ptr<SGMaterialCache> matcache = matlib->generateMatCache(center, 0);
     SGMaterial* mat = matcache->find( "Ocean" );
 
     if ( mat != NULL ) {
@@ -295,20 +295,15 @@ osg::Node* SGOceanTile(const SGBucket& b, SGMaterialLib *matlib, int latPoints, 
     }
     OceanMesh grid(latPoints, lonPoints);
     // Calculate center point
-    SGVec3d cartCenter = SGVec3d::fromGeod(b.get_center());
+    SGVec3d cartCenter = SGVec3d::fromGeod(center);
     SGGeod geodPos = SGGeod::fromCart(cartCenter);
     SGQuatd hlOr = SGQuatd::fromLonLat(geodPos)*SGQuatd::fromEulerDeg(0, 0, 180);
-
-    double clon = b.get_center_lon();
-    double clat = b.get_center_lat();
-    double height = b.get_height();
-    double width = b.get_width();
 
     grid.calcMesh(cartCenter, hlOr, clon, clat, height, width, tex_width);
     grid.calcApronPts(tex_width);
   
     osg::Vec4Array* cl = new osg::Vec4Array;
-    cl->push_back(osg::Vec4(1, 1, 1, 1));
+    cl->push_back(osg::Vec4d(1, 1, 1, 1));
   
     osg::Geometry* geometry = new osg::Geometry;
     geometry->setDataVariance(osg::Object::STATIC);
@@ -346,4 +341,9 @@ osg::Node* SGOceanTile(const SGBucket& b, SGMaterialLib *matlib, int latPoints, 
     transform->accept(bvhBuilder);
     
     return transform;
+}
+
+osg::Node* SGOceanTile(const SGBucket& b, SGMaterialLib *matlib, int latPoints, int lonPoints)
+{
+    return SGOceanTile(b.get_center_lat(), b.get_center_lon(), b.get_width(), b.get_height(), matlib, latPoints, lonPoints);
 }
