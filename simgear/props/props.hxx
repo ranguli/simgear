@@ -42,6 +42,7 @@
 
 #include <simgear/structure/SGReferenced.hxx>
 #include <simgear/structure/SGSharedPtr.hxx>
+#include <simgear/structure/SGSourceLocation.hxx>
 #include <simgear/structure/SGWeakPtr.hxx>
 
 // XXX This whole file should be in the simgear namespace, but I don't
@@ -1028,6 +1029,11 @@ public:
     /** Get the path to this node from the root. */
     std::string getPath(bool simplify = false) const;
 
+    /** Get the original location of the node. */
+    const SGSourceLocation& getLocation() const;
+    /** Set the original location of the node. */
+    void setLocation(const SGSourceLocation& location);
+
     /** Get a pointer to the root node. */
     SGPropertyNode* getRootNode();
     const SGPropertyNode* getRootNode() const;
@@ -1406,6 +1412,7 @@ private:
     simgear::props::Type _type;
     bool _tied;
     int _attr = NO_ATTR;
+    SGSourceLocation _location;
 
     // The right kind of pointer...
     union {

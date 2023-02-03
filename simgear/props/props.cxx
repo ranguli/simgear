@@ -2813,6 +2813,17 @@ SGPropertyNode::getPath (bool simplify) const
   return result;
 }
 
+const SGSourceLocation&
+SGPropertyNode::getLocation() const
+{
+    return _location;
+}
+
+void SGPropertyNode::setLocation(const SGSourceLocation& location)
+{
+    _location = location;
+}
+
 bool SGPropertyNode::getAttribute (Attribute attr) const
 {
     SGPropertyLockShared shared(*this);

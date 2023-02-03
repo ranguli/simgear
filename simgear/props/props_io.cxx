@@ -221,6 +221,7 @@ PropsVisitor::startElement (const char * name, const XMLAttributes &atts)
              << node->getPath(true) << "\n at " << location.asString());
       node = &null;
     }
+    node->setLocation(location);
 
     // TODO use correct default mode (keep for now to match past behavior)
     int mode = _default_mode | SGPropertyNode::READ | SGPropertyNode::WRITE;
