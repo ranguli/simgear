@@ -10,6 +10,7 @@ set(HEADERS
     SGSharedPtr.hxx
     SGSmplhist.hxx
     SGSmplstat.hxx
+    SGSourceLocation.hxx
     SGWeakPtr.hxx
     SGWeakReferenced.hxx
     SGPerfMon.hxx
@@ -34,6 +35,7 @@ set(SOURCES
     SGSmplhist.cxx
     SGSmplstat.cxx
     SGPerfMon.cxx
+    SGSourceLocation.cxx
     StringTable.cxx
     commands.cxx
     event_mgr.cxx
