@@ -44,7 +44,8 @@ namespace osg
   class Vec2d;
   class Vec2f;
   class Vec2s;
-
+  class Vec2i;
+  
   class Vec4f;
   class Vec4d;
 }
@@ -68,6 +69,7 @@ SG_MAKE_TRAIT(<>, osg::Vec2b, is_vec2)
 SG_MAKE_TRAIT(<>, osg::Vec2d, is_vec2)
 SG_MAKE_TRAIT(<>, osg::Vec2f, is_vec2)
 SG_MAKE_TRAIT(<>, osg::Vec2s, is_vec2)
+SG_MAKE_TRAIT(<>, osg::Vec2i, is_vec2)
 
 SG_MAKE_TRAIT(<class T>, SGVec4<T>, is_vec4)
 SG_MAKE_TRAIT(<>, osg::Vec4d, is_vec4)

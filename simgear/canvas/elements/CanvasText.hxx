@@ -57,7 +57,22 @@ namespace canvas
       /// Number of characters in @a line.
       size_t lineLength(size_t line) const;
 
-      osg::Vec2 getNearestCursor(const osg::Vec2& pos) const;
+      /**
+       * @brief map a pixel location to a line,char position
+       * Rounding is applied to make this work 'as expected' for
+       * clicking on text, i.e clicks closer to the right edge
+       * return the character to the right.
+      */
+      osg::Vec2i getNearestCursor(const osg::Vec2& pos) const;
+      
+      /**
+       * @brief Map line,char location to the top-left of the
+       * glyph's box.
+       * 
+       * @param line 
+       * @param character 
+       * @return osg::Vec2 : top-left of the glyph box in pixels
+       */
       osg::Vec2 getCursorPos(size_t line, size_t character) const;
 
     protected:

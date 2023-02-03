@@ -82,7 +82,7 @@ namespace canvas
       bool empty() const;
 
       osg::Vec2 cursorPos(size_t i) const;
-      osg::Vec2 nearestCursor(float x) const;
+      osg::Vec2i nearestCursor(float x) const;
 
     protected:
       typedef Text::TextOSG::GlyphQuads GlyphQuads;
@@ -193,10 +193,10 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
-  osg::Vec2 TextLine::nearestCursor(float x) const
+  osg::Vec2i TextLine::nearestCursor(float x) const
   {
     if (empty())
-      return cursorPos(0);
+      return {static_cast<int>(_line), 0};
 
     osgText::TextBase::Coords refCoords = _text->getCoords();
     osgText::TextBase::Coords::element_type &coords = *refCoords.get();
@@ -220,7 +220,8 @@ namespace canvas
         break;
     }
 
-    return cursorPos(i - _begin);
+    return {static_cast<int>(_line), 
+      static_cast<int>(i - _begin)};
   }
 
   //----------------------------------------------------------------------------
@@ -778,7 +779,7 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
-  osg::Vec2 Text::getNearestCursor(const osg::Vec2& pos) const
+  osg::Vec2i Text::getNearestCursor(const osg::Vec2& pos) const
   {
     return _text->nearestLine(pos.y()).nearestCursor(pos.x());
   }
