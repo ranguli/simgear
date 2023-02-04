@@ -111,6 +111,20 @@ bool SGSceneUserData_writeLocalData(const osg::Object& obj, osgDB::Output& fw)
         fw.moveOut();
         fw.indent() << "}\n";
     }
+    auto& loc = data.getLocation();
+    if (loc.isValid()) {
+        fw.indent() << "location {\n";
+        fw.moveIn();
+        fw.indent() << "path \"" << loc.getPath() << "\"\n";
+        int line = loc.getLine();
+        if (line >= 0)
+            fw.indent() << "line " << line << "\n";
+        int column = loc.getColumn();
+        if (column >= 0)
+            fw.indent() << "column " << column << "\n";
+        fw.moveOut();
+        fw.indent() << "}\n";
+    }
     return true;
 }
 

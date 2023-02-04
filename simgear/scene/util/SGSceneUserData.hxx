@@ -26,6 +26,7 @@
 #include <osg/Node>
 #include <osg/Object>
 #include <simgear/bvh/BVHNode.hxx>
+#include <simgear/structure/SGSourceLocation.hxx>
 #include "SGPickCallback.hxx"
 
 class SGSceneUserData : public osg::Object {
@@ -36,7 +37,8 @@ public:
                   const osg::CopyOp& copyOp = osg::CopyOp::SHALLOW_COPY)
     : osg::Object(rhs,copyOp),
       _bvhNode(rhs._bvhNode), _velocity(rhs._velocity),
-      _pickCallbacks(rhs._pickCallbacks)
+      _pickCallbacks(rhs._pickCallbacks),
+      _location(rhs._location)
   {
   }
   static SGSceneUserData* getSceneUserData(osg::Node* node);
@@ -74,7 +76,16 @@ public:
   { if (!_velocity) _velocity = new Velocity; return _velocity; }
   void setVelocity(Velocity* velocity)
   { _velocity = velocity; }
-  
+
+  const SGSourceLocation& getLocation() const
+  {
+      return _location;
+  }
+  void setLocation(const SGSourceLocation& location)
+  {
+      _location = location;
+  }
+
 private:
   // If this node has a collision tree attached, it is stored here
   SGSharedPtr<simgear::BVHNode> _bvhNode;
@@ -84,6 +95,9 @@ private:
 
   /// Scene interaction callbacks
   std::vector<SGSharedPtr<SGPickCallback> > _pickCallbacks;
+
+  /// Original source location describing this node
+  SGSourceLocation _location;
 };
 
 #endif
