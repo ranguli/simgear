@@ -29,6 +29,7 @@
 #include <simgear/scene/model/model.hxx>
 #include <simgear/scene/model/ConditionNode.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
+#include <simgear/scene/util/SGSceneUserData.hxx>
 
 using namespace std;
 using namespace simgear;
@@ -437,6 +438,7 @@ SGMaterialAnimation::createAnimationGroup(osg::Group& parent)
 {
   osg::Group* group = new osg::Group;
   group->setName("material animation group");
+  SGSceneUserData::getOrCreateSceneUserData(group)->setLocation(getConfig()->getLocation());
 
   SGPropertyNode* inputRoot = getModelRoot();
   const SGPropertyNode* node = getConfig()->getChild("property-base");

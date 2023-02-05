@@ -465,12 +465,14 @@ SGPickAnimation::apply(osg::Group& group)
       if (getConfig()->getBoolValue("visible", true)) {
           renderGroup = new osg::Group;
           renderGroup->setName("pick render group");
+          SGSceneUserData::getOrCreateSceneUserData(renderGroup)->setLocation(getConfig()->getLocation());
           renderGroup->addChild(child);
           mainGroup->addChild(renderGroup);
       }
       
       pickGroup = new osg::Group;
       pickGroup->setName("pick highlight group");
+      SGSceneUserData::getOrCreateSceneUserData(pickGroup)->setLocation(getConfig()->getLocation());
       pickGroup->setNodeMask(simgear::PICK_BIT);
       pickGroup->setStateSet(sharedHighlightStateSet());
       mainGroup->addChild(pickGroup);

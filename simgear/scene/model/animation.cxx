@@ -1910,6 +1910,7 @@ SGRangeAnimation::createAnimationGroup(osg::Group& parent)
 {
   osg::Group* group = new osg::Group;
   group->setName("range animation group");
+  SGSceneUserData::getOrCreateSceneUserData(group)->setLocation(getConfig()->getLocation());
 
   osg::LOD* lod = new osg::LOD;
   lod->setName("range animation node");
