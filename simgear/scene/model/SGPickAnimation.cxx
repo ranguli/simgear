@@ -436,22 +436,63 @@ SGPickAnimation::apply(osg::Group& group)
         // Repeating other animations however multiplies their effect.
         // Detect if we've already installed the animation on this object name,
         // and warn loudly that this is deprecated behaviour that will change.
-        auto it2 = std::find(_objectNamesRemaining.begin(), _objectNamesRemaining.end(), child->getName());
-        if (it2 != _objectNamesRemaining.end()) {
-          // First install of animation
-          _objectNamesRemaining.erase(it2);
-        } else {
-          static bool secondaryWarning = false;
-          if (!secondaryWarning) {
-            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Deprecation Alert: Since 2013, knob & slider animations are duplicated if they already take part in an effect,");
-            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    resulting in exaggerated motion. This incorrect behaviour will be removed in a future version, which will reduce");
-            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    the motion of these objects. Aircraft can work around the issue and silence this warning by rearranging the XML");
-            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    so that the animation node comes before the effect node. You may need to double the animation factor or");
-            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    property-adjust ranges to match the current range of motion. The affected object names will be logged below.");
-            secondaryWarning = true;
+        auto it2 = _objectNamesHandled.find(child->getName());
+        unsigned int* timesHandled;
+        if (it2 != _objectNamesHandled.end())
+          timesHandled = &(*it2).second;
+        else
+          timesHandled = &(_objectNamesHandled[child->getName()] = 0);
+        if (++*timesHandled == 2) {
+          // Second install, Search upwards for a node with multiple parents
+          unsigned int foundMultiParents = 0;
+          unsigned int numParents;
+          for (osg::Node* cur = child; (numParents = cur->getNumParents());
+               cur = cur->getParent(0)) {
+            if (numParents > 1)
+              ++foundMultiParents;
           }
-          SG_LOG(SG_GENERAL, SG_DEV_ALERT,
-                 "Warning: Duplication of " << getType() << " animation on object \"" << child->getName() << "\" is deprecated behaviour (see above).");
+          if (!foundMultiParents) {
+            // Its inadvisable to have duplicated object names with animations
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT,
+                   "Warning: " << getType() << " animation applies to multiple distinct objects named \"" << child->getName() << "\".");
+          } else {
+            static bool secondaryWarning = false;
+            if (!secondaryWarning) {
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Deprecation Alert: Since 2013, knob & slider animations are duplicated if they");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    already take part in a certain animations, resulting in exaggerated motion.");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    This incorrect behaviour will be removed in a future version, which will");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    reduce the motion of these objects. Aircraft can work around the issue and");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    silence this warning by rearranging the XML so that the knob/slider");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    animation node comes before the other animation node. You may need to");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    multiply the animation factor or property-adjust ranges to match the");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    current range of motion. The affected objects will be logged below.");
+              secondaryWarning = true;
+            }
+
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Warning: " << (1 << foundMultiParents) << "x duplication of " << getType() << " animation on object \"" << child->getName() << "\" is deprecated behaviour (see above)");
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    Animation node at: " << getConfig()->getLocation());
+
+            // Search upwards for a node with multiple parents
+            for (osg::Node* cur = child; (numParents = cur->getNumParents());
+                 cur = cur->getParent(0)) {
+              if (numParents > 1) {
+                // This is the one, look for a parent with a location
+                unsigned int i;
+                for (i = 0; i < numParents; ++i) {
+                  auto* userData = SGSceneUserData::getSceneUserData(cur->getParent(i));
+                  if (userData && userData->getLocation().isValid()) {
+                    SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    Duplicated due to: " << userData->getLocation());
+                    break;
+                  }
+                }
+                if (i == numParents) {
+                  SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    Duplicated scene node '" << cur->getName() << "' at unknown location");
+                  for (i = 0; i < numParents; ++i)
+                    SG_LOG(SG_GENERAL, SG_DEV_ALERT, "        parent " << i << " named '" << cur->getParent(i)->getName() << "'");
+                }
+              }
+            }
+          }
         }
       }
 

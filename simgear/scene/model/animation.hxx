@@ -113,7 +113,6 @@ protected:
 
   simgear::SGTransientModelData &_modelData;
   std::list<std::string> _objectNames;
-  std::list<std::string> _objectNamesRemaining;
 private:
   void installInGroup(const std::string& name, osg::Group& group,
                       osg::ref_ptr<osg::Group>& animationGroup);

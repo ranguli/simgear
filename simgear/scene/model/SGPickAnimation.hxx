@@ -62,6 +62,7 @@ private:
   class VncCallback;
   
   string_list _proxyNames;
+  std::map<std::string, unsigned int> _objectNamesHandled;
 };
 
 
