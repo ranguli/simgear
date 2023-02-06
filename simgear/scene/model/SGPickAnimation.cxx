@@ -459,7 +459,7 @@ SGPickAnimation::apply(osg::Group& group)
             static bool secondaryWarning = false;
             if (!secondaryWarning) {
               SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Deprecation Alert: Since 2013, knob & slider animations are duplicated if they");
-              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    already take part in a certain animations, resulting in exaggerated motion.");
+              SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    already take part in certain animations, resulting in exaggerated motion.");
               SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    This incorrect behaviour will be removed in a future version, which will");
               SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    reduce the motion of these objects. Aircraft can work around the issue and");
               SG_LOG(SG_GENERAL, SG_DEV_ALERT, "    silence this warning by rearranging the XML so that the knob/slider");
