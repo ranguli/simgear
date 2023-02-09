@@ -85,8 +85,8 @@ private:
   struct State
   {
     State () : node(0), type(""), mode(DEFAULT_MODE), omit(false) {}
-    State (SGPropertyNode * _node, const char * _type, int _mode, bool _omit)
-      : node(_node), type(_type), mode(_mode), omit(_omit) {}
+    State (SGPropertyNode * _node, int _startLine, const char * _type, int _mode, bool _omit)
+      : node(_node), startLine(_startLine), type(_type), mode(_mode), omit(_omit) {}
     bool hasChildren() const
     {
       int n_children = node->nChildren();
@@ -94,6 +94,7 @@ private:
          || (n_children == 1 && node->getChild(0)->getNameString() != ATTR);
     }
     SGPropertyNode * node;
+    int startLine;
     string type;
     int mode;
     bool omit;
@@ -102,11 +103,11 @@ private:
 
   State &state () { return _state_stack[_state_stack.size() - 1]; }
 
-  void push_state (SGPropertyNode * node, const char * type, int mode, bool omit = false) {
+  void push_state (SGPropertyNode * node, int startLine, const char * type, int mode, bool omit = false) {
     if (type == 0)
-      _state_stack.push_back(State(node, "unspecified", mode, omit));
+      _state_stack.push_back(State(node, startLine, "unspecified", mode, omit));
     else
-      _state_stack.push_back(State(node, type, mode, omit));
+      _state_stack.push_back(State(node, startLine, type, mode, omit));
     _level++;
     _data = "";
   }
@@ -196,7 +197,7 @@ PropsVisitor::startElement (const char * name, const XMLAttributes &atts)
       }
     }
 
-    push_state(_root, "", DEFAULT_MODE);
+    push_state(_root, getLine(), "", DEFAULT_MODE);
   }
 
   else {
@@ -221,7 +222,6 @@ PropsVisitor::startElement (const char * name, const XMLAttributes &atts)
              << node->getPath(true) << "\n at " << location.asString());
       node = &null;
     }
-    node->setLocation(location);
 
     // TODO use correct default mode (keep for now to match past behavior)
     int mode = _default_mode | SGPropertyNode::READ | SGPropertyNode::WRITE;
@@ -310,7 +310,7 @@ PropsVisitor::startElement (const char * name, const XMLAttributes &atts)
         attr_node->setUnspecifiedValue(att_name.c_str(), val.c_str());
       }
     }
-    push_state(node, type, mode, omit);
+    push_state(node, getLine(), type, mode, omit);
   }
 }
 
@@ -366,6 +366,9 @@ PropsVisitor::endElement (const char * name)
                          << "\" with type " << st.type
                          << "\n at " << location.asString()
       );
+  } else {
+    // Record the start location of non-leaf nodes
+    st.node->setLocation(SGSourceLocation(getPath(), st.startLine));
   }
 
   // Set the access-mode attributes now,
