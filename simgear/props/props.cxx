@@ -2150,6 +2150,20 @@ SGPropertyNode::clearValue ()
  */
 const int SGPropertyNode::LAST_USED_ATTRIBUTE = VALUE_CHANGED_DOWN;
 
+/// Mutex to protect access to nodeOrigins.
+static std::shared_mutex nodeOriginsLock;
+
+typedef std::map<const SGPropertyNode*, SGSourceLocation> NodeOriginMap;
+/**
+ * Origin source locations of certain nodes for debug output.
+ * This is stored separately from SGPropertyNode to save memory since only a
+ * small fraction of them use it.
+ * It is a pointer that is only set while it contains entries. This is to
+ * prevent the map being destroyed before the last SGPropertyNode objects have
+ * been.
+ */
+static NodeOriginMap* nodeOrigins;
+
 /**
  * Default constructor: always creates a root node.
  */
@@ -2191,6 +2205,8 @@ SGPropertyNode::SGPropertyNode (const SGPropertyNode &node)
     _attr(node._attr),
     _listeners(0)		// CHECK!!
 {
+    setLocation(node->getLocation());
+
     SGPropertyLockShared shared(node);
     SGPropertyLockExclusive exclusive(*this);
     _local_val.string_val = 0;
@@ -2290,6 +2306,9 @@ SGPropertyNode::SGPropertyNode( const std::string& name,
  */
 SGPropertyNode::~SGPropertyNode ()
 {
+  // clean up this from nodeOrigins map
+  setLocation(SGSourceLocation());
+
   for (unsigned i = 0; i < _children.size(); ++i)
     _children[i]->_parent = nullptr;
   clearValue();
@@ -2813,15 +2832,32 @@ SGPropertyNode::getPath (bool simplify) const
   return result;
 }
 
-const SGSourceLocation&
-SGPropertyNode::getLocation() const
+SGSourceLocation SGPropertyNode::getLocation() const
 {
-    return _location;
+    std::shared_lock rlock(nodeOriginsLock);
+    if (!nodeOrigins)
+        return SGSourceLocation();
+    auto it = nodeOrigins->find(this);
+    if (it != nodeOrigins->end())
+        return (*it).second;
+    else
+        return SGSourceLocation();
 }
 
 void SGPropertyNode::setLocation(const SGSourceLocation& location)
 {
-    _location = location;
+    std::unique_lock lock(nodeOriginsLock);
+    if (location.isValid()) {
+        if (!nodeOrigins)
+            nodeOrigins = new NodeOriginMap;
+        (*nodeOrigins)[this] = location;
+    } else if (nodeOrigins) {
+        nodeOrigins->erase(this);
+        if (nodeOrigins->empty()) {
+            delete nodeOrigins;
+            nodeOrigins = nullptr;
+        }
+    }
 }
 
 bool SGPropertyNode::getAttribute (Attribute attr) const

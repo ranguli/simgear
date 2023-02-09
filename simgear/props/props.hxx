@@ -1030,7 +1030,7 @@ public:
     std::string getPath(bool simplify = false) const;
 
     /** Get the original location of the node. */
-    const SGSourceLocation& getLocation() const;
+    SGSourceLocation getLocation() const;
     /** Set the original location of the node. */
     void setLocation(const SGSourceLocation& location);
 
@@ -1412,7 +1412,6 @@ private:
     simgear::props::Type _type;
     bool _tied;
     int _attr = NO_ATTR;
-    SGSourceLocation _location;
 
     // The right kind of pointer...
     union {
