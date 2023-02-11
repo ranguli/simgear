@@ -2205,7 +2205,7 @@ SGPropertyNode::SGPropertyNode (const SGPropertyNode &node)
     _attr(node._attr),
     _listeners(0)		// CHECK!!
 {
-    setLocation(node->getLocation());
+    setLocation(node.getLocation());
 
     SGPropertyLockShared shared(node);
     SGPropertyLockExclusive exclusive(*this);
