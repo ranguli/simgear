@@ -25,6 +25,20 @@
 #include <string.h>
 #include <stdio.h>
 
+// The shaders are moved to fgdata/gui/shaders
+#if 1
+// Defined in CanvasMgr.cxx
+void *simgearShaderOpen(const char*, const char**, int*);
+void simgearShaderClose(void*);
+
+static const char* vgShaderVertexPipeline = "canvas-pipeline.vert";
+static const char* vgShaderFragmentPipeline = "canvas-pipeline.frag";
+static const char* vgShaderVertexUserDefault = "canvas-user-default.vert";
+static const char* vgShaderFragmentUserDefault = "canvas-user-default.frag";
+static const char* vgShaderVertexColorRamp = "canvas-color-ramp.vert";
+static const char* vgShaderFragmentColorRamp = "canvas-color-ramp.vert";
+
+#else
 static const char* vgShaderVertexPipeline = R"glsl(
     #version 330
     
@@ -66,7 +80,9 @@ static const char* vgShaderVertexPipeline = R"glsl(
 )glsl";
 
 static const char* vgShaderVertexUserDefault = R"glsl(
-    void shMain(){ gl_Position = sh_Ortho * sh_Model * sh_Vertex; }
+    void shMain() {
+        gl_Position = sh_Ortho * sh_Model * sh_Vertex;
+     }
 )glsl";
 
 static const char* vgShaderFragmentPipeline = R"glsl(
@@ -240,6 +256,7 @@ static const char* vgShaderFragmentColorRamp = R"glsl(
         fragColor = interpolateColor;
     }
 )glsl";
+#endif
 
 void shInitPiplelineShaders(void) {
 
@@ -255,15 +272,27 @@ void shInitPiplelineShaders(void) {
   } else {
     extendedStage = vgShaderVertexUserDefault;
   }
-  buf[0] = vgShaderVertexPipeline;
-  buf[1] = extendedStage;
-  size[0] = strlen(vgShaderVertexPipeline);
-  size[1] = strlen(extendedStage);
-  glShaderSource(context->vs, 2, buf, size);
-  glCompileShader(context->vs);
-  glGetShaderiv(context->vs, GL_COMPILE_STATUS, &compileStatus);
-  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-  GL_CEHCK_ERROR;
+
+  {
+    int len;
+    const char *shader;
+    void *sh1 = simgearShaderOpen(vgShaderVertexPipeline, &shader, &len);
+    buf[0] = shader;
+    size[0] = len;
+
+    void *sh2 = simgearShaderOpen(extendedStage, &shader, &len);
+    buf[1] = shader;
+    size[1] = len;
+
+    glShaderSource(context->vs, 2, buf, size);
+    glCompileShader(context->vs);
+    glGetShaderiv(context->vs, GL_COMPILE_STATUS, &compileStatus);
+    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CEHCK_ERROR;
+
+    simgearShaderClose(sh2);
+    simgearShaderClose(sh1);
+  }
 
   context->fs = glCreateShader(GL_FRAGMENT_SHADER);
   if(context->userShaderFragment){
@@ -271,15 +300,27 @@ void shInitPiplelineShaders(void) {
   } else {
     extendedStage = vgShaderFragmentUserDefault;
   }
-  buf[0] = vgShaderFragmentPipeline;
-  buf[1] = extendedStage;
-  size[0] = strlen(vgShaderFragmentPipeline);
-  size[1] = strlen(extendedStage);
-  glShaderSource(context->fs, 2, buf, size);
-  glCompileShader(context->fs);
-  glGetShaderiv(context->fs, GL_COMPILE_STATUS, &compileStatus);
-  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-  GL_CEHCK_ERROR;
+
+  {
+    int len;
+    const char *shader;
+    void *sh1 = simgearShaderOpen(vgShaderFragmentPipeline, &shader, &len);
+    buf[0] = shader;
+    size[0] = len;
+
+    void *sh2 = simgearShaderOpen(extendedStage, &shader, &len);
+    buf[1] = shader;
+    size[1] = len;
+
+    glShaderSource(context->fs, 2, buf, size);
+    glCompileShader(context->fs);
+    glGetShaderiv(context->fs, GL_COMPILE_STATUS, &compileStatus);
+    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CEHCK_ERROR;
+
+    simgearShaderClose(sh2);
+    simgearShaderClose(sh1);
+  }
 
   context->progDraw = glCreateProgram();
   glAttachShader(context->progDraw, context->vs);
@@ -332,18 +373,34 @@ void shInitRampShaders(void) {
   GLint  compileStatus;
 
   GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vs, 1, &vgShaderVertexColorRamp, NULL);
-  glCompileShader(vs);
-  glGetShaderiv(vs, GL_COMPILE_STATUS, &compileStatus);
-  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-  GL_CEHCK_ERROR;
+  {
+    int len;
+    const char *shader;
+    void *sh = simgearShaderOpen(vgShaderVertexColorRamp, &shader, &len);
+
+    glShaderSource(vs, 1, &shader, &len);
+    glCompileShader(vs);
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &compileStatus);
+    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CEHCK_ERROR;
+
+    simgearShaderClose(sh);
+  }
 
   GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fs, 1, &vgShaderFragmentColorRamp, NULL);
-  glCompileShader(fs);
-  glGetShaderiv(fs, GL_COMPILE_STATUS, &compileStatus);
-  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-  GL_CEHCK_ERROR;
+  {
+    int len;
+    const char *shader;
+    void *sh = simgearShaderOpen(vgShaderFragmentColorRamp, &shader, &len);
+
+    glShaderSource(fs, 1, &shader, &len);
+    glCompileShader(fs);
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &compileStatus);
+    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CEHCK_ERROR;
+
+    simgearShaderClose(sh);
+  }
 
   context->progColorRamp = glCreateProgram();
   glAttachShader(context->progColorRamp, vs);
