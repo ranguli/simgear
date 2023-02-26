@@ -23,6 +23,30 @@
 #include "Canvas.hxx"
 #include "CanvasEventManager.hxx"
 
+// Used by ShaderVG to find the shader source files in fgdata
+std::string simgearShaderRootPath = "";
+extern "C" void *
+simgearShaderOpen(const char *shader, const char**buf, int *size)
+{
+    SGPath file = simgearShaderRootPath;
+    file.append(shader)
+;
+    SGMMapFile *mmap = new SGMMapFile(file);
+    mmap->open(SG_IO_IN);
+    *buf = mmap->get();
+    *size = mmap->get_size();
+    return mmap;
+}
+
+extern "C" void
+simgearShaderClose(void *ptr) 
+{
+    SGMMapFile *mmap = (SGMMapFile*)ptr;
+    delete mmap;
+}
+// Used by ShaderVG to find the shader source files in fgdata
+
+
 namespace simgear
 {
 namespace canvas

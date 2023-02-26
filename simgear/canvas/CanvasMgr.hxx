@@ -21,7 +21,11 @@
 #define SG_CANVAS_MGR_H_
 
 #include "canvas_fwd.hxx"
+#include <simgear/io/sg_mmap.hxx>
+#include <simgear/misc/sg_path.hxx>
 #include <simgear/props/PropertyBasedMgr.hxx>
+
+extern std::string simgearShaderRootPath;
 
 namespace simgear
 {
@@ -57,6 +61,16 @@ public:
      *             /canvas/by-index/texture[i]/name
      */
     CanvasPtr getCanvas(const std::string& name) const;
+
+
+    /**
+     * Set the root directory for the ShaderVG shaders
+     *
+     * @param root    Directory where the shaders are located
+     */
+    void setShaderRoot(const SGPath &path) const {
+        simgearShaderRootPath = path.utf8Str();
+    }
 
 protected:
     void elementCreated(PropertyBasedElementPtr element) override;
