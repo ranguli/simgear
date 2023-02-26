@@ -25,8 +25,6 @@
 #include <simgear/misc/sg_path.hxx>
 #include <simgear/props/PropertyBasedMgr.hxx>
 
-extern std::string simgearShaderRootPath;
-
 namespace simgear
 {
 namespace canvas
@@ -68,9 +66,7 @@ public:
      *
      * @param root    Directory where the shaders are located
      */
-    void setShaderRoot(const SGPath &path) const {
-        simgearShaderRootPath = path.utf8Str();
-    }
+    void setShaderRoot(const SGPath &path) const;
 
 protected:
     void elementCreated(PropertyBasedElementPtr element) override;

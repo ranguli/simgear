@@ -24,7 +24,7 @@
 #include "CanvasEventManager.hxx"
 
 // Used by ShaderVG to find the shader source files in fgdata
-std::string simgearShaderRootPath = "";
+static std::string simgearShaderRootPath = "";
 extern "C" void *
 simgearShaderOpen(const char *shader, const char**buf, int *size)
 {
@@ -90,6 +90,11 @@ namespace canvas
   {
     CanvasPtr canvas = static_cast<Canvas*>(element.get());
     canvas->setCanvasMgr(this);
+  }
+
+  //----------------------------------------------------------------------------
+  void CanvasMgr::setShaderRoot(const SGPath &path) const {
+    simgearShaderRootPath = path.utf8Str();
   }
 
 } // namespace canvas
