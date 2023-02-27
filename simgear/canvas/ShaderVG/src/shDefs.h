@@ -173,14 +173,15 @@ SHfloat getMaxFloat();
 #include "shExtensions.h"
 
 #define GL_GET_ERROR printf("glGetError() -> %d line:%d file:%s\r\n", glGetError(), __LINE__, __FILE__)
-#define GL_CEHCK_ERROR \
+#define GL_CHECK_SHADER(a) \
  { \
    GLint err = glGetError(); \
    if(err){\
-       printf("glGetError() -> %d \r\n", err);\
+       printf("glGetError() -> %d (0x%x) line:%d file:%s\r\n", err, err, __LINE__, (a));\
        assert(0);\
    }\
  }
+#define GL_CHECK_ERROR GL_CHECK_SHADER(__FILE__)
 
 // GL_TEXTURE0 :imageSampler
 // GL_TEXTURE1 :rampSampler or  patternSampler

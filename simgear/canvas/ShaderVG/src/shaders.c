@@ -287,8 +287,8 @@ void shInitPiplelineShaders(void) {
     glShaderSource(context->vs, 2, buf, size);
     glCompileShader(context->vs);
     glGetShaderiv(context->vs, GL_COMPILE_STATUS, &compileStatus);
-    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CEHCK_ERROR;
+//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CHECK_SHADER(vgShaderVertexPipeline);
 
     simgearShaderClose(sh2);
     simgearShaderClose(sh1);
@@ -315,8 +315,8 @@ void shInitPiplelineShaders(void) {
     glShaderSource(context->fs, 2, buf, size);
     glCompileShader(context->fs);
     glGetShaderiv(context->fs, GL_COMPILE_STATUS, &compileStatus);
-    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CEHCK_ERROR;
+//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CHECK_SHADER(vgShaderFragmentPipeline);
 
     simgearShaderClose(sh2);
     simgearShaderClose(sh1);
@@ -326,7 +326,7 @@ void shInitPiplelineShaders(void) {
   glAttachShader(context->progDraw, context->vs);
   glAttachShader(context->progDraw, context->fs);
   glLinkProgram(context->progDraw);
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 
   context->locationDraw.pos            = glGetAttribLocation(context->progDraw,  "pos");
   context->locationDraw.textureUV      = glGetAttribLocation(context->progDraw,  "textureUV");
@@ -342,20 +342,20 @@ void shInitPiplelineShaders(void) {
   context->locationDraw.paintParams    = glGetUniformLocation(context->progDraw, "paintParams");
   context->locationDraw.paintColor     = glGetUniformLocation(context->progDraw, "paintColor");
   context->locationDraw.scaleFactorBias= glGetUniformLocation(context->progDraw, "scaleFactorBias");
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 
   // TODO: Support color transform to remove this from here
   glUseProgram(context->progDraw);
   GLfloat factor_bias[8] = {1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0};
   glUniform4fv(context->locationDraw.scaleFactorBias, 2, factor_bias);
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 
   /* Initialize uniform variables */
   float mat[16];
   float volume = fmax(context->surfaceWidth, context->surfaceHeight) / 2;
-  shCalcOrtho2D(mat, 0, context->surfaceWidth , 0, context->surfaceHeight, -volume, volume);
+  shCalcOrtho2D(mat, 0, context->surfaceWidth , context->surfaceHeight, 0, -volume, volume);
   glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 }
 
 void shDeinitPiplelineShaders(void){
@@ -364,7 +364,7 @@ void shDeinitPiplelineShaders(void){
   glDeleteShader(context->vs);
   glDeleteShader(context->fs);
   glDeleteProgram(context->progDraw);
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 }
 
 void shInitRampShaders(void) {
@@ -381,8 +381,8 @@ void shInitRampShaders(void) {
     glShaderSource(vs, 1, &shader, &len);
     glCompileShader(vs);
     glGetShaderiv(vs, GL_COMPILE_STATUS, &compileStatus);
-    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CEHCK_ERROR;
+//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CHECK_ERROR;
 
     simgearShaderClose(sh);
   }
@@ -396,8 +396,8 @@ void shInitRampShaders(void) {
     glShaderSource(fs, 1, &shader, &len);
     glCompileShader(fs);
     glGetShaderiv(fs, GL_COMPILE_STATUS, &compileStatus);
-    printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CEHCK_ERROR;
+//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+    GL_CHECK_ERROR;
 
     simgearShaderClose(sh);
   }
@@ -408,11 +408,11 @@ void shInitRampShaders(void) {
   glLinkProgram(context->progColorRamp);
   glDeleteShader(vs);
   glDeleteShader(fs);
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 
   context->locationColorRamp.step = glGetAttribLocation(context->progColorRamp, "step");
   context->locationColorRamp.stepColor = glGetAttribLocation(context->progColorRamp, "stepColor");
-  GL_CEHCK_ERROR;
+  GL_CHECK_ERROR;
 }
 
 void shDeinitRampShaders(void){
@@ -442,110 +442,110 @@ VG_API_CALL void vgCompileShaderSH(void){
 
 VG_API_CALL void vgUniform1fSH(VGint location, VGfloat v0){
     glUniform1f(location, v0);                                                     
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform2fSH(VGint location, VGfloat v0, VGfloat v1){
     glUniform2f(location, v0, v1);                                         
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform3fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2){
     glUniform3f(location, v0, v1, v2);                             
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform4fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2, VGfloat v3){
     glUniform4f(location, v0, v1, v2, v3);                 
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform1fvSH(VGint location, VGint count, const VGfloat *value){
     glUniform1fv(location, count, value);                           
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform2fvSH(VGint location, VGint count, const VGfloat *value){
     glUniform2fv(location, count, value);                           
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform3fvSH(VGint location, VGint count, const VGfloat *value){
     glUniform3fv(location, count, value);                           
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform4fvSH(VGint location, VGint count, const VGfloat *value){
     glUniform4fv(location, count, value);                           
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniformMatrix2fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
     glUniformMatrix2fv(location, count, transpose, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniformMatrix3fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
     glUniformMatrix3fv(location, count, transpose, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniformMatrix4fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
     glUniformMatrix4fv(location, count, transpose, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL VGint vgGetUniformLocationSH(const VGbyte *name){
     VG_GETCONTEXT(-1);
     VGint retval = glGetUniformLocation(context->progDraw, name);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
     return retval;
 }
 
 VG_API_CALL void vgGetUniformfvSH(VGint location, VGfloat *params){
     VG_GETCONTEXT(VG_NO_RETVAL);
     glGetUniformfv(context->progDraw, location, params);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform1iSH (VGint location, VGint v0){
     glUniform1i (location, v0);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform2iSH (VGint location, VGint v0, VGint v1){
     glUniform2i (location, v0, v1);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform3iSH (VGint location, VGint v0, VGint v1, VGint v2){
     glUniform3i (location,  v0,  v1, v2);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform4iSH (VGint location, VGint v0, VGint v1, VGint v2, VGint v3){
     glUniform4i (location, v0, v1, v2, v3);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform1ivSH (VGint location, VGint count, const VGint *value){
     glUniform1iv (location, count, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform2ivSH (VGint location, VGint count, const VGint *value){
     glUniform2iv (location, count, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform3ivSH (VGint location, VGint count, const VGint *value){
     glUniform3iv (location, count, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 VG_API_CALL void vgUniform4ivSH (VGint location, VGint count, const VGint *value){
     glUniform4iv (location, count, value);
-    GL_CEHCK_ERROR;
+    GL_CHECK_ERROR;
 }
 
 
