@@ -29,10 +29,9 @@ class TileBounds {
     public:
         TileBounds(Locator *locator, osg::Vec3d up);
         virtual std::list<osg::Vec3d> clipToTile(std::list<osg::Vec3d> points);
+        virtual bool insideTile(osg::Vec3d pt);
     
     protected:
-
-        virtual bool insideTile(osg::Vec3d pt);
         virtual osg::Vec3d getTileIntersection(osg::Vec3d inside, osg::Vec3d outside);
         virtual osg::Vec3d getPlaneIntersection(osg::Vec3d inside, osg::Vec3d outside, osg::Vec3d normal, osg::Vec3d plane);
 

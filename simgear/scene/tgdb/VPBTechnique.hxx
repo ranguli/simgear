@@ -219,6 +219,9 @@ class VPBTechnique : public TerrainTechnique
         typedef std::pair<unsigned int, float> LoadStat;
         inline static std::map<int, LoadStat> _loadStats;
 
+        inline static osg::ref_ptr<osg::Image> _defaultCoastlineTexture;
+        inline static std::mutex _defaultCoastlineTexture_mutex;
+
         inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
         inline static const char* MODEL_OFFSET   = "fg_modelOffset";
         inline static const char* PHOTO_SCENERY  = "fg_photoScenery";

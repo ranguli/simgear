@@ -62,6 +62,13 @@ VPBTechnique::VPBTechnique()
     setFilterWidth(0.1);
     setFilterMatrixAs(GAUSSIAN);
     _randomObjectsConstraintGroup = new osg::Group();
+
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
+    if (VPBTechnique::_defaultCoastlineTexture == 0) {
+        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
+        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+    }
 }
 
 VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string fileName):
@@ -72,6 +79,13 @@ VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string fi
     setFilterMatrixAs(GAUSSIAN);
     setOptions(options);
     _randomObjectsConstraintGroup = new osg::Group();
+
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
+    if (VPBTechnique::_defaultCoastlineTexture == 0) {
+        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
+        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+    }
 }
 
 VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
@@ -83,6 +97,13 @@ VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
     setFilterMatrix(gt._filterMatrix);
     setOptions(gt._options);
     _randomObjectsConstraintGroup = new osg::Group();
+
+    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
+    if (VPBTechnique::_defaultCoastlineTexture == 0) {
+        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
+        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+    }
 }
 
 VPBTechnique::~VPBTechnique()
@@ -2073,7 +2094,6 @@ osg::Image* VPBTechnique::generateWaterTexture(Atlas* atlas) {
 
 
 osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* masterLocator) {
-    osg::Image* coastTexture = new osg::Image();
 
     unsigned int coast_features_lod_range = 4;
     unsigned int waterTextureSize = 2048;
@@ -2090,17 +2110,7 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
     }
 
     if ((_coastFeatureLists.size() == 0 ) || (tileLevel < coast_features_lod_range)) {
-        // Do not generate coasts for tiles too far away, or if we definitely don't have any to write
-        coastTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
-        return coastTexture;
-    }
-
-    coastTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
-    for (unsigned int y = 0; y < waterTextureSize; ++y) {
-        for (unsigned int x = 0; x < waterTextureSize; ++x) {
-            coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
-        }
+        return VPBTechnique::_defaultCoastlineTexture;
     }
 
     // Get all appropriate coasts.  We assume that the VPB terrain tile is smaller than a Bucket size.
@@ -2116,35 +2126,59 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
 
     bool coastsFound = false;
 
+    // Do a quick pass to check that there is some coastline to generate here. This is worth doing
+    // because the LoD scheme results in many tiles with no coastlines.
     for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
         if (coasts->first != bucket) continue;
         const CoastlineBinList coastBins = coasts->second;
 
-        for (auto rb = coastBins.begin(); rb != coastBins.end(); ++rb)
+        for (auto rb = coastBins.begin(); !coastsFound && (rb != coastBins.end()); ++rb)
         {
             auto coastFeatures = (*rb)->getCoastlines();
-
-            for (auto r = coastFeatures.begin(); r != coastFeatures.end(); ++r) {
-                auto clipped = tileBounds.clipToTile(r->_nodes);
-                if (clipped.size() > 1) {                    
-                    // We need at least two points to render a line.
-                    LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
-                    addCoastline(masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
-                    coastsFound = true;
+            for (auto r = coastFeatures.begin(); !coastsFound && (r != coastFeatures.end()); ++r) {
+                for (auto p = r->_nodes.begin(); !coastsFound && (p != r->_nodes.end()); ++p) {
+                    if (tileBounds.insideTile(*p)) {
+                        coastsFound = true;
+                    }
                 }
             }
         }
     }
 
-    if (! coastsFound) {
-        // No coasts found, so save some memory
-        coastTexture->unref();
+    if (coastsFound) {
+        // We have at least one coast here, so generate a coastline texture for the tile and
+        // render to it.
         osg::Image* coastTexture = new osg::Image();
-        coastTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+        coastTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
+        for (unsigned int y = 0; y < waterTextureSize; ++y) {
+            for (unsigned int x = 0; x < waterTextureSize; ++x) {
+                coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
+            }
+        }
+
+        for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
+            if (coasts->first != bucket) continue;
+            const CoastlineBinList coastBins = coasts->second;
+
+            for (auto rb = coastBins.begin(); rb != coastBins.end(); ++rb)
+            {
+                auto coastFeatures = (*rb)->getCoastlines();
+
+                for (auto r = coastFeatures.begin(); r != coastFeatures.end(); ++r) {
+                    auto clipped = tileBounds.clipToTile(r->_nodes);
+                    if (clipped.size() > 1) {                    
+                        // We need at least two points to render a line.
+                        LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
+                        addCoastline(masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
+                    }
+                }
+            }
+        }
+
+        return coastTexture;
     }
 
-    return coastTexture;
+    return VPBTechnique::_defaultCoastlineTexture;
 }
 
 // Update the color of a particular texture pixel, clipping to the texture and not over-writing a larger value.
