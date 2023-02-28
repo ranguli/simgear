@@ -48,6 +48,8 @@ namespace canvas
         _canvas(canvas)
       {}
 
+      virtual bool needsDragPosition() const { return true; }
+
       virtual bool needsUV() const { return true; }
 
       virtual bool buttonPressed( int,

@@ -100,6 +100,12 @@ public:
   { return std::string(); }
 
   /**
+   * Whether the scene coordinates of the picking action should be calculated for mouseMoved().
+   */
+  virtual bool needsDragPosition() const
+  { return false; }
+
+  /**
    * Whether the uv coordinates of the picking action should be calculated upon
    * an intersection.
    */
