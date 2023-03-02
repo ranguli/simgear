@@ -168,6 +168,7 @@ bool SGMaterialLib::load( const SGPath &fg_root, const SGPath& mpath,
             SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << mat << " for landclass " << lc);
         } else {
             landclasslib[lc] = std::pair(mat, water);
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Landclass mapping: " << lc << " : " << mat);
         }
     }
 
@@ -257,7 +258,9 @@ SGMaterialCache *SGMaterialLib::generateMatCache(SGVec2f center, const simgear::
     // Collapse down the mapping from landclasses to materials.
     const_landclass_map_iterator lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
-        newCache->insert(lc_iter->first, internalFind(lc_iter->second.first, center));
+        SGMaterial* mat = internalFind(lc_iter->second.first, center);
+        newCache->insert(lc_iter->first, mat);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "MatCache Landclass mapping: " << lc_iter->first << " : " << mat->get_names()[0]);
     }
 
     return newCache;

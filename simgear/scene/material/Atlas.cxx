@@ -69,6 +69,7 @@ Atlas::Atlas(osg::ref_ptr<const SGReaderWriterOptions> options) {
 
 void Atlas::addMaterial(int landclass, bool isWater, SGMaterial* mat) {
 
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Atlas Landclass mapping: " << landclass << " : " << mat->get_names()[0]);
     _index[landclass] = _materialLookupIndex;
     _waterAtlas[landclass] = isWater;
     unsigned int textureList[Atlas::MAX_TEXTURES];
@@ -117,6 +118,7 @@ void Atlas::addMaterial(int landclass, bool isWater, SGMaterial* mat) {
 
         for (unsigned int i = 0; i < Atlas::MAX_TEXTURES; i++) {
             std::string texture = mat->get_one_texture(0,i);
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Landclass " << landclass << " texture " << i << " : " << texture);
 
             if (texture.empty()) {
                 // This is a rather horrible hardcoded mapping of the default textures defined in
