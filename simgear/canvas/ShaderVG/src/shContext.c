@@ -71,23 +71,29 @@ VG_API_CALL VGboolean vgHasContextSH()
 VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
 {
   VG_GETCONTEXT(VG_NO_RETVAL);
-  
+
   /* update surface info */
   context->surfaceWidth = width;
   context->surfaceHeight = height;
-  
+
   /* setup GL projection */
   /* We handle viewport and projection ourselves...
   glViewport(0,0,width,height); */
-  
+
+  VG_RETURN(VG_NO_RETVAL);
+}
+
+VG_API_CALL void vgSetROrtho2DSH(VGint left, VGint right, VGint bottom, VGint top)
+{
+  VG_GETCONTEXT(VG_NO_RETVAL);
+
   /* Setup projection matrix */
-//float mat[16];
-//float volume = fmax(width, height) / 2;
-//shCalcOrtho2D(mat, 0, width, 0, height, -volume, volume);
+  float mat[16];
+  shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
   glUseProgram(context->progDraw);
-//glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
+  glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
   GL_CHECK_ERROR;
-  
+
   VG_RETURN(VG_NO_RETVAL);
 }
 

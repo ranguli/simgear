@@ -178,7 +178,6 @@ SHfloat getMaxFloat();
    GLint err = glGetError(); \
    if(err){\
        printf("glGetError() -> %d (0x%x) line:%d file:%s\r\n", err, err, __LINE__, (a));\
-       assert(0);\
    }\
  }
 #define GL_CHECK_ERROR GL_CHECK_SHADER(__FILE__)
