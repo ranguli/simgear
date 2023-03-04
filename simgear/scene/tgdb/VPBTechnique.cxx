@@ -1242,9 +1242,9 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
 void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
 {   
-
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
     Atlas* atlas = matcache->getAtlas();
+    auto tileID = _terrainTile->getTileID();
 
     bool photoScenery = false;
 
@@ -1257,7 +1257,6 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
 
         // Firstly, we need to work out the texture file we want to load.  Fortunately this follows the same
         // naming convention as the VPB scenery itself.
-        auto tileID = _terrainTile->getTileID();
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Using Photoscenery for " << _fileName << " " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
 
         const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
@@ -1323,17 +1322,36 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         osg::Image* image = colorLayer->getImage();
         if (!image || ! image->valid()) return;
 
+        int raster_count[256] = {0};
+
         // Set the "g" color channel to an index into the atlas for the landclass.
         for (unsigned int s = 0; s < (unsigned int) image->s(); s++) {
             for (unsigned int t = 0; t < (unsigned int) image->t(); t++) {
                 osg::Vec4d c = image->getColor(s, t);
-                int i = int(std::round(c.x() * 255.0));
+                unsigned int i = (unsigned int) std::abs(std::round(c.x() * 255.0));
                 c.set(c.x(), (double) (atlas->getIndex(i) / 255.0), atlas->isWater(i) ? 1.0 : 0.0, c.z());
+                if (i < 256) {
+                    raster_count[i]++;
+                } else {
+                    SG_LOG(SG_TERRAIN, SG_ALERT, "Raster value out of range: " << c.x() << " " << i);
+                }
                 image->setColor(c, s, t);
             }
         }
 
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "VPB Image level:" << _terrainTile->getTileID().level << " " << image->s() << "x" << image->t() << " mipmaps:" << image->getNumMipmapLevels() << " format:" << image->getInternalTextureFormat());
+        // Simple statistics on the raster
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Landclass Raster " << _fileName << " Level " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Raster Information:" << image->s() << "x" << image->t() << " (" << (image->s() * image->t()) << " pixels)" << " mipmaps:" << image->getNumMipmapLevels() << " format:" << image->getInternalTextureFormat());
+        for (unsigned int i = 0; i < 256; ++i) { 
+            if (raster_count[i] > 0) {
+                SGMaterial* mat = matcache->find(i);
+                if (mat) {
+                    SG_LOG(SG_TERRAIN, SG_DEBUG, "  Landclass: " << i << " Material " <<  mat->get_names()[0] << " " << mat->get_one_texture(0,0) << " count: " << raster_count[i]);
+                } else {
+                    SG_LOG(SG_TERRAIN, SG_DEBUG, "  Landclass: " << i << " NO MATERIAL FOUND count : " << raster_count[i]);
+                }
+            }
+        }
 
         osg::ref_ptr<osg::Texture2D> texture2D  = new osg::Texture2D;
         texture2D->setImage(image);
