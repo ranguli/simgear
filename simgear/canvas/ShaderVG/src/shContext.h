@@ -45,6 +45,14 @@ typedef struct
   /* Surface info (since no EGL yet) */
   SHint surfaceWidth;
   SHint surfaceHeight;
+
+  /* View info */
+  SHint viewWidth;
+  SHint viewHeight;
+
+  /* Ortho info */
+  SHint left, right;
+  SHint bottom, top;
   
   /* GetString info */
   char vendor[256];
@@ -112,6 +120,7 @@ typedef struct
   struct {
       GLint pos            ;
       GLint textureUV      ;
+      GLint view           ;
       GLint model          ;
       GLint projection     ;
       GLint paintInverted  ;

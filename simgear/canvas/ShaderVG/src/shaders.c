@@ -325,6 +325,7 @@ void shInitPiplelineShaders(void) {
 
   context->locationDraw.pos            = glGetAttribLocation(context->progDraw,  "pos");
   context->locationDraw.textureUV      = glGetAttribLocation(context->progDraw,  "textureUV");
+  context->locationDraw.view           = glGetUniformLocation(context->progDraw, "sh_View");
   context->locationDraw.model          = glGetUniformLocation(context->progDraw, "sh_Model");
   context->locationDraw.projection     = glGetUniformLocation(context->progDraw, "sh_Ortho");
   context->locationDraw.paintInverted  = glGetUniformLocation(context->progDraw, "paintInverted");
@@ -345,12 +346,14 @@ void shInitPiplelineShaders(void) {
   glUniform4fv(context->locationDraw.scaleFactorBias, 2, factor_bias);
   GL_CHECK_ERROR;
 
+#if 0
   /* Initialize uniform variables */
   float mat[16];
   float volume = fmax(context->surfaceWidth, context->surfaceHeight) / 2;
   shCalcOrtho2D(mat, 0, context->surfaceWidth , context->surfaceHeight, 0, -volume, volume);
   glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
   GL_CHECK_ERROR;
+#endif
 }
 
 void shDeinitPiplelineShaders(void){

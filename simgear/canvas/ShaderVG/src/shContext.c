@@ -47,6 +47,14 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height)
   /* init surface info */
   g_context->surfaceWidth = width;
   g_context->surfaceHeight = height;
+
+  g_context->viewWidth = width;
+  g_context->viewHeight = height;
+
+  g_context->left = 0;
+  g_context->right = width;
+  g_context->bottom = height;
+  g_context->top = 0;
   
   /* setup GL projection */
   /* We handle viewport and projection ourselves...
@@ -72,7 +80,7 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
 {
   VG_GETCONTEXT(VG_NO_RETVAL);
 
-  /* update surface info */
+  /* update surface (texture) info */
   context->surfaceWidth = width;
   context->surfaceHeight = height;
 
@@ -87,12 +95,40 @@ VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top
 {
   VG_GETCONTEXT(VG_NO_RETVAL);
 
-  /* Setup projection matrix */
-  float mat[16];
-  shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
-  glUseProgram(context->progDraw);
-  glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
-  GL_CHECK_ERROR;
+  if (left == 0 && right == context->surfaceWidth &&
+      top == 0 && bottom == context->surfaceHeight)
+  {
+    context->viewWidth = context->surfaceWidth;
+    context->viewHeight = context->surfaceHeight;
+
+    /* Setup view matrix */
+    float mat[16];
+    shCalcView(mat, context->viewWidth, context->viewHeight,
+                    right-left, bottom-top);
+    glUniformMatrix4fv(context->locationDraw.view, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
+  }
+  else
+  {
+    context->left = left;
+    context->right = right;
+    context->bottom = bottom;
+    context->top = top;
+
+    /* Setup view matrix */
+    float mat[16];
+    shCalcView(mat, context->viewWidth, context->viewHeight,
+                    right-left, bottom-top);
+    glUniformMatrix4fv(context->locationDraw.view, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
+
+    /* Setup projection matrix */
+    float mat[16];
+    shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
+    glUseProgram(context->progDraw);
+    glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
+  }
 
   VG_RETURN(VG_NO_RETVAL);
 }

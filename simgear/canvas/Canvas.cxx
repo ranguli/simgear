@@ -304,8 +304,6 @@ namespace canvas
       osg::ref_ptr<osg::Group> root_scene_group = _root_group->getSceneGroup();
 
       _texture.setSize(_size_x, _size_y);
-      if ( vgHasContextSH() )
-        vgSetOrtho2DSH( 0, _size_x, _size_y, 0);
 
       if( !_texture.serviceable() )
       {
