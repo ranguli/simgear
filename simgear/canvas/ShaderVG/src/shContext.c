@@ -115,14 +115,8 @@ VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top
     context->bottom = bottom;
     context->top = top;
 
-    /* Setup view matrix */
-    float mat[16];
-    shCalcView(mat, context->viewWidth, context->viewHeight,
-                    right-left, bottom-top);
-    glUniformMatrix4fv(context->locationDraw.view, 1, GL_FALSE, mat);
-    GL_CHECK_ERROR;
-
     /* Setup projection matrix */
+    float mat[16];
     shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
     glUseProgram(context->progDraw);
     glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
