@@ -123,7 +123,6 @@ VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top
     GL_CHECK_ERROR;
 
     /* Setup projection matrix */
-    float mat[16];
     shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
     glUseProgram(context->progDraw);
     glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
