@@ -332,7 +332,7 @@ namespace canvas
       );
 
       if ( vgHasContextSH() )
-        vgSetROrtho2DSH( 0, _view_width, _view_height, 0);
+        vgSetOrtho2DSH( 0, _view_width, _view_height, 0);
     } else {
       camera->setProjectionMatrix(
         osg::Matrix::ortho2D( -_view_width/2.,  _view_width/2.,
@@ -340,7 +340,7 @@ namespace canvas
       );
 
       if ( vgHasContextSH() )
-        vgSetROrtho2DSH( -_view_width/2.,  _view_width/2.,
+        vgSetOrtho2DSH( -_view_width/2.,  _view_width/2.,
                          -_view_height/2., _view_height/2. );
     }
 

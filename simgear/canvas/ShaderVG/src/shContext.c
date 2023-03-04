@@ -83,7 +83,7 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
   VG_RETURN(VG_NO_RETVAL);
 }
 
-VG_API_CALL void vgSetROrtho2DSH(VGint left, VGint right, VGint bottom, VGint top)
+VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top)
 {
   VG_GETCONTEXT(VG_NO_RETVAL);
 

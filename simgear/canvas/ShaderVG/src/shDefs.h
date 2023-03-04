@@ -173,14 +173,21 @@ SHfloat getMaxFloat();
 #include "shExtensions.h"
 
 #define GL_GET_ERROR printf("glGetError() -> %d line:%d file:%s\r\n", glGetError(), __LINE__, __FILE__)
-#define GL_CHECK_SHADER(a) \
- { \
-   GLint err = glGetError(); \
-   if(err){\
-       printf("glGetError() -> %d (0x%x) line:%d file:%s\r\n", err, err, __LINE__, (a));\
-   }\
+#define GL_CHECK_ERROR { \
+  GLint err = glGetError(); \
+  if(err)\
+    printf("glGetError() -> %d (0x%x) line:%d file:%s\r\n", err, err, __LINE__, __FILE__);\
+}
+#define GL_CHECK_SHADER(fs, a) { \
+    GLint compileStatus, maxLength = 0; char errstr[1025]; \
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &compileStatus); \
+    if (compileStatus == GL_FALSE) { \
+      glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &maxLength); \
+      glGetShaderInfoLog(fs, 1024, &maxLength, errstr); \
+      errstr[1024] = 0; \
+      printf("Shader error -> line:%d file:%s\r\n    %sr\n    in shader file: %s\n", __LINE__, __FILE__, errstr, a); \
+    } \
  }
-#define GL_CHECK_ERROR GL_CHECK_SHADER(__FILE__)
 
 // GL_TEXTURE0 :imageSampler
 // GL_TEXTURE1 :rampSampler or  patternSampler

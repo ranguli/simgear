@@ -305,7 +305,7 @@ namespace canvas
 
       _texture.setSize(_size_x, _size_y);
       if ( vgHasContextSH() )
-        vgSetROrtho2DSH( 0, _size_x, _size_y, 0);
+        vgSetOrtho2DSH( 0, _size_x, _size_y, 0);
 
       if( !_texture.serviceable() )
       {

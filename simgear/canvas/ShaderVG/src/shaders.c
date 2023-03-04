@@ -36,7 +36,7 @@ static const char* vgShaderFragmentPipeline = "canvas-pipeline.frag";
 static const char* vgShaderVertexUserDefault = "canvas-user-default.vert";
 static const char* vgShaderFragmentUserDefault = "canvas-user-default.frag";
 static const char* vgShaderVertexColorRamp = "canvas-color-ramp.vert";
-static const char* vgShaderFragmentColorRamp = "canvas-color-ramp.vert";
+static const char* vgShaderFragmentColorRamp = "canvas-color-ramp.frag";
 
 #else
 static const char* vgShaderVertexPipeline = R"glsl(
@@ -261,7 +261,6 @@ static const char* vgShaderFragmentColorRamp = R"glsl(
 void shInitPiplelineShaders(void) {
 
   VG_GETCONTEXT(VG_NO_RETVAL);
-  GLint  compileStatus;
   const char* extendedStage;
   const char* buf[2];
   GLint size[2];
@@ -286,9 +285,7 @@ void shInitPiplelineShaders(void) {
 
     glShaderSource(context->vs, 2, buf, size);
     glCompileShader(context->vs);
-    glGetShaderiv(context->vs, GL_COMPILE_STATUS, &compileStatus);
-//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CHECK_SHADER(vgShaderVertexPipeline);
+    GL_CHECK_SHADER(context->vs, vgShaderVertexPipeline);
 
     simgearShaderClose(sh2);
     simgearShaderClose(sh1);
@@ -314,9 +311,7 @@ void shInitPiplelineShaders(void) {
 
     glShaderSource(context->fs, 2, buf, size);
     glCompileShader(context->fs);
-    glGetShaderiv(context->fs, GL_COMPILE_STATUS, &compileStatus);
-//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CHECK_SHADER(vgShaderFragmentPipeline);
+    GL_CHECK_SHADER(context->fs, vgShaderFragmentPipeline);
 
     simgearShaderClose(sh2);
     simgearShaderClose(sh1);
@@ -395,9 +390,7 @@ void shInitRampShaders(void) {
 
     glShaderSource(fs, 1, &shader, &len);
     glCompileShader(fs);
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &compileStatus);
-//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
-    GL_CHECK_ERROR;
+    GL_CHECK_SHADER(fs, vgShaderFragmentColorRamp);
 
     simgearShaderClose(sh);
   }

@@ -629,7 +629,7 @@ VG_API_CALL const VGubyte * vgGetString(VGStringID name);
 VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height);
 VG_API_CALL VGboolean vgHasContextSH();
 VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height);
-VG_API_CALL void vgSetROrtho2DSH(VGint left, VGint right, VGint bottom, VGint top);
+VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top);
 VG_API_CALL void vgDestroyContextSH(void);
 
 /* Extensions for ShaderVG */
