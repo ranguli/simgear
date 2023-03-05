@@ -888,7 +888,6 @@ struct ReaderWriterSTG::_ModelBin {
         }
         
         osg::PagedLOD* pagedLOD = new osg::PagedLOD;
-        pagedLOD->setCenterMode(osg::PagedLOD::USE_BOUNDING_SPHERE_CENTER);
         std::string name = string("pagedObjectLOD ").append(bucket.gen_index_str());
         pagedLOD->setName(name);
 
@@ -918,6 +917,11 @@ struct ReaderWriterSTG::_ModelBin {
         pagedLOD->setRange(pagedLOD->getNumChildren(), 0, 2.0 * _object_range_rough);
         pagedLOD->setMinimumExpiryTime(pagedLOD->getNumChildren(), pagedLODExpiry);
         pagedLOD->setRadius(SG_TILE_RADIUS);
+        pagedLOD->setCenterMode(osg::PagedLOD::USER_DEFINED_CENTER);
+
+        SGVec3d coord;
+        SGGeodesy::SGGeodToCart(bucket.get_center(), coord);
+        pagedLOD->setCenter(toOsg(coord));
         SG_LOG( SG_TERRAIN, SG_DEBUG, "Tile " << bucket.gen_index_str() << " PagedLOD Center: " << pagedLOD->getCenter().x() << "," << pagedLOD->getCenter().y() << "," << pagedLOD->getCenter().z() );
         SG_LOG( SG_TERRAIN, SG_DEBUG, "Tile " << bucket.gen_index_str() << " PagedLOD Range: " << (2.0 * _object_range_rough));
         SG_LOG( SG_TERRAIN, SG_DEBUG, "Tile " << bucket.gen_index_str() << " PagedLOD Radius: " << SG_TILE_RADIUS);
