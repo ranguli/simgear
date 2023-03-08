@@ -283,7 +283,7 @@ void shInitPiplelineShaders(void) {
     buf[1] = shader;
     size[1] = len;
 
-    glShaderSource(context->vs, 2, buf, size);
+    glShaderSource(context->vs, 1, buf, size);
     glCompileShader(context->vs);
     GL_CHECK_SHADER(context->vs, vgShaderVertexPipeline);
 
@@ -309,7 +309,7 @@ void shInitPiplelineShaders(void) {
     buf[1] = shader;
     size[1] = len;
 
-    glShaderSource(context->fs, 2, buf, size);
+    glShaderSource(context->fs, 1, buf, size);
     glCompileShader(context->fs);
     GL_CHECK_SHADER(context->fs, vgShaderFragmentPipeline);
 
@@ -325,7 +325,6 @@ void shInitPiplelineShaders(void) {
 
   context->locationDraw.pos            = glGetAttribLocation(context->progDraw,  "pos");
   context->locationDraw.textureUV      = glGetAttribLocation(context->progDraw,  "textureUV");
-  context->locationDraw.view           = glGetUniformLocation(context->progDraw, "sh_View");
   context->locationDraw.model          = glGetUniformLocation(context->progDraw, "sh_Model");
   context->locationDraw.projection     = glGetUniformLocation(context->progDraw, "sh_Ortho");
   context->locationDraw.paintInverted  = glGetUniformLocation(context->progDraw, "paintInverted");

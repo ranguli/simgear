@@ -134,34 +134,6 @@ int shLineLineXsection(SHVector2 *o1, SHVector2 *v1,
   return 1;
 }
 
-void shCalcView(float* mat, float width, float height, float size_x, float size_y)
-{
-    /* first column */
-    *mat++ = width/size_x;
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-
-    /* second */
-    *mat++ = (0.0f);
-    *mat++ = height/size_y;
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-
-    /* third */
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-    *mat++ = (1.0f);
-    *mat++ = (0.0f);
-
-    /* fourth */
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-    *mat++ = (0.0f);
-    *mat++ = (1.0f);
-
-}
-
 void shCalcOrtho2D(float* mat, float left, float right, float bottom, float top, float near, float far)
 {
     /* http://en.wikipedia.org/wiki/Orthographic_projection */

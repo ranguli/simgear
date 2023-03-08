@@ -27,6 +27,8 @@
 #include "shGeometry.h"
 #include "shPaint.h"
 
+#define USE_MODELVIEW_MATRIX	0
+
 void shPremultiplyFramebuffer()
 {
   /* Multiply target color with its own alpha */
@@ -282,7 +284,9 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 {
   SHPath *p;
   SHMatrix3x3 mi;
+#if USE_MODELVIEW_MATRIX
   SHfloat mgl[16];
+#endif
   SHPaint *fill, *stroke;
   SHRectangle *rect;
   
@@ -327,10 +331,12 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   stroke = (context->strokePaint ? context->strokePaint : &context->defaultPaint);
   
   /* Apply transformation */
+#if USE_MODELVIEW_MATRIX
   shMatrixToGL(&context->pathTransform, mgl);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glMultMatrixf(mgl);
+#endif
   
   if (paintModes & VG_FILL_PATH) {
     
@@ -446,8 +452,9 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 #endif
   }
   
-  
+#if USE_MODELVIEW_MATRIX
   glPopMatrix();
+#endif
   
   if (context->scissoring == VG_TRUE)
     glDisable( GL_SCISSOR_TEST );
@@ -458,7 +465,9 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 VG_API_CALL void vgDrawImage(VGImage image)
 {
   SHImage *i;
+#if USE_MODELVIEW_MATRIX
   SHfloat mgl[16];
+#endif
   SHfloat texGenS[4] = {0,0,0,0};
   SHfloat texGenT[4] = {0,0,0,0};
   SHPaint *fill;
@@ -484,10 +493,12 @@ VG_API_CALL void vgDrawImage(VGImage image)
   
   /* Apply image-user-to-surface transformation */
   i = (SHImage*)image;
+#if USE_MODELVIEW_MATRIX
   shMatrixToGL(&context->imageTransform, mgl);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glMultMatrixf(mgl);
+#endif
   
   /* Clamp to edge for proper filtering, modulate for multiply mode */
   glActiveTexture(GL_TEXTURE0);
@@ -592,7 +603,9 @@ VG_API_CALL void vgDrawImage(VGImage image)
   
   glDisable(GL_TEXTURE_GEN_S);
   glDisable(GL_TEXTURE_GEN_T);
+#if USE_MODELVIEW_MATRIX
   glPopMatrix();
+#endif
 
   if (context->scissoring == VG_TRUE)
     glDisable( GL_SCISSOR_TEST );

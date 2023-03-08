@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2007 Ivan Leben
+ * Copyright (c) 2007 Ivan Leben
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,8 @@
 #include "shImage.h"
 #include "shGeometry.h"
 #include "shPaint.h"
+
+#define USE_MODELVIEW_MATRIX	0
 
 void shPremultiplyFramebuffer()
 {
@@ -170,12 +172,12 @@ static void shDrawPaintMesh(VGContext *c, SHVector2 *min, SHVector2 *max,
     
   case VG_PAINT_TYPE_PATTERN:
     if (p->pattern != VG_INVALID_HANDLE) {
-    shLoadPatternMesh(p, mode, VG_MATRIX_PATH_USER_TO_SURFACE);
+      shLoadPatternMesh(p, mode, VG_MATRIX_PATH_USER_TO_SURFACE);
       break;
     }/* else behave as a color paint */
   
   case VG_PAINT_TYPE_COLOR:
-    shLoadOneColorMesh(p);
+//  shLoadOneColorMesh(p);
     break;  
   }
 
@@ -194,7 +196,7 @@ VGboolean shIsTessCacheValid (VGContext *c, SHPath *p)
 {
   SHfloat nX, nY;
   SHVector2 X, Y;
-  SHMatrix3x3 mi; //, mchange;
+  SHMatrix3x3 mi;//, mchange;
   VGboolean valid = VG_TRUE;
 
   if (p->cacheDataValid == VG_FALSE) {
@@ -273,7 +275,9 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 {
   SHPath *p;
   SHMatrix3x3 mi;
+#if USE_MODELVIEW_MATRIX
   SHfloat mgl[16];
+#endif
   SHPaint *fill, *stroke;
   SHRectangle *rect;
   
@@ -311,13 +315,15 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
   /* Pick paint if available or default*/
   fill = (context->fillPaint ? context->fillPaint : &context->defaultPaint);
   stroke = (context->strokePaint ? context->strokePaint : &context->defaultPaint);
-  
+
   /* Apply transformation */
+#if USE_MODELVIEW_MATRIX
   shMatrixToGL(&context->pathTransform, mgl);
   glUseProgram(context->progDraw);
   glUniformMatrix4fv(context->locationDraw.model, 1, GL_FALSE, mgl);
   glUniform1i(context->locationDraw.drawMode, 0); /* drawMode: path */
   GL_CHECK_ERROR;
+#endif
   
   if (paintModes & VG_FILL_PATH) {
     
@@ -416,7 +422,9 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
 VG_API_CALL void vgDrawImage(VGImage image)
 {
   SHImage *i;
+#if USE_MODELVIEW_MATRIX
   SHfloat mgl[16];
+#endif
   SHPaint *fill;
 //SHVector2 min, max;
   SHRectangle *rect;
@@ -440,9 +448,13 @@ VG_API_CALL void vgDrawImage(VGImage image)
   
   /* Apply image-user-to-surface transformation */
   i = (SHImage*)image;
+#if USE_MODELVIEW_MATRIX
   shMatrixToGL(&context->imageTransform, mgl);
   glUseProgram(context->progDraw);
   glUniformMatrix4fv(context->locationDraw.model, 1, GL_FALSE, mgl);
+  GL_CHECK_ERROR;
+#endif
+
   glUniform1i(context->locationDraw.drawMode, 1); /* drawMode: image */
   GL_CHECK_ERROR;
   
@@ -494,7 +506,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
               break;
           default:
           case VG_PAINT_TYPE_COLOR:
-              shLoadOneColorMesh(fill);
+              // shLoadOneColorMesh(fill);
               break;
       }
   } else {

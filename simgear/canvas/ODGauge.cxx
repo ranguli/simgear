@@ -324,10 +324,10 @@ namespace canvas
     if( _view_height < 0 )
       _view_height = _size_y;
 
-    camera->setViewport(0, 0, _size_x, _size_y);
-    if ( vgHasContextSH() )
-      vgResizeSurfaceSH(_size_x, _size_y);
+//  if ( vgHasContextSH() )
+//    vgResizeSurfaceSH(_size_x, _size_y);
 
+    camera->setViewport(0, 0, _size_x, _size_y);
 
     if( _flags & USE_IMAGE_COORDS ) {
       camera->setProjectionMatrix(
