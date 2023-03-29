@@ -357,34 +357,49 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
                 float mipmap_resize_factor = 1.0f / pow(2.0f, float(level));
                 if (!viewport_absolute &&
                     (p_attachment->getIndex() == viewport_attachment)) {
-                    if ((buffer->width_scale  == 0.0f) &&
-                        (buffer->height_scale == 0.0f)) {
-                        // This is a fixed size pass. We allow the user to use
-                        // relative coordinates to shape the viewport.
-                        float x      = p_viewport->getFloatValue("x",      0.0f);
-                        float y      = p_viewport->getFloatValue("y",      0.0f);
-                        float width  = p_viewport->getFloatValue("width",  1.0f)
-                            * mipmap_resize_factor;
-                        float height = p_viewport->getFloatValue("height", 1.0f)
-                            * mipmap_resize_factor;
-                        camera->setViewport(x      * texture->getTextureWidth(),
-                                            y      * texture->getTextureHeight(),
-                                            width  * texture->getTextureWidth(),
-                                            height * texture->getTextureHeight());
-                    } else {
-                        // This is a pass that should match the physical viewport
-                        // size. Store the scales so we can resize the pass later
-                        // if the physical viewport changes size.
-                        pass->viewport_width_scale  = buffer->width_scale
-                            * mipmap_resize_factor;
-                        pass->viewport_height_scale = buffer->height_scale
-                            * mipmap_resize_factor;
-                        camera->setViewport(
-                            0,
-                            0,
-                            pass->viewport_width_scale  * compositor->getViewport()->width(),
-                            pass->viewport_height_scale * compositor->getViewport()->height());
-                    }
+                    float rel_x      = p_viewport->getFloatValue("x",      0.0f);
+                    float rel_y      = p_viewport->getFloatValue("y",      0.0f);
+                    float rel_width  = p_viewport->getFloatValue("width",  1.0f)
+                        * mipmap_resize_factor;
+                    float rel_height = p_viewport->getFloatValue("height", 1.0f)
+                        * mipmap_resize_factor;
+
+                    auto assign_dim = [&](float rel_dim,
+                                          float buffer_dim_scale,
+                                          int texture_dim,
+                                          int physical_viewport_dim,
+                                          float &viewport_dim_scale) -> float {
+                        if (buffer_dim_scale == 0.0f) {
+                            viewport_dim_scale = 0.0f;
+                            return rel_dim * texture_dim;
+                        } else {
+                            viewport_dim_scale = rel_dim * buffer_dim_scale;
+                            return viewport_dim_scale * physical_viewport_dim;
+                        }
+                    };
+
+                    float x = assign_dim(rel_x,
+                                         buffer->width_scale,
+                                         texture->getTextureWidth(),
+                                         compositor->getViewport()->width(),
+                                         pass->viewport_x_scale);
+                    float y = assign_dim(rel_y,
+                                         buffer->height_scale,
+                                         texture->getTextureHeight(),
+                                         compositor->getViewport()->height(),
+                                         pass->viewport_y_scale);
+                    float width  = assign_dim(rel_width,
+                                              buffer->width_scale,
+                                              texture->getTextureWidth(),
+                                              compositor->getViewport()->width(),
+                                              pass->viewport_width_scale);
+                    float height = assign_dim(rel_height,
+                                              buffer->height_scale,
+                                              texture->getTextureHeight(),
+                                              compositor->getViewport()->height(),
+                                              pass->viewport_height_scale);
+
+                    camera->setViewport(x, y, width, height);
                 }
             } catch (sg_exception &e) {
                 SG_LOG(SG_INPUT, SG_ALERT, "PassBuilder::build: Skipping attachment "
@@ -534,7 +549,7 @@ public:
         _render_at_night(render_at_night),
         _near_m(near_m),
         _far_m(far_m) {
-        _half_sm_size = osg::Vec2d((double)sm_width, (double)sm_height) / 2.0;
+        _half_sm_size = osg::Vec2d((double)sm_width, (double)sm_height) * 0.5;
     }
     virtual void updatePass(Pass &pass,
                             const osg::Matrix &view_matrix,

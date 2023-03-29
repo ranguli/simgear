@@ -307,20 +307,34 @@ Compositor::resized()
         if (!camera)
             continue;
 
-        if (camera->isRenderToTextureCamera()
-            && pass->viewport_width_scale  != 0.0f
-            && pass->viewport_height_scale != 0.0f) {
+        osg::Viewport *viewport = camera->getViewport();
+
+        if (camera->isRenderToTextureCamera() &&
+            (pass->viewport_x_scale      != 0.0f ||
+             pass->viewport_y_scale      != 0.0f ||
+             pass->viewport_width_scale  != 0.0f ||
+             pass->viewport_height_scale != 0.0f)) {
 
             // Resize the viewport
-            camera->setViewport(0, 0,
-                                pass->viewport_width_scale  * _viewport->width(),
-                                pass->viewport_height_scale * _viewport->height());
+            int new_x = (pass->viewport_x_scale == 0.0f) ?
+                viewport->x() :
+                pass->viewport_x_scale * _viewport->width();
+            int new_y = (pass->viewport_y_scale == 0.0f) ?
+                viewport->y() :
+                pass->viewport_y_scale * _viewport->height();
+            int new_width = (pass->viewport_width_scale == 0.0f) ?
+                viewport->width() :
+                pass->viewport_width_scale * _viewport->width();
+            int new_height = (pass->viewport_height_scale == 0.0f) ?
+                viewport->height() :
+                pass->viewport_height_scale * _viewport->height();
+            camera->setViewport(new_x, new_y, new_width, new_height);
+
             // Force the OSG rendering backend to handle the new sizes
             camera->dirtyAttachmentMap();
         }
 
         // Update the uniforms even if it isn't a RTT camera
-        osg::Viewport *viewport = camera->getViewport();
         _uniforms[SG_UNIFORM_VIEWPORT]->set(
             osg::Vec4f(viewport->x(),
                        viewport->y(),
@@ -334,58 +348,94 @@ Compositor::resized()
     // Resize buffers that must be a multiple of the screen size
     for (const auto &buffer : _buffers) {
         osg::Texture *texture = buffer.second->texture;
-        if (texture
-            && buffer.second->width_scale  != 0.0f
-            && buffer.second->height_scale != 0.0f) {
-
-            int width  = buffer.second->width_scale  * _viewport->width();
-            int height = buffer.second->height_scale * _viewport->height();
+        if (texture &&
+            (buffer.second->width_scale  != 0.0f ||
+             buffer.second->height_scale != 0.0f)) {
             {
                 auto tex = dynamic_cast<osg::Texture1D *>(texture);
                 if (tex) {
-                    tex->setTextureWidth(width);
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    tex->setTextureWidth(new_width);
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::Texture2D *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height);
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height);
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::Texture2DArray *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height, tex->getTextureDepth());
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height, tex->getTextureDepth());
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::Texture2DMultisample *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height);
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height);
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::Texture3D *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height, tex->getTextureDepth());
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height, tex->getTextureDepth());
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::TextureRectangle *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height);
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height);
                     tex->dirtyTextureObject();
                 }
             }
             {
                 auto tex = dynamic_cast<osg::TextureCubeMap *>(texture);
                 if (tex) {
-                    tex->setTextureSize(width, height);
+                    int new_width = (buffer.second->width_scale == 0.0f) ?
+                        tex->getTextureWidth() :
+                        buffer.second->width_scale * _viewport->width();
+                    int new_height = (buffer.second->height_scale == 0.0f) ?
+                        tex->getTextureHeight() :
+                        buffer.second->height_scale * _viewport->height();
+                    tex->setTextureSize(new_width, new_height);
                     tex->dirtyTextureObject();
                 }
             }
