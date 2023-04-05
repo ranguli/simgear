@@ -26,6 +26,7 @@
 
 #include <simgear/math/SGMath.hxx>
 #include <simgear/scene/tgdb/userdata.hxx>
+#include <simgear/scene/util/color_space.hxx>
 #include <simgear/props/props_io.hxx>
 
 #include "animation.hxx"
@@ -190,10 +191,11 @@ SGLight::SGLight()
     // Default values taken from osg::Light
     // They don't matter anyway as they are overwritten by the XML config values
 
-//TODO: can this be moved to initalizer in hxx?
+    // TODO: can this be moved to initalizer in hxx?
     _ambient.set(0.05f, 0.05f, 0.05f, 1.0f);
     _diffuse.set(0.8f, 0.8f, 0.8f, 1.0f);
     _specular.set(0.05f, 0.05f, 0.05f, 1.0f);
+    _color.set(1.0f, 1.0f, 1.0f);
 
     // Do not let OSG cull lights by default, we usually leave that job to
     // other algorithms, like clustered shading.
@@ -242,6 +244,15 @@ void SGLight::configure(const SGPropertyNode *configNode)
 
     setSpotExponent(configNode->getFloatValue("spot-exponent"));
     setSpotCutoff(configNode->getFloatValue("spot-cutoff"));
+
+    float srgb[3], linear_srgb[3];
+    srgb[0] = configNode->getFloatValue("color/r");
+    srgb[1] = configNode->getFloatValue("color/g");
+    srgb[2] = configNode->getFloatValue("color/b");
+    simgear::eotf_inverse_sRGB(srgb, linear_srgb);
+    setColor(osg::Vec3(linear_srgb[0], linear_srgb[1], linear_srgb[2]));
+
+    setIntensity(configNode->getFloatValue("intensity"));
 
     osg::Matrix t;
     osg::Vec3 pos(configNode->getFloatValue("position/x-m"),

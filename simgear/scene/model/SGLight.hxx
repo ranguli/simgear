@@ -96,6 +96,12 @@ public:
     void setPriority(Priority priority) { _priority = priority; }
     Priority getPriority() const { return _priority; }
 
+    void setColor(const osg::Vec3 &color) { _color = color; }
+    const osg::Vec3 &getColor() const { return _color; }
+
+    void setIntensity(float intensity) { _intensity = intensity; }
+    float getIntensity() const { return _intensity; }
+
 protected:
     virtual ~SGLight();
 
@@ -114,6 +120,14 @@ protected:
     float _spot_cutoff {180.0f};
     Priority _priority {Priority::LOW};
     osg::MatrixTransform *_transform {nullptr};
+
+    // Physically-based parameters. These are an alternative to the classic
+    // ambient/diffuse/specular scheme.
+
+    // Color of emitted light, as a linear sRGB color
+    osg::Vec3 _color;
+    // The light's brightness. The unit depends on the renderer
+    float _intensity {1.0f};
 };
 
 typedef std::vector<osg::ref_ptr<SGLight>> SGLightList;

@@ -2,6 +2,7 @@ include (SimGearComponent)
 
 set(HEADERS
     ColorInterpolator.hxx
+    color_space.hxx
     CopyOp.hxx
     DeletionManager.hxx
     NodeAndDrawableVisitor.hxx
@@ -37,6 +38,7 @@ set(HEADERS
 
 set(SOURCES
     ColorInterpolator.cxx
+    color_space.cxx
     CopyOp.cxx
     DeletionManager.cxx
     NodeAndDrawableVisitor.cxx
