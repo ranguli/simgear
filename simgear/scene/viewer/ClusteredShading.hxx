@@ -20,6 +20,8 @@
 #include <atomic>
 
 #include <osg/Camera>
+#include <osg/Texture2D>
+#include <osg/Texture3D>
 #include <osg/Uniform>
 
 #include <simgear/scene/model/SGLight.hxx>
@@ -32,6 +34,11 @@ public:
     ClusteredShading(osg::Camera *camera, const SGPropertyNode *config);
     ~ClusteredShading();
 
+    void exposeUniformsToPass(osg::Camera *camera,
+                              int clusters_bind_unit,
+                              int indices_bind_unit,
+                              int pointlights_bind_unit,
+                              int spotlights_bind_unit);
     void update(const SGLightList &light_list);
 protected:
     // We could make use of osg::Polytope, but it does a lot of std::vector
@@ -57,10 +64,17 @@ protected:
         } bounding_sphere;
     };
 
+    void updateLightBounds(const SGLightList &light_list);
+    void sortLightBounds();
+    void recreateSubfrustaIfNeeded();
+    void updateUniforms();
+    void updateSubfrusta();
     void threadFunc(int thread_id);
     void assignLightsToSlice(int slice);
     void writePointlightData();
     void writeSpotlightData();
+    void writePointlightDataPBR();
+    void writeSpotlightDataPBR();
     float getDepthForSlice(int slice) const;
 
     osg::observer_ptr<osg::Camera>  _camera;
@@ -69,6 +83,8 @@ protected:
     osg::ref_ptr<osg::Uniform>      _slice_bias;
     osg::ref_ptr<osg::Uniform>      _horizontal_tiles;
     osg::ref_ptr<osg::Uniform>      _vertical_tiles;
+
+    bool                            _pbr_lights = false;
 
     int                             _max_pointlights = 0;
     int                             _max_spotlights = 0;
@@ -95,6 +111,11 @@ protected:
     osg::ref_ptr<osg::Image>        _indices;
     osg::ref_ptr<osg::Image>        _pointlights;
     osg::ref_ptr<osg::Image>        _spotlights;
+
+    osg::ref_ptr<osg::Texture3D>    _clusters_tex;
+    osg::ref_ptr<osg::Texture2D>    _indices_tex;
+    osg::ref_ptr<osg::Texture2D>    _pointlights_tex;
+    osg::ref_ptr<osg::Texture2D>    _spotlights_tex;
 
     std::unique_ptr<Subfrustum[]>   _subfrusta;
 

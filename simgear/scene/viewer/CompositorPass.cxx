@@ -95,6 +95,29 @@ protected:
     osg::ref_ptr<osg::Uniform> _light_matrix_uniform;
 };
 
+class SceneCullCallback : public osg::NodeCallback {
+public:
+    SceneCullCallback(ClusteredShading *clustered) :
+        _clustered(clustered) {}
+
+    virtual void operator()(osg::Node *node, osg::NodeVisitor *nv) {
+        osg::Camera *camera = static_cast<osg::Camera *>(node);
+        EffectCullVisitor *cv = dynamic_cast<EffectCullVisitor *>(nv);
+
+        cv->traverse(*camera);
+
+        if (_clustered) {
+            // Retrieve the light list from the cull visitor
+            SGLightList light_list = cv->getLightList();
+            _clustered->update(light_list);
+        }
+    }
+
+    ClusteredShading *getClusteredShading() const { return _clustered.get(); }
+protected:
+    osg::ref_ptr<ClusteredShading> _clustered;
+};
+
 class LightFinder : public osg::NodeVisitor {
 public:
     LightFinder(const std::string &name) :
@@ -477,6 +500,38 @@ public:
         quad_state->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF
                             | osg::StateAttribute::PROTECTED);
 
+        const SGPropertyNode *p_clustered = root->getChild("use-clustered-uniforms");
+        if (p_clustered) {
+            std::string clustered_pass_name = p_clustered->getStringValue("pass");
+            if (!clustered_pass_name.empty()) {
+                Pass *clustered_pass = compositor->getPass(clustered_pass_name);
+                if (clustered_pass) {
+                    auto *cullcb = dynamic_cast<SceneCullCallback *>(
+                        clustered_pass->camera->getCullCallback());
+                    if (cullcb) {
+                        auto *clustered = cullcb->getClusteredShading();
+                        if (clustered) {
+                            clustered->exposeUniformsToPass(
+                                camera,
+                                p_clustered->getIntValue("clusters-bind-unit", 11),
+                                p_clustered->getIntValue("indices-bind-unit", 12),
+                                p_clustered->getIntValue("pointlights-bind-unit", 13),
+                                p_clustered->getIntValue("spotlights-bind-unit", 14));
+                        } else {
+                            SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
+                                   << clustered_pass_name << "' does not contain a clustered shading node");
+                        }
+                    } else {
+                        SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
+                               << clustered_pass_name << "' is not a scene pass");
+                    }
+                } else {
+                    SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
+                           << clustered_pass_name << "' not found");
+                }
+            }
+        }
+
         osg::StateSet *ss = camera->getOrCreateStateSet();
         for (const auto &uniform : compositor->getBuiltinUniforms())
             ss->addUniform(uniform);
@@ -737,27 +792,6 @@ protected:
     int _cubemap_face;
     double _zNear;
     double _zFar;
-};
-
-class SceneCullCallback : public osg::NodeCallback {
-public:
-    SceneCullCallback(ClusteredShading *clustered) :
-        _clustered(clustered) {}
-
-    virtual void operator()(osg::Node *node, osg::NodeVisitor *nv) {
-        osg::Camera *camera = static_cast<osg::Camera *>(node);
-        EffectCullVisitor *cv = dynamic_cast<EffectCullVisitor *>(nv);
-
-        cv->traverse(*camera);
-
-        if (_clustered) {
-            // Retrieve the light list from the cull visitor
-            SGLightList light_list = cv->getLightList();
-            _clustered->update(light_list);
-        }
-    }
-protected:
-    osg::ref_ptr<ClusteredShading> _clustered;
 };
 
 struct ScenePassBuilder : public PassBuilder {
