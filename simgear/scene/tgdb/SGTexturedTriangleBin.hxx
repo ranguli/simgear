@@ -463,7 +463,7 @@ public:
     } else {
         geometry->setTexCoordArray(0, priTexCoords.get());
     }        
-    geometry->setVertexAttribArray(14, overlayCoords.get(), osg::Array::BIND_PER_VERTEX);
+    geometry->setTexCoordArray(2, overlayCoords.get());
 
     const unsigned invalid = ~unsigned(0);
     std::vector<unsigned> indexMap(getNumVertices(), invalid);
