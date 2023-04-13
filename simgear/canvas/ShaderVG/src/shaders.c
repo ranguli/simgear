@@ -31,12 +31,12 @@
 void *simgearShaderOpen(const char*, const char**, int*);
 void simgearShaderClose(void*);
 
-static const char* vgShaderVertexPipeline = "canvas-pipeline.vert";
-static const char* vgShaderFragmentPipeline = "canvas-pipeline.frag";
-static const char* vgShaderVertexUserDefault = "canvas-user-default.vert";
-static const char* vgShaderFragmentUserDefault = "canvas-user-default.frag";
-static const char* vgShaderVertexColorRamp = "canvas-color-ramp.vert";
-static const char* vgShaderFragmentColorRamp = "canvas-color-ramp.frag";
+static const char* vgShaderVertexPipeline = "canvas_pipeline.vert";
+static const char* vgShaderFragmentPipeline = "canvas_pipeline.frag";
+static const char* vgShaderVertexUserDefault = "canvas_user_default.vert";
+static const char* vgShaderFragmentUserDefault = "canvas_user_default.frag";
+static const char* vgShaderVertexColorRamp = "canvas_color_ramp.vert";
+static const char* vgShaderFragmentColorRamp = "canvas_color_ramp.frag";
 
 #else
 static const char* vgShaderVertexPipeline = R"glsl(
