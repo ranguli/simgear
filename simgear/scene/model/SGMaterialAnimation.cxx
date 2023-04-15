@@ -39,14 +39,6 @@ namespace {
  * Get a color from properties.
  */
 struct ColorSpec {
-  float red, green, blue;
-  float factor;
-  float offset;
-  SGPropertyNode_ptr red_prop;
-  SGPropertyNode_ptr green_prop;
-  SGPropertyNode_ptr blue_prop;
-  SGPropertyNode_ptr factor_prop;
-  SGPropertyNode_ptr offset_prop;
   SGSharedPtr<SGExpressiond> redex, greenex, blueex;
   SGSharedPtr<SGExpressiond> factorex;
   SGSharedPtr<SGExpressiond> offsetex;
