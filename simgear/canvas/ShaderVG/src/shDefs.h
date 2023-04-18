@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHDEFS_H
-#define __SHDEFS_H
+#pragma once
 
 // FlightGear change : include shConfig.h here, since the logic below requires it.
 // wondering if this file is supposed to be auto-included, since there is no explicit
@@ -219,5 +218,3 @@ SHfloat getMaxFloat();
 // GL_TEXTURE1 :rampSampler or  patternSampler
 // GL_TEXTURE2 :User defined
 #define SH_TEXTURE_USER_TOP GL_TEXTURE2
-
-#endif /* __SHDEFS_H */

@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHIMAGE_H
-#define __SHIMAGE_H
+#pragma once
 
 #include "shDefs.h"
 
@@ -233,6 +232,3 @@ void SHImage_dtor(SHImage* i);
 
 void shStoreColor(SHColor* c, void* data, SHImageFormatDesc* f);
 void shLoadColor(SHColor* c, const void* data, SHImageFormatDesc* f);
-
-
-#endif /* __SHIMAGE_H */

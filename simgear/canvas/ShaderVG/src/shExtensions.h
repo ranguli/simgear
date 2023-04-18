@@ -18,8 +18,4 @@
  *
  */
 
-#ifndef __SHEXTENSIONS_H
-#define __SHEXTENSIONS_H
-
-
-#endif
+#pragma once

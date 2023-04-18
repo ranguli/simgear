@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHPATH_H
-#define __SHPATH_H
+#pragma once
 
 #include "shArrays.h"
 #include "shVectors.h"
@@ -137,5 +136,3 @@ void shProcessPathData(SHPath* p, int flags,
 #define _FUNC_T shPathArray
 #define _ARRAY_DECLARE
 #include "shArrayBase.h"
-
-#endif /* __SHPATH_H */

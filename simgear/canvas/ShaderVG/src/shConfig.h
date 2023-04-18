@@ -1,6 +1,5 @@
 
-#ifndef __SHCONFIG_H
-#define __SHCONFIG_H
+#pragma once
 
 ////////////////////////////////////////////////////////////
 // Identify the operating system
@@ -47,5 +46,3 @@
 // use it loading and unloading needs to happen within OpenSceneGraph to handle
 // synchronization correctly in multithreading mode.
 #define SH_NO_IMAGE
-
-#endif // __SHCONFIG_H

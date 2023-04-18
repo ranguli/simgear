@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHPAINT_H
-#define __SHPAINT_H
+#pragma once
 
 #include "shDefs.h"
 #include "shArrays.h"
@@ -71,6 +70,3 @@ int shLoadLinearGradientMesh(SHPaint* p, VGPaintMode mode, VGMatrixMode matrixMo
 int shLoadRadialGradientMesh(SHPaint* p, VGPaintMode mode, VGMatrixMode matrixMode);
 int shLoadPatternMesh(SHPaint* p, VGPaintMode mode, VGMatrixMode matrixMode);
 int shLoadOneColorMesh(SHPaint* p);
-
-
-#endif /* __SHPAINT_H */

@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHCONTEXT_H
-#define __SHCONTEXT_H
+#pragma once
 
 #include "shDefs.h"
 #include "shArrays.h"
@@ -210,6 +209,3 @@ VGContext* shGetContext();
             return RETVAL;                        \
         }                                         \
     }
-
-
-#endif /* __SHCONTEXT_H */

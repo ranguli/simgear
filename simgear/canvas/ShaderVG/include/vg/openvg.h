@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef _OPENVG_H
-#define _OPENVG_H
+#pragma once
 
 #define OPENVG_VERSION_1_0_1 1
 
@@ -406,8 +405,8 @@ typedef enum {
 
 /* Function Prototypes */
 
-#if 0 // We are including ShivaVG directly into libSimGearScene and only using \
-      // inside the library so there is no need for any dll import/export stuff
+#if 0 /* We are including ShivaVG directly into libSimGearScene and only using
+         inside the library so there is no need for any dll import/export stuff */
 #if defined(_WIN32) || defined(__VC32__)
 #if defined(VG_API_EXPORT)
 #define VG_API_CALL __declspec(dllexport)
@@ -674,4 +673,3 @@ VG_API_CALL void vgGetUniformfvSH(VGint location, VGfloat* params);
 #if defined(__cplusplus)
 } /* extern "C" */
 #endif
-#endif /* _OPENVG_H */

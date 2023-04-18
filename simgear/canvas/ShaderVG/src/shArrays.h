@@ -18,15 +18,13 @@
  *
  */
 
+#pragma once
+
 /*--------------------------------------------
  * Declarations of all the arrays used
  *--------------------------------------------*/
 
-#ifndef __SHARRAYS_H
-#define __SHARRAYS_H
-
 #include "shVectors.h"
-
 
 #define _ITEM_T SHint
 #define _ARRAY_T SHIntArray
@@ -51,5 +49,3 @@
 #define _FUNC_T shRectArray
 #define _ARRAY_DECLARE
 #include "shArrayBase.h"
-
-#endif

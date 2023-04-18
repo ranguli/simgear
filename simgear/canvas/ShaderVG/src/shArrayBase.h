@@ -33,6 +33,7 @@
  * _ARRAY_DEFINE: generate function definitions
  *-----------------------------------------------------------*/
 
+/* === partial header guard ================================= */
 #ifndef __SHARRAYBASE_H
 #define __SHARRAYBASE_H
 
@@ -42,6 +43,8 @@
 #define JN(x, y) VAL(x, y)
 
 #endif
+/* === partial header guard - end =========================== */
+
 
 /*--------------------------------------------
  * The rest is not #ifndef protected to allow

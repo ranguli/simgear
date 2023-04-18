@@ -18,13 +18,10 @@
  *
  */
 
-#ifndef __SHADERS_H
-#define __SHADERS_H
+#pragma once
 
 void shInitPiplelineShaders(void);
 void shDeinitPiplelineShaders(void);
 
 void shInitRampShaders(void);
 void shDeinitRampShaders(void);
-
-#endif /* __SHADERS_H */

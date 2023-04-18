@@ -18,7 +18,7 @@
  *
  */
 
-#ifndef __SH_GEOMETRY_H
+#pragma once
 
 #include "shDefs.h"
 #include "shContext.h"
@@ -30,4 +30,3 @@ void shStrokePath(VGContext* c, SHPath* p);
 void shTransformVertices(SHMatrix3x3* m, SHPath* p);
 void shFindBoundbox(SHPath* p);
 
-#endif /* __SH_GEOMETRY_H */

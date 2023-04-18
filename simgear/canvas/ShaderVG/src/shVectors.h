@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef __SHVECTORS_H
-#define __SHVECTORS_H
+#pragma once
 
 #include "shDefs.h"
 
@@ -486,5 +485,3 @@ int shLineLineXsection(SHVector2* o1, SHVector2* v1,
 void shCalcOrtho2D(float* mat, float left, float right, float bottom, float top, float near, float far);
 void shMatrixToVG(SHMatrix3x3* m, SHfloat mvg[9]);
 void shIdMatrixGL(SHfloat mgl[16]);
-
-#endif /* __SHVECTORS_H */
