@@ -282,7 +282,7 @@ static SHint shCoordCountForData(VGint segcount, const SHuint8* segs)
 }
 
 /*-------------------------------------------------------
- * Interpretes the path data array according to the
+ * Interprets the path data array according to the
  * path data type and returns the value at given index
  * in final interpretation (including scale and bias)
  *-------------------------------------------------------*/
@@ -304,7 +304,7 @@ static SHfloat shRealCoordFromData(VGPathDatatype type, SHfloat scale, SHfloat b
 }
 
 /*-------------------------------------------------------
- * Interpretes the path data array according to the
+ * Interprets the path data array according to the
  * path data type and sets the value at given index
  * from final interpretation (including scale and bias)
  *-------------------------------------------------------*/

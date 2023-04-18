@@ -176,7 +176,7 @@ static SHint shValidInputFloat2Int(VGfloat f)
 }
 
 /*---------------------------------------------------
- * Interpretes the input value vector as an array of
+ * Interprets the input value vector as an array of
  * integers and returns the value at given index
  *---------------------------------------------------*/
 
@@ -189,7 +189,7 @@ static SHint shParamToInt(const void* values, SHint floats, SHint index)
 }
 
 /*---------------------------------------------------
- * Interpretes the input value vector as an array of
+ * Interprets the input value vector as an array of
  * floats and returns the value at given index
  *---------------------------------------------------*/
 
@@ -202,7 +202,7 @@ static VGfloat shParamToFloat(const void* values, SHint floats, SHint index)
 }
 
 /*---------------------------------------------------
- * Interpretes the output value vector as an array of
+ * Interprets the output value vector as an array of
  * integers and sets the value at given index
  *---------------------------------------------------*/
 
@@ -217,7 +217,7 @@ static void shIntToParam(SHint i, SHint count, void* output, SHint floats, SHint
 }
 
 /*----------------------------------------------------
- * Interpretes the output value vector as an array of
+ * Interprets the output value vector as an array of
  * floats and sets the value at given index
  *----------------------------------------------------*/
 

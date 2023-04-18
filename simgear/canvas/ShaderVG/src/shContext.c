@@ -50,8 +50,8 @@ VG_API_CALL VGboolean vgCreateContextSH(VGint width, VGint height)
     g_context->surfaceHeight = height;
 
     /* setup GL projection */
-    /* We handle viewport and projection ourselves...
-  glViewport(0,0,width,height); */
+    // We handle viewport and projection ourselves...
+    // glViewport(0,0,width,height);
 
     /* Setup shader for rendering*/
     g_context->userShaderVertex = NULL;
