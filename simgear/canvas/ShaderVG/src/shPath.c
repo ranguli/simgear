@@ -43,7 +43,7 @@
 
 static const SHint shCoordsPerCommand[] = {
     0, /* VG_CLOSE_PATH */
-    2, /* VG_MOTE_TO */
+    2, /* VG_MOVE_TO */
     2, /* VG_LINE_TO */
     1, /* VG_HLINE_TO */
     1, /* VG_VLINE_TO */
@@ -538,7 +538,7 @@ VG_API_CALL void vgModifyPathCoords(VGPath dstPath, VGint startIndex,
 }
 
 /*------------------------------------------------------------
- * Converts standart endpoint arc parametrization into center
+ * Converts standard endpoint arc parametrization into center
  * arc parametrization for further internal processing
  *------------------------------------------------------------*/
 
@@ -628,7 +628,7 @@ SHint shCentralizeArc(SHuint command, SHfloat* data)
     a1 = shVectorOrientation(&pc1);
 
     /* Correct precision error when ry very small
-     (q gets very large and points very far appart) */
+     (q gets very large and points very far apart) */
     if (SH_ISNAN(a1)) a1 = 0.0f;
 
     /* Small or large one? */
@@ -692,10 +692,10 @@ SHint shCentralizeArc(SHuint command, SHfloat* data)
 /*-------------------------------------------------------
  * Walks the raw (standard) path data and simplifies the
  * complex and implicit segments according to given
- * simplificatin request flags. Instead of storing the
+ * simplification request flags. Instead of storing the
  * processed data into another array, the given callback
  * function is called, so we don't need to walk the
- * raw data twice just to find the neccessary memory
+ * raw data twice just to find the necessary memory
  * size for processed data.
  *-------------------------------------------------------*/
 
@@ -1045,7 +1045,7 @@ static void shTransformSegment(SHPath* p, VGPathSegment segment,
     switch (segment) {
     case VG_CLOSE_PATH:
 
-        /* No cordinates for this segment */
+        /* No coordinates for this segment */
 
         break;
     case VG_MOVE_TO:

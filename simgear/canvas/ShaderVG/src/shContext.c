@@ -29,7 +29,7 @@
 /*-----------------------------------------------------
  * Simple functions to create a VG context instance
  * on top of an existing OpenGL context.
- * TODO: There is no mechanics yet to asure the OpenGL
+ * TODO: There is no mechanics yet to assure the OpenGL
  * context exists and to choose which context / window
  * to bind to.
  *-----------------------------------------------------*/

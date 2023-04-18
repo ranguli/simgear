@@ -162,7 +162,7 @@ static void shDrawPaintMesh(VGContext* c, SHVector2* min, SHVector2* max,
     }
 
     /* We want to be sure to cover every pixel of this path so better
-     take a pixel more than leave some out (multisampling is tricky). */
+     take a pixel more than leave some out (multi-sampling is tricky). */
     SET2V(pmin, (*min));
     SUB2(pmin, K, K);
     SET2V(pmax, (*max));

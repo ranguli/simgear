@@ -149,7 +149,7 @@ int shIsEnumValid(SHint type, VGint val)
 }
 
 /*--------------------------------------------------------
- * These two functions check for invalid (erroneus) float
+ * These two functions check for invalid (erroneous) float
  * input and correct it to acceptable ranges.
  *---------------------------------------------------*/
 

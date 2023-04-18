@@ -378,7 +378,7 @@ static void shSubdivideSegment(SHPath* p, VGPathSegment segment,
 }
 
 /*--------------------------------------------------
- * Processes path data by simplfying it and sending
+ * Processes path data by simplifying it and sending
  * each segment to subdivision callback function
  *--------------------------------------------------*/
 

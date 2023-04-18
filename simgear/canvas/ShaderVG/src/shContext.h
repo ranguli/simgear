@@ -153,7 +153,7 @@ VGContext* shGetContext();
 
 /*----------------------------------------------------
  * TODO: Add mutex locking/unlocking to these macros
- * to assure sequentiallity in multithreading.
+ * to assure sequentiality in multithreading.
  *----------------------------------------------------*/
 
 #define VG_NO_RETVAL
