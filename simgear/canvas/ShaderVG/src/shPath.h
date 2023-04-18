@@ -21,44 +21,44 @@
 #ifndef __SHPATH_H
 #define __SHPATH_H
 
-#include "shVectors.h"
 #include "shArrays.h"
+#include "shVectors.h"
 
 /* Helper structures for subdivision */
 typedef struct {
-  SHVector2 p1;
-  SHVector2 p2;
-  SHVector2 p3;
+    SHVector2 p1;
+    SHVector2 p2;
+    SHVector2 p3;
 } SHQuad;
 
 typedef struct {
-  SHVector2 p1;
-  SHVector2 p2;
-  SHVector2 p3;
-  SHVector2 p4;
+    SHVector2 p1;
+    SHVector2 p2;
+    SHVector2 p3;
+    SHVector2 p4;
 } SHCubic;
 
 typedef struct {
-  SHVector2 p1;
-  SHVector2 p2;
-  SHfloat a1;
-  SHfloat a2;
+    SHVector2 p1;
+    SHVector2 p2;
+    SHfloat a1;
+    SHfloat a2;
 } SHArc;
 
 /* SHVertex */
 typedef struct
 {
-  SHVector2 point;
-  SHVector2 tangent;
-  SHfloat length;
-  SHuint flags;
-  
+    SHVector2 point;
+    SHVector2 tangent;
+    SHfloat length;
+    SHuint flags;
+
 } SHVertex;
 
 /* Vertex flags for contour definition */
-#define SH_VERTEX_FLAG_CLOSE   (1 << 0)
-#define SH_VERTEX_FLAG_SEGEND  (1 << 1)
-#define SH_SEGMENT_TYPE_COUNT  13
+#define SH_VERTEX_FLAG_CLOSE  (1 << 0)
+#define SH_VERTEX_FLAG_SEGEND (1 << 1)
+#define SH_SEGMENT_TYPE_COUNT 13
 
 /* Vertex array */
 #define _ITEM_T SHVertex
@@ -69,67 +69,66 @@ typedef struct
 
 
 /* SHPath */
-typedef struct SHPath
-{
-  /* Properties */
-  VGint format;
-  SHfloat scale;
-  SHfloat bias;
-  SHint segHint;
-  SHint dataHint;
-  VGbitfield caps;
-  VGPathDatatype datatype;
-  
-  /* Raw data */
-  SHuint8 *segs;
-  void *data;
-  SHint segCount;
-  SHint dataCount;
+typedef struct SHPath {
+    /* Properties */
+    VGint format;
+    SHfloat scale;
+    SHfloat bias;
+    SHint segHint;
+    SHint dataHint;
+    VGbitfield caps;
+    VGPathDatatype datatype;
 
-  /* Subdivision */
-  SHVertexArray vertices;
-  SHVector2 min, max;
-  
-  /* Additional stroke geometry (dash vertices if
+    /* Raw data */
+    SHuint8* segs;
+    void* data;
+    SHint segCount;
+    SHint dataCount;
+
+    /* Subdivision */
+    SHVertexArray vertices;
+    SHVector2 min, max;
+
+    /* Additional stroke geometry (dash vertices if
      path dashed or triangle vertices if width > 1 */
-  SHVector2Array stroke;
+    SHVector2Array stroke;
 
-  /* Cache */
-  VGboolean      cacheDataValid;
+    /* Cache */
+    VGboolean cacheDataValid;
 
-  VGboolean      cacheTransformInit;
-  SHMatrix3x3    cacheTransform;
+    VGboolean cacheTransformInit;
+    SHMatrix3x3 cacheTransform;
 
-  VGboolean      cacheStrokeInit;
-  VGboolean      cacheStrokeTessValid;
-  SHfloat        cacheStrokeLineWidth;
-  VGCapStyle     cacheStrokeCapStyle;
-  VGJoinStyle    cacheStrokeJoinStyle;
-  SHfloat        cacheStrokeMiterLimit;
-  SHfloat        cacheStrokeDashPhase;
-  VGboolean      cacheStrokeDashPhaseReset;
-  
+    VGboolean cacheStrokeInit;
+    VGboolean cacheStrokeTessValid;
+    SHfloat cacheStrokeLineWidth;
+    VGCapStyle cacheStrokeCapStyle;
+    VGJoinStyle cacheStrokeJoinStyle;
+    SHfloat cacheStrokeMiterLimit;
+    SHfloat cacheStrokeDashPhase;
+    VGboolean cacheStrokeDashPhaseReset;
+
 } SHPath;
 
-void SHPath_ctor(SHPath *p);
-void SHPath_dtor(SHPath *p);
+void SHPath_ctor(SHPath* p);
+void SHPath_dtor(SHPath* p);
 
 
 /* Processing normalization flags */
-#define SH_PROCESS_SIMPLIFY_LINES    (1 << 0)
-#define SH_PROCESS_SIMPLIFY_CURVES   (1 << 1)
-#define SH_PROCESS_CENTRALIZE_ARCS   (1 << 2)
-#define SH_PROCESS_REPAIR_ENDS       (1 << 3)
+#define SH_PROCESS_SIMPLIFY_LINES  (1 << 0)
+#define SH_PROCESS_SIMPLIFY_CURVES (1 << 1)
+#define SH_PROCESS_CENTRALIZE_ARCS (1 << 2)
+#define SH_PROCESS_REPAIR_ENDS     (1 << 3)
 
 /* Segment callback function type */
-typedef void (*SegmentFunc) (SHPath *p, VGPathSegment segment,
-                             VGPathCommand originalCommand,
-                             SHfloat *data, void *userData);
+typedef void (*SegmentFunc)(SHPath* p, VGPathSegment segment,
+                            VGPathCommand originalCommand,
+                            SHfloat* data, void* userData);
 
 /* Processes raw path data into normalized segments */
-void shProcessPathData(SHPath *p, int flags,
+void shProcessPathData(SHPath* p, int flags,
                        SegmentFunc callback,
-                       void *userData);
+                       void* userData);
 
 
 /* Pointer-to-path array */

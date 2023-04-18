@@ -18,17 +18,18 @@
  *
  */
 
-#include "vg/openvg.h"
-#include "shContext.h"
-#include "shDefs.h"
-#include "shaders.h"
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "vg/openvg.h"
+#include "shDefs.h"
+#include "shContext.h"
+#include "shaders.h"
 
 // The shaders are moved to fgdata/gui/shaders
 #if 1
 // Defined in CanvasMgr.cxx
-void *simgearShaderOpen(const char*, const char**, int*);
+void* simgearShaderOpen(const char*, const char**, int*);
 void simgearShaderClose(void*);
 
 static const char* vgShaderVertexPipeline = "canvas_pipeline.vert";
@@ -258,92 +259,92 @@ static const char* vgShaderFragmentColorRamp = R"glsl(
 )glsl";
 #endif
 
-void shInitPiplelineShaders(void) {
+void shInitPiplelineShaders(void)
+{
+    VG_GETCONTEXT(VG_NO_RETVAL);
+    const char* extendedStage;
+    const char* buf[2];
+    GLint size[2];
 
-  VG_GETCONTEXT(VG_NO_RETVAL);
-  const char* extendedStage;
-  const char* buf[2];
-  GLint size[2];
+    context->vs = glCreateShader(GL_VERTEX_SHADER);
+    if (context->userShaderVertex) {
+        extendedStage = (const char*)context->userShaderVertex;
+    } else {
+        extendedStage = vgShaderVertexUserDefault;
+    }
 
-  context->vs = glCreateShader(GL_VERTEX_SHADER);
-  if(context->userShaderVertex){
-    extendedStage = (const char*)context->userShaderVertex;
-  } else {
-    extendedStage = vgShaderVertexUserDefault;
-  }
+    {
+        int len;
+        const char* shader;
+        void* sh1 = simgearShaderOpen(vgShaderVertexPipeline, &shader, &len);
+        buf[0] = shader;
+        size[0] = len;
 
-  {
-    int len;
-    const char *shader;
-    void *sh1 = simgearShaderOpen(vgShaderVertexPipeline, &shader, &len);
-    buf[0] = shader;
-    size[0] = len;
+        void* sh2 = simgearShaderOpen(extendedStage, &shader, &len);
+        buf[1] = shader;
+        size[1] = len;
 
-    void *sh2 = simgearShaderOpen(extendedStage, &shader, &len);
-    buf[1] = shader;
-    size[1] = len;
+        glShaderSource(context->vs, 1, buf, size);
+        glCompileShader(context->vs);
+        GL_CHECK_SHADER(context->vs, vgShaderVertexPipeline);
 
-    glShaderSource(context->vs, 1, buf, size);
-    glCompileShader(context->vs);
-    GL_CHECK_SHADER(context->vs, vgShaderVertexPipeline);
+        simgearShaderClose(sh2);
+        simgearShaderClose(sh1);
+    }
 
-    simgearShaderClose(sh2);
-    simgearShaderClose(sh1);
-  }
+    context->fs = glCreateShader(GL_FRAGMENT_SHADER);
+    if (context->userShaderFragment) {
+        extendedStage = (const char*)context->userShaderFragment;
+    } else {
+        extendedStage = vgShaderFragmentUserDefault;
+    }
 
-  context->fs = glCreateShader(GL_FRAGMENT_SHADER);
-  if(context->userShaderFragment){
-    extendedStage = (const char*)context->userShaderFragment;
-  } else {
-    extendedStage = vgShaderFragmentUserDefault;
-  }
+    {
+        int len;
+        const char* shader;
+        void* sh1 = simgearShaderOpen(vgShaderFragmentPipeline, &shader, &len);
+        buf[0] = shader;
+        size[0] = len;
 
-  {
-    int len;
-    const char *shader;
-    void *sh1 = simgearShaderOpen(vgShaderFragmentPipeline, &shader, &len);
-    buf[0] = shader;
-    size[0] = len;
+        void* sh2 = simgearShaderOpen(extendedStage, &shader, &len);
+        buf[1] = shader;
+        size[1] = len;
 
-    void *sh2 = simgearShaderOpen(extendedStage, &shader, &len);
-    buf[1] = shader;
-    size[1] = len;
+        glShaderSource(context->fs, 1, buf, size);
+        glCompileShader(context->fs);
+        GL_CHECK_SHADER(context->fs, vgShaderFragmentPipeline);
 
-    glShaderSource(context->fs, 1, buf, size);
-    glCompileShader(context->fs);
-    GL_CHECK_SHADER(context->fs, vgShaderFragmentPipeline);
+        simgearShaderClose(sh2);
+        simgearShaderClose(sh1);
+    }
 
-    simgearShaderClose(sh2);
-    simgearShaderClose(sh1);
-  }
+    context->progDraw = glCreateProgram();
+    glAttachShader(context->progDraw, context->vs);
+    glAttachShader(context->progDraw, context->fs);
+    glLinkProgram(context->progDraw);
+    GL_CHECK_ERROR;
 
-  context->progDraw = glCreateProgram();
-  glAttachShader(context->progDraw, context->vs);
-  glAttachShader(context->progDraw, context->fs);
-  glLinkProgram(context->progDraw);
-  GL_CHECK_ERROR;
+    context->locationDraw.pos = glGetAttribLocation(context->progDraw, "pos");
+    context->locationDraw.textureUV = glGetAttribLocation(context->progDraw, "textureUV");
+    context->locationDraw.model = glGetUniformLocation(context->progDraw, "sh_Model");
+    context->locationDraw.projection = glGetUniformLocation(context->progDraw, "sh_Ortho");
+    context->locationDraw.paintInverted = glGetUniformLocation(context->progDraw, "paintInverted");
+    context->locationDraw.drawMode = glGetUniformLocation(context->progDraw, "drawMode");
+    context->locationDraw.imageSampler = glGetUniformLocation(context->progDraw, "imageSampler");
+    context->locationDraw.imageMode = glGetUniformLocation(context->progDraw, "imageMode");
+    context->locationDraw.paintType = glGetUniformLocation(context->progDraw, "paintType");
+    context->locationDraw.rampSampler = glGetUniformLocation(context->progDraw, "rampSampler");
+    context->locationDraw.patternSampler = glGetUniformLocation(context->progDraw, "patternSampler");
+    context->locationDraw.paintParams = glGetUniformLocation(context->progDraw, "paintParams");
+    context->locationDraw.paintColor = glGetUniformLocation(context->progDraw, "paintColor");
+    context->locationDraw.scaleFactorBias = glGetUniformLocation(context->progDraw, "scaleFactorBias");
+    GL_CHECK_ERROR;
 
-  context->locationDraw.pos            = glGetAttribLocation(context->progDraw,  "pos");
-  context->locationDraw.textureUV      = glGetAttribLocation(context->progDraw,  "textureUV");
-  context->locationDraw.model          = glGetUniformLocation(context->progDraw, "sh_Model");
-  context->locationDraw.projection     = glGetUniformLocation(context->progDraw, "sh_Ortho");
-  context->locationDraw.paintInverted  = glGetUniformLocation(context->progDraw, "paintInverted");
-  context->locationDraw.drawMode       = glGetUniformLocation(context->progDraw, "drawMode");
-  context->locationDraw.imageSampler   = glGetUniformLocation(context->progDraw, "imageSampler");
-  context->locationDraw.imageMode      = glGetUniformLocation(context->progDraw, "imageMode");
-  context->locationDraw.paintType      = glGetUniformLocation(context->progDraw, "paintType");
-  context->locationDraw.rampSampler    = glGetUniformLocation(context->progDraw, "rampSampler");
-  context->locationDraw.patternSampler = glGetUniformLocation(context->progDraw, "patternSampler");
-  context->locationDraw.paintParams    = glGetUniformLocation(context->progDraw, "paintParams");
-  context->locationDraw.paintColor     = glGetUniformLocation(context->progDraw, "paintColor");
-  context->locationDraw.scaleFactorBias= glGetUniformLocation(context->progDraw, "scaleFactorBias");
-  GL_CHECK_ERROR;
-
-  // TODO: Support color transform to remove this from here
-  glUseProgram(context->progDraw);
-  GLfloat factor_bias[8] = {1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0};
-  glUniform4fv(context->locationDraw.scaleFactorBias, 2, factor_bias);
-  GL_CHECK_ERROR;
+    // TODO: Support color transform to remove this from here
+    glUseProgram(context->progDraw);
+    GLfloat factor_bias[8] = {1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0};
+    glUniform4fv(context->locationDraw.scaleFactorBias, 2, factor_bias);
+    GL_CHECK_ERROR;
 
 #if 0
   /* Initialize uniform variables */
@@ -355,192 +356,214 @@ void shInitPiplelineShaders(void) {
 #endif
 }
 
-void shDeinitPiplelineShaders(void){
-
-  VG_GETCONTEXT(VG_NO_RETVAL);
-  glDeleteShader(context->vs);
-  glDeleteShader(context->fs);
-  glDeleteProgram(context->progDraw);
-  GL_CHECK_ERROR;
+void shDeinitPiplelineShaders(void)
+{
+    VG_GETCONTEXT(VG_NO_RETVAL);
+    glDeleteShader(context->vs);
+    glDeleteShader(context->fs);
+    glDeleteProgram(context->progDraw);
+    GL_CHECK_ERROR;
 }
 
-void shInitRampShaders(void) {
+void shInitRampShaders(void)
+{
+    VG_GETCONTEXT(VG_NO_RETVAL);
+    GLint compileStatus;
 
-  VG_GETCONTEXT(VG_NO_RETVAL);
-  GLint  compileStatus;
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    {
+        int len;
+        const char* shader;
+        void* sh = simgearShaderOpen(vgShaderVertexColorRamp, &shader, &len);
 
-  GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-  {
-    int len;
-    const char *shader;
-    void *sh = simgearShaderOpen(vgShaderVertexColorRamp, &shader, &len);
+        glShaderSource(vs, 1, &shader, &len);
+        glCompileShader(vs);
+        glGetShaderiv(vs, GL_COMPILE_STATUS, &compileStatus);
+        //  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+        GL_CHECK_ERROR;
 
-    glShaderSource(vs, 1, &shader, &len);
-    glCompileShader(vs);
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &compileStatus);
-//  printf("Shader compile status :%d line:%d\n", compileStatus, __LINE__);
+        simgearShaderClose(sh);
+    }
+
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    {
+        int len;
+        const char* shader;
+        void* sh = simgearShaderOpen(vgShaderFragmentColorRamp, &shader, &len);
+
+        glShaderSource(fs, 1, &shader, &len);
+        glCompileShader(fs);
+        GL_CHECK_SHADER(fs, vgShaderFragmentColorRamp);
+
+        simgearShaderClose(sh);
+    }
+
+    context->progColorRamp = glCreateProgram();
+    glAttachShader(context->progColorRamp, vs);
+    glAttachShader(context->progColorRamp, fs);
+    glLinkProgram(context->progColorRamp);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
     GL_CHECK_ERROR;
 
-    simgearShaderClose(sh);
-  }
-
-  GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-  {
-    int len;
-    const char *shader;
-    void *sh = simgearShaderOpen(vgShaderFragmentColorRamp, &shader, &len);
-
-    glShaderSource(fs, 1, &shader, &len);
-    glCompileShader(fs);
-    GL_CHECK_SHADER(fs, vgShaderFragmentColorRamp);
-
-    simgearShaderClose(sh);
-  }
-
-  context->progColorRamp = glCreateProgram();
-  glAttachShader(context->progColorRamp, vs);
-  glAttachShader(context->progColorRamp, fs);
-  glLinkProgram(context->progColorRamp);
-  glDeleteShader(vs);
-  glDeleteShader(fs);
-  GL_CHECK_ERROR;
-
-  context->locationColorRamp.step = glGetAttribLocation(context->progColorRamp, "step");
-  context->locationColorRamp.stepColor = glGetAttribLocation(context->progColorRamp, "stepColor");
-  GL_CHECK_ERROR;
+    context->locationColorRamp.step = glGetAttribLocation(context->progColorRamp, "step");
+    context->locationColorRamp.stepColor = glGetAttribLocation(context->progColorRamp, "stepColor");
+    GL_CHECK_ERROR;
 }
 
-void shDeinitRampShaders(void){
-  VG_GETCONTEXT(VG_NO_RETVAL);
-  glDeleteProgram(context->progColorRamp);
+void shDeinitRampShaders(void)
+{
+    VG_GETCONTEXT(VG_NO_RETVAL);
+    glDeleteProgram(context->progColorRamp);
 }
 
-VG_API_CALL void vgShaderSourceSH(VGuint shadertype, const VGbyte* string){
+VG_API_CALL void vgShaderSourceSH(VGuint shadertype, const VGbyte* string)
+{
     VG_GETCONTEXT(VG_NO_RETVAL);
 
-    switch(shadertype) {
-		case VG_FRAGMENT_SHADER_SH:
-			context->userShaderFragment = (const void*)string;
-			break;
-		case VG_VERTEX_SHADER_SH:
-			context->userShaderVertex = (const void*)string;
-			break;
-		default:
-			break;
+    switch (shadertype) {
+    case VG_FRAGMENT_SHADER_SH:
+        context->userShaderFragment = (const void*)string;
+        break;
+    case VG_VERTEX_SHADER_SH:
+        context->userShaderVertex = (const void*)string;
+        break;
+    default:
+        break;
     }
 }
 
-VG_API_CALL void vgCompileShaderSH(void){
+VG_API_CALL void vgCompileShaderSH(void)
+{
     shDeinitPiplelineShaders();
     shInitPiplelineShaders();
 }
 
-VG_API_CALL void vgUniform1fSH(VGint location, VGfloat v0){
-    glUniform1f(location, v0);                                                     
+VG_API_CALL void vgUniform1fSH(VGint location, VGfloat v0)
+{
+    glUniform1f(location, v0);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform2fSH(VGint location, VGfloat v0, VGfloat v1){
-    glUniform2f(location, v0, v1);                                         
+VG_API_CALL void vgUniform2fSH(VGint location, VGfloat v0, VGfloat v1)
+{
+    glUniform2f(location, v0, v1);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform3fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2){
-    glUniform3f(location, v0, v1, v2);                             
+VG_API_CALL void vgUniform3fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2)
+{
+    glUniform3f(location, v0, v1, v2);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform4fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2, VGfloat v3){
-    glUniform4f(location, v0, v1, v2, v3);                 
+VG_API_CALL void vgUniform4fSH(VGint location, VGfloat v0, VGfloat v1, VGfloat v2, VGfloat v3)
+{
+    glUniform4f(location, v0, v1, v2, v3);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform1fvSH(VGint location, VGint count, const VGfloat *value){
-    glUniform1fv(location, count, value);                           
+VG_API_CALL void vgUniform1fvSH(VGint location, VGint count, const VGfloat* value)
+{
+    glUniform1fv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform2fvSH(VGint location, VGint count, const VGfloat *value){
-    glUniform2fv(location, count, value);                           
+VG_API_CALL void vgUniform2fvSH(VGint location, VGint count, const VGfloat* value)
+{
+    glUniform2fv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform3fvSH(VGint location, VGint count, const VGfloat *value){
-    glUniform3fv(location, count, value);                           
+VG_API_CALL void vgUniform3fvSH(VGint location, VGint count, const VGfloat* value)
+{
+    glUniform3fv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform4fvSH(VGint location, VGint count, const VGfloat *value){
-    glUniform4fv(location, count, value);                           
+VG_API_CALL void vgUniform4fvSH(VGint location, VGint count, const VGfloat* value)
+{
+    glUniform4fv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniformMatrix2fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
+VG_API_CALL void vgUniformMatrix2fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat* value)
+{
     glUniformMatrix2fv(location, count, transpose, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniformMatrix3fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
+VG_API_CALL void vgUniformMatrix3fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat* value)
+{
     glUniformMatrix3fv(location, count, transpose, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniformMatrix4fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat *value){
+VG_API_CALL void vgUniformMatrix4fvSH(VGint location, VGint count, VGboolean transpose, const VGfloat* value)
+{
     glUniformMatrix4fv(location, count, transpose, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL VGint vgGetUniformLocationSH(const VGbyte *name){
+VG_API_CALL VGint vgGetUniformLocationSH(const VGbyte* name)
+{
     VG_GETCONTEXT(-1);
     VGint retval = glGetUniformLocation(context->progDraw, name);
     GL_CHECK_ERROR;
     return retval;
 }
 
-VG_API_CALL void vgGetUniformfvSH(VGint location, VGfloat *params){
+VG_API_CALL void vgGetUniformfvSH(VGint location, VGfloat* params)
+{
     VG_GETCONTEXT(VG_NO_RETVAL);
     glGetUniformfv(context->progDraw, location, params);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform1iSH (VGint location, VGint v0){
-    glUniform1i (location, v0);
+VG_API_CALL void vgUniform1iSH(VGint location, VGint v0)
+{
+    glUniform1i(location, v0);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform2iSH (VGint location, VGint v0, VGint v1){
-    glUniform2i (location, v0, v1);
+VG_API_CALL void vgUniform2iSH(VGint location, VGint v0, VGint v1)
+{
+    glUniform2i(location, v0, v1);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform3iSH (VGint location, VGint v0, VGint v1, VGint v2){
-    glUniform3i (location,  v0,  v1, v2);
+VG_API_CALL void vgUniform3iSH(VGint location, VGint v0, VGint v1, VGint v2)
+{
+    glUniform3i(location, v0, v1, v2);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform4iSH (VGint location, VGint v0, VGint v1, VGint v2, VGint v3){
-    glUniform4i (location, v0, v1, v2, v3);
+VG_API_CALL void vgUniform4iSH(VGint location, VGint v0, VGint v1, VGint v2, VGint v3)
+{
+    glUniform4i(location, v0, v1, v2, v3);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform1ivSH (VGint location, VGint count, const VGint *value){
-    glUniform1iv (location, count, value);
+VG_API_CALL void vgUniform1ivSH(VGint location, VGint count, const VGint* value)
+{
+    glUniform1iv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform2ivSH (VGint location, VGint count, const VGint *value){
-    glUniform2iv (location, count, value);
+VG_API_CALL void vgUniform2ivSH(VGint location, VGint count, const VGint* value)
+{
+    glUniform2iv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform3ivSH (VGint location, VGint count, const VGint *value){
-    glUniform3iv (location, count, value);
+VG_API_CALL void vgUniform3ivSH(VGint location, VGint count, const VGint* value)
+{
+    glUniform3iv(location, count, value);
     GL_CHECK_ERROR;
 }
 
-VG_API_CALL void vgUniform4ivSH (VGint location, VGint count, const VGint *value){
-    glUniform4iv (location, count, value);
+VG_API_CALL void vgUniform4ivSH(VGint location, VGint count, const VGint* value)
+{
+    glUniform4iv(location, count, value);
     GL_CHECK_ERROR;
 }
-
-

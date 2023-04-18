@@ -22,135 +22,134 @@
 #define __SHCONTEXT_H
 
 #include "shDefs.h"
-#include "shVectors.h"
 #include "shArrays.h"
-#include "shPath.h"
-#include "shPaint.h"
 #include "shImage.h"
+#include "shPaint.h"
+#include "shPath.h"
+#include "shVectors.h"
 
 /*------------------------------------------------
  * VGContext object
  *------------------------------------------------*/
 
-typedef enum
-{
-  SH_RESOURCE_INVALID   = 0,
-  SH_RESOURCE_PATH      = 1,
-  SH_RESOURCE_PAINT     = 2,
-  SH_RESOURCE_IMAGE     = 3
+typedef enum {
+    SH_RESOURCE_INVALID = 0,
+    SH_RESOURCE_PATH    = 1,
+    SH_RESOURCE_PAINT   = 2,
+    SH_RESOURCE_IMAGE   = 3
 } SHResourceType;
 
 typedef struct
 {
-  /* Surface info (since no EGL yet) */
-  SHint surfaceWidth;
-  SHint surfaceHeight;
+    /* Surface info (since no EGL yet) */
+    SHint surfaceWidth;
+    SHint surfaceHeight;
 
-  /* GetString info */
-  char vendor[256];
-  char renderer[256];
-  char version[256];
-  char extensions[256];
-  
-  /* Mode settings */
-  VGMatrixMode        matrixMode;
-	VGFillRule          fillRule;
-	VGImageQuality      imageQuality;
-	VGRenderingQuality  renderingQuality;
-	VGBlendMode         blendMode;
-	VGImageMode         imageMode;
-  
-	/* Scissor rectangles */
-	SHRectArray        scissor;
-  VGboolean          scissoring;
-  VGboolean          masking;
-  
-	/* Stroke parameters */
-  SHfloat           strokeLineWidth;
-  VGCapStyle        strokeCapStyle;
-  VGJoinStyle       strokeJoinStyle;
-  SHfloat           strokeMiterLimit;
-  SHFloatArray      strokeDashPattern;
-  SHfloat           strokeDashPhase;
-  VGboolean         strokeDashPhaseReset;
-  
-  /* Edge fill color for vgConvolve and pattern paint */
-  SHColor           tileFillColor;
-  
-  /* Color for vgClear */
-  SHColor           clearColor;
-  
-  /* Color components layout inside pixel */
-  VGPixelLayout     pixelLayout;
-  
-  /* Source format for image filters */
-  VGboolean         filterFormatLinear;
-  VGboolean         filterFormatPremultiplied;
-  VGbitfield        filterChannelMask;
-  
-  /* Matrices */
-  SHMatrix3x3       pathTransform;
-  SHMatrix3x3       imageTransform;
-  SHMatrix3x3       fillTransform;
-  SHMatrix3x3       strokeTransform;
-  
-  /* Paints */
-  SHPaint*          fillPaint;
-  SHPaint*          strokePaint;
-  SHPaint           defaultPaint;
-  
-  VGErrorCode       error;
-  
-  /* Resources */
-  SHPathArray       paths;
-  SHPaintArray      paints;
-  SHImageArray      images;
+    /* GetString info */
+    char vendor[256];
+    char renderer[256];
+    char version[256];
+    char extensions[256];
 
-  /* Pointers to extensions */
-  
-  /* GL locations */
-  struct {
-      GLint pos            ;
-      GLint textureUV      ;
-      GLint model          ;
-      GLint projection     ;
-      GLint paintInverted  ;
-      GLint drawMode       ;
-      GLint imageSampler   ;
-      GLint imageMode      ;
-      GLint paintType      ;
-      GLint rampSampler    ;
-      GLint patternSampler ;
-      GLint userSampler    ;
-      GLint paintParams    ;
-      GLint paintColor     ;
-      GLint scaleFactorBias;
-  } locationDraw;
+    /* Mode settings */
+    VGMatrixMode matrixMode;
+    VGFillRule fillRule;
+    VGImageQuality imageQuality;
+    VGRenderingQuality renderingQuality;
+    VGBlendMode blendMode;
+    VGImageMode imageMode;
 
-  struct {
-      GLuint step;
-      GLuint stepColor;
-  } locationColorRamp;
+    /* Scissor rectangles */
+    SHRectArray scissor;
+    VGboolean scissoring;
+    VGboolean masking;
 
-  /* GL programs */
-  GLuint progDraw;
-  GLuint progColorRamp;
+    /* Stroke parameters */
+    SHfloat strokeLineWidth;
+    VGCapStyle strokeCapStyle;
+    VGJoinStyle strokeJoinStyle;
+    SHfloat strokeMiterLimit;
+    SHFloatArray strokeDashPattern;
+    SHfloat strokeDashPhase;
+    VGboolean strokeDashPhaseReset;
 
-  /* GL shaders */
-  const void* userShaderVertex;
-  const void* userShaderFragment;
-  GLint vs;
-  GLint fs;
+    /* Edge fill color for vgConvolve and pattern paint */
+    SHColor tileFillColor;
+
+    /* Color for vgClear */
+    SHColor clearColor;
+
+    /* Color components layout inside pixel */
+    VGPixelLayout pixelLayout;
+
+    /* Source format for image filters */
+    VGboolean filterFormatLinear;
+    VGboolean filterFormatPremultiplied;
+    VGbitfield filterChannelMask;
+
+    /* Matrices */
+    SHMatrix3x3 pathTransform;
+    SHMatrix3x3 imageTransform;
+    SHMatrix3x3 fillTransform;
+    SHMatrix3x3 strokeTransform;
+
+    /* Paints */
+    SHPaint* fillPaint;
+    SHPaint* strokePaint;
+    SHPaint defaultPaint;
+
+    VGErrorCode error;
+
+    /* Resources */
+    SHPathArray paths;
+    SHPaintArray paints;
+    SHImageArray images;
+
+    /* Pointers to extensions */
+
+    /* GL locations */
+    struct {
+        GLint pos;
+        GLint textureUV;
+        GLint model;
+        GLint projection;
+        GLint paintInverted;
+        GLint drawMode;
+        GLint imageSampler;
+        GLint imageMode;
+        GLint paintType;
+        GLint rampSampler;
+        GLint patternSampler;
+        GLint userSampler;
+        GLint paintParams;
+        GLint paintColor;
+        GLint scaleFactorBias;
+    } locationDraw;
+
+    struct {
+        GLuint step;
+        GLuint stepColor;
+    } locationColorRamp;
+
+    /* GL programs */
+    GLuint progDraw;
+    GLuint progColorRamp;
+
+    /* GL shaders */
+    const void* userShaderVertex;
+    const void* userShaderFragment;
+    GLint vs;
+    GLint fs;
 
 } VGContext;
 
-void VGContext_ctor(VGContext *c);
-void VGContext_dtor(VGContext *c);
-void shSetError(VGContext *c, VGErrorCode e);
-SHint shIsValidPath(VGContext *c, VGHandle h);
-SHint shIsValidPaint(VGContext *c, VGHandle h);
-SHint shIsValidImage(VGContext *c, VGHandle h);
-SHResourceType shGetResourceType(VGContext *c, VGHandle h);
+void VGContext_ctor(VGContext* c);
+void VGContext_dtor(VGContext* c);
+void shSetError(VGContext* c, VGErrorCode e);
+SHint shIsValidPath(VGContext* c, VGHandle h);
+SHint shIsValidPaint(VGContext* c, VGHandle h);
+SHint shIsValidImage(VGContext* c, VGHandle h);
+SHResourceType shGetResourceType(VGContext* c, VGHandle h);
 VGContext* shGetContext();
 
 /*----------------------------------------------------
@@ -160,18 +159,28 @@ VGContext* shGetContext();
 
 #define VG_NO_RETVAL
 
-#define VG_GETCONTEXT(RETVAL) \
-  VGContext *context = shGetContext(); \
-  if (!context) return RETVAL;
-  
+#define VG_GETCONTEXT(RETVAL)            \
+    VGContext* context = shGetContext(); \
+    if (!context) return RETVAL;
+
 #define VG_RETURN(RETVAL) \
-  { return RETVAL; }
+    {                     \
+        return RETVAL;    \
+    }
 
 #define VG_RETURN_ERR(ERRORCODE, RETVAL) \
-  { shSetError(context,ERRORCODE); return RETVAL; }
+    {                                    \
+        shSetError(context, ERRORCODE);  \
+        return RETVAL;                   \
+    }
 
 #define VG_RETURN_ERR_IF(COND, ERRORCODE, RETVAL) \
-  { if (COND) {shSetError(context,ERRORCODE); return RETVAL;} }
+    {                                             \
+        if (COND) {                               \
+            shSetError(context, ERRORCODE);       \
+            return RETVAL;                        \
+        }                                         \
+    }
 
 /*-----------------------------------------------------------
  * Same macros but no mutex handling - used by sub-functions
@@ -179,18 +188,28 @@ VGContext* shGetContext();
 
 #define SH_NO_RETVAL
 
-#define SH_GETCONTEXT(RETVAL) \
-  VGContext *context = shGetContext(); \
-  if (!context) return RETVAL;
-  
+#define SH_GETCONTEXT(RETVAL)            \
+    VGContext* context = shGetContext(); \
+    if (!context) return RETVAL;
+
 #define SH_RETURN(RETVAL) \
-  { return RETVAL; }
+    {                     \
+        return RETVAL;    \
+    }
 
 #define SH_RETURN_ERR(ERRORCODE, RETVAL) \
-  { shSetError(context,ERRORCODE); return RETVAL; }
+    {                                    \
+        shSetError(context, ERRORCODE);  \
+        return RETVAL;                   \
+    }
 
 #define SH_RETURN_ERR_IF(COND, ERRORCODE, RETVAL) \
-  { if (COND) {shSetError(context,ERRORCODE); return RETVAL;} }
+    {                                             \
+        if (COND) {                               \
+            shSetError(context, ERRORCODE);       \
+            return RETVAL;                        \
+        }                                         \
+    }
 
 
 #endif /* __SHCONTEXT_H */
