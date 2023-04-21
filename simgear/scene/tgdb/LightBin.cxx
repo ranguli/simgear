@@ -233,10 +233,10 @@ osg::Drawable* createDrawable(LightBin& lightList, const osg::Matrix& transform)
     osg::Geometry* geometry = new osg::Geometry;
     geometry->setDataVariance(osg::Object::STATIC);
     geometry->setVertexArray(vertices);
-    geometry->setVertexAttribArray(11, light_params, osg::Array::BIND_PER_VERTEX);
-    geometry->setVertexAttribArray(12, animation_params, osg::Array::BIND_PER_VERTEX);
-    geometry->setVertexAttribArray(13, direction_params_1, osg::Array::BIND_PER_VERTEX);
-    geometry->setVertexAttribArray(14, direction_params_2, osg::Array::BIND_PER_VERTEX);
+    geometry->setVertexAttribArray(LIGHT_ATTR1, light_params, osg::Array::BIND_PER_VERTEX);
+    geometry->setVertexAttribArray(LIGHT_ATTR2, animation_params, osg::Array::BIND_PER_VERTEX);
+    geometry->setVertexAttribArray(LIGHT_ATTR3, direction_params_1, osg::Array::BIND_PER_VERTEX);
+    geometry->setVertexAttribArray(LIGHT_ATTR4, direction_params_2, osg::Array::BIND_PER_VERTEX);
     geometry->setNormalBinding(osg::Geometry::BIND_OFF);
     geometry->setColorArray(colors, osg::Array::BIND_PER_VERTEX);
 

@@ -28,6 +28,11 @@
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/tgdb/LightBin.hxx>
 
+const int LIGHT_ATTR1 = 9;
+const int LIGHT_ATTR2 = 10;
+const int LIGHT_ATTR3 = 11;
+const int LIGHT_ATTR4 = 12;
+
 namespace simgear
 {
 class LightBin {

@@ -52,12 +52,14 @@
 #define SG_BUILDING_FADE_OUT_LEVELS 4
 
 // these correspond to building.eff
-const int BUILDING_POSITION_ATTR = 10;  // (x,y,z)
-const int BUILDING_SCALE_ATTR = 11; // (width, depth, height)
-const int BUILDING_ATTR1 = 12;
-const int BUILDING_ATTR2 = 13;
-const int BUILDING_ATTR3 = 14;
-const int BUILDING_ATTR4 = 15;
+const int BUILDING_POSITION_ATTR = 9;  // (x,y,z)
+const int BUILDING_SCALE_ATTR = 10; // (width, depth, height)
+const int BUILDING_ATTR1 = 11;
+const int BUILDING_ATTR2 = 12;
+// XXX: Using OSG vertex aliasing and indices higher than 12 results in a crash.
+// It doesn't matter for now as attributes 3 and 4 remain unused.
+const int BUILDING_ATTR3 = 13;
+const int BUILDING_ATTR4 = 14;
 
 using namespace osg;
 
