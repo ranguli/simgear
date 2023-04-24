@@ -1,18 +1,5 @@
-// Copyright (C) 2021  Fernando García Liñán <fernandogarcialinan@gmail.com>
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA
+// Copyright (C) 2021 - 2023 Fernando García Liñán
+// SPDX-License-Identifier: LGPL-2.0-or-later
 
 #ifdef HAVE_CONFIG_H
 #  include <simgear_config.h>
@@ -58,26 +45,37 @@ struct GLTFBuilder {
     }
 
     osg::Node *makeModel() const {
-        osg::MatrixTransform* transform = new osg::MatrixTransform;
-        // In glTF +Y is up, but we use +Z up
-        transform->setMatrix(osg::Matrixd::rotate(osg::Vec3d(0.0, 1.0, 0.0),
-                                                  osg::Vec3d(0.0, 0.0, 1.0)));
-
+        osg::Group *group = new osg::Group;
         for (const auto &scene : model.scenes) {
             for (const int nodeIndex : scene.nodes) {
                 osg::Node *node = makeNode(model.nodes[nodeIndex]);
                 if (node)
-                    transform->addChild(node);
+                    group->addChild(node);
             }
         }
-
-        return transform;
+        return group;
     }
 
     osg::Node *makeNode(const tinygltf::Node &node) const {
+        // We need to create a named osg::Group for animations. Naming the
+        // MatrixTransform directly does not work.
+        osg::Group *group = new osg::Group;
+        group->setName(node.name);
+
+        if (node.mesh >= 0) {
+            osg::Group *mesh = makeMesh(model.meshes[node.mesh]);
+            if (mesh)
+                group->addChild(mesh);
+        }
+
+        for (const int nodeIndex : node.children) {
+            osg::Node *child = makeNode(model.nodes[nodeIndex]);
+            if (child)
+                group->addChild(child);
+        }
+
         osg::MatrixTransform* mt = new osg::MatrixTransform;
-        // This is the name used later by animations
-        mt->setName(node.name);
+        mt->addChild(group);
 
         if (node.matrix.size() == 16) {
             osg::Matrixd mat;
@@ -103,18 +101,6 @@ struct GLTFBuilder {
                                                       node.translation[2]);
             }
             mt->setMatrix(scale * rotation * translation);
-        }
-
-        if (node.mesh >= 0) {
-            osg::Group *mesh = makeMesh(model.meshes[node.mesh]);
-            if (mesh)
-                mt->addChild(mesh);
-        }
-
-        for (const int nodeIndex : node.children) {
-            osg::Node *child = makeNode(model.nodes[nodeIndex]);
-            if (child)
-                mt->addChild(child);
         }
 
         return mt;
