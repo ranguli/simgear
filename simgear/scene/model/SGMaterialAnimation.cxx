@@ -46,6 +46,11 @@ struct ColorSpec {
   
   ColorSpec(const SGPropertyNode* configNode, SGPropertyNode* modelRoot)
   {
+    redex = new SGConstExpression<double>(-1.0);
+    greenex = new SGConstExpression<double>(-1.0);
+    blueex = new SGConstExpression<double>(-1.0);
+    factorex = new SGConstExpression<double>(1.0);
+    offsetex = new SGConstExpression<double>(0.0);
     if (!configNode)
       return;
 
@@ -136,16 +141,10 @@ struct ColorSpec {
     return redex->getValue() >= 0 || greenex->getValue() >= 0 || blueex->getValue() >= 0;
   }
   bool live() {
-    return !(
-      (redex && redex->isConst()) &&
-      (greenex && greenex->isConst()) &&
-      (blueex &&blueex->isConst()) &&
-      (factorex && factorex->isConst()) &&
-      (offsetex && offsetex->isConst())
-    );
+    return !(redex->isConst() && greenex->isConst() && blueex->isConst() && factorex->isConst() && offsetex->isConst());
   }
   SGVec4f &rgba() {
-    float red = 1.0, green = 1.0, blue = 1.0, factor = 1.0, offset = 0.0;
+    float red = -1.0, green = -1.0, blue = -1.0, factor = 1.0, offset = 0.0;
     if (redex)
       red = redex->getValue();
     if (greenex)
