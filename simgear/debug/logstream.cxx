@@ -686,7 +686,7 @@ sgDebugPriority logstream::priorityFromString(const std::string& s)
     if (s == "warn") return SG_WARN;
     if (s == "alert") return SG_ALERT;
 
-    throw std::invalid_argument("Couldn't parse log prioirty:" + s);
+    throw std::invalid_argument("Couldn't parse log priority:" + s);
 }
 
 logstream&
