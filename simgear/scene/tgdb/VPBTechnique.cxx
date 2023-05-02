@@ -341,11 +341,11 @@ class VertexNormalGenerator
 
         VertexNormalGenerator(Locator* masterLocator, const osg::Vec3d& centerModel, int numRows, int numColmns, float scaleHeight, float vtx_gap, bool createSkirt);
 
-        void populateCenter(osgTerrain::Layer* elevationLayer, osg::Vec2Array* texcoords);
-        void populateLeftBoundary(osgTerrain::Layer* elevationLayer);
-        void populateRightBoundary(osgTerrain::Layer* elevationLayer);
-        void populateAboveBoundary(osgTerrain::Layer* elevationLayer);
-        void populateBelowBoundary(osgTerrain::Layer* elevationLayer);
+        void populateCenter(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas, osg::Vec2Array* texcoords);
+        void populateLeftBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+        void populateRightBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+        void populateAboveBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+        void populateBelowBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
 
         void computeNormals();
 
@@ -547,7 +547,7 @@ VertexNormalGenerator::VertexNormalGenerator(Locator* masterLocator, const osg::
     _boundaryVertices->reserve(_numRows*2 + _numColumns*2 + 4);
 }
 
-void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, osg::Vec2Array* texcoords)
+void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas, osg::Vec2Array* texcoords)
 {
     // OSG_NOTICE<<std::endl<<"VertexNormalGenerator::populateCenter("<<elevationLayer<<")"<<std::endl;
 
@@ -555,6 +555,8 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
                    ( (elevationLayer->getNumRows()!=static_cast<unsigned int>(_numRows)) ||
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
+    osg::Image* landclassImage = colorLayer->getImage();
+    
     for(int j=0; j<_numRows; ++j)
     {
         for(int i=0; i<_numColumns; ++i)
@@ -568,6 +570,15 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
                 if (sampled) validValue = elevationLayer->getInterpolatedValidValue(ndc.x(), ndc.y(), value);
                 else validValue = elevationLayer->getValidValue(i,j,value);
                 ndc.z() = value*_scaleHeight;
+            }
+
+            if (landclassImage)
+            {
+                osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
+                unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
+                if (atlas->isSea(lc)) {
+                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                }
             }
 
             if (validValue)
@@ -598,7 +609,7 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
     }
 }
 
-void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLayer)
+void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas)
 {
     // OSG_NOTICE<<"   VertexNormalGenerator::populateLeftBoundary("<<elevationLayer<<")"<<std::endl;
 
@@ -608,6 +619,8 @@ void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLay
                    ( (elevationLayer->getNumRows()!=static_cast<unsigned int>(_numRows)) ||
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
+    osg::Image* landclassImage = colorLayer->getImage();
+    
     for(int j=0; j<_numRows; ++j)
     {
         for(int i=-1; i<=0; ++i)
@@ -625,6 +638,16 @@ void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLay
 
                 ndc.z() += 0.f;
             }
+
+            if (landclassImage)
+            {
+                osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
+                unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
+                if (atlas->isSea(lc)) {
+                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                }
+            }
+
             if (validValue)
             {
                 osg::Vec3d model;
@@ -644,7 +667,7 @@ void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLay
     }
 }
 
-void VertexNormalGenerator::populateRightBoundary(osgTerrain::Layer* elevationLayer)
+void VertexNormalGenerator::populateRightBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas)
 {
     // OSG_NOTICE<<"   VertexNormalGenerator::populateRightBoundary("<<elevationLayer<<")"<<std::endl;
 
@@ -654,6 +677,8 @@ void VertexNormalGenerator::populateRightBoundary(osgTerrain::Layer* elevationLa
                    ( (elevationLayer->getNumRows()!=static_cast<unsigned int>(_numRows)) ||
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
+    osg::Image* landclassImage = colorLayer->getImage();
+    
     for(int j=0; j<_numRows; ++j)
     {
         for(int i=_numColumns-1; i<_numColumns+1; ++i)
@@ -670,6 +695,15 @@ void VertexNormalGenerator::populateRightBoundary(osgTerrain::Layer* elevationLa
                 ndc.z() = value*_scaleHeight;
             }
 
+            if (landclassImage)
+            {
+                osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
+                unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
+                if (atlas->isSea(lc)) {
+                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                }
+            }
+
             if (validValue)
             {
                 osg::Vec3d model;
@@ -689,7 +723,7 @@ void VertexNormalGenerator::populateRightBoundary(osgTerrain::Layer* elevationLa
     }
 }
 
-void VertexNormalGenerator::populateAboveBoundary(osgTerrain::Layer* elevationLayer)
+void VertexNormalGenerator::populateAboveBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas)
 {
     // OSG_NOTICE<<"   VertexNormalGenerator::populateAboveBoundary("<<elevationLayer<<")"<<std::endl;
 
@@ -699,6 +733,8 @@ void VertexNormalGenerator::populateAboveBoundary(osgTerrain::Layer* elevationLa
                    ( (elevationLayer->getNumRows()!=static_cast<unsigned int>(_numRows)) ||
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
+    osg::Image* landclassImage = colorLayer->getImage();
+    
     for(int j=_numRows-1; j<_numRows+1; ++j)
     {
         for(int i=0; i<_numColumns; ++i)
@@ -715,6 +751,15 @@ void VertexNormalGenerator::populateAboveBoundary(osgTerrain::Layer* elevationLa
                 ndc.z() = value*_scaleHeight;
             }
 
+            if (landclassImage)
+            {
+                osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
+                unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
+                if (atlas->isSea(lc)) {
+                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                }
+            }
+
             if (validValue)
             {
                 osg::Vec3d model;
@@ -734,7 +779,7 @@ void VertexNormalGenerator::populateAboveBoundary(osgTerrain::Layer* elevationLa
     }
 }
 
-void VertexNormalGenerator::populateBelowBoundary(osgTerrain::Layer* elevationLayer)
+void VertexNormalGenerator::populateBelowBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas)
 {
     // OSG_NOTICE<<"   VertexNormalGenerator::populateBelowBoundary("<<elevationLayer<<")"<<std::endl;
 
@@ -744,6 +789,8 @@ void VertexNormalGenerator::populateBelowBoundary(osgTerrain::Layer* elevationLa
                    ( (elevationLayer->getNumRows()!=static_cast<unsigned int>(_numRows)) ||
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
+    osg::Image* landclassImage = colorLayer->getImage();
+    
     for(int j=-1; j<=0; ++j)
     {
         for(int i=0; i<_numColumns; ++i)
@@ -758,6 +805,15 @@ void VertexNormalGenerator::populateBelowBoundary(osgTerrain::Layer* elevationLa
                 if (sampled) validValue = elevationLayer->getInterpolatedValidValue(below_ndc.x(), below_ndc.y(), value);
                 else validValue = elevationLayer->getValidValue(i,(_numRows-1)+j,value);
                 ndc.z() = value*_scaleHeight;
+            }
+
+            if (landclassImage)
+            {
+                osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
+                unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
+                if (atlas->isSea(lc)) {
+                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                }
             }
 
             if (validValue)
@@ -800,6 +856,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     Terrain* terrain = _terrainTile->getTerrain();
     osgTerrain::Layer* elevationLayer = _terrainTile->getElevationLayer();
+    osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
 
     // Determine the correct Effect for this, based on a material lookup taking into account
     // the lat/lon of the center.
@@ -886,7 +943,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     // allocate and assign texture coordinates
     auto texcoords = new osg::Vec2Array;
-    VNG.populateCenter(elevationLayer, texcoords);
+    VNG.populateCenter(elevationLayer, colorLayer, atlas, texcoords);
     buffer._landGeometry->setTexCoordArray(0, texcoords);
 
     if (terrain && terrain->getEqualizeBoundaries())
@@ -898,10 +955,10 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
         osg::ref_ptr<TerrainTile> top_tile = terrain->getTile(TileID(tileID.level, tileID.x, tileID.y+1));
         osg::ref_ptr<TerrainTile> bottom_tile = terrain->getTile(TileID(tileID.level, tileID.x, tileID.y-1));
 
-        VNG.populateLeftBoundary(left_tile.valid() ? left_tile->getElevationLayer() : 0);
-        VNG.populateRightBoundary(right_tile.valid() ? right_tile->getElevationLayer() : 0);
-        VNG.populateAboveBoundary(top_tile.valid() ? top_tile->getElevationLayer() : 0);
-        VNG.populateBelowBoundary(bottom_tile.valid() ? bottom_tile->getElevationLayer() : 0);
+        VNG.populateLeftBoundary(left_tile.valid() ? left_tile->getElevationLayer() : 0, colorLayer, atlas);
+        VNG.populateRightBoundary(right_tile.valid() ? right_tile->getElevationLayer() : 0, colorLayer, atlas);
+        VNG.populateAboveBoundary(top_tile.valid() ? top_tile->getElevationLayer() : 0, colorLayer, atlas);
+        VNG.populateBelowBoundary(bottom_tile.valid() ? bottom_tile->getElevationLayer() : 0, colorLayer, atlas);
 
         _neighbours.clear();
 

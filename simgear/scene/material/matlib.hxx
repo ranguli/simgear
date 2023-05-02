@@ -105,7 +105,13 @@ private:
     typedef material_map::iterator material_map_iterator;
     typedef material_map::const_iterator const_material_map_iterator;
 
-    typedef std::map < int, std::pair<std::string, bool> > landclass_map;
+    struct landclass_info {
+        std::string _mat;
+        bool _water;
+        bool _sea;
+    };
+
+    typedef std::map < int, landclass_info> landclass_map;
     typedef landclass_map::iterator landclass_map_iterator;
     typedef landclass_map::const_iterator const_landclass_map_iterator;
 

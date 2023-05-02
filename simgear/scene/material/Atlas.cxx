@@ -67,11 +67,12 @@ Atlas::Atlas(osg::ref_ptr<const SGReaderWriterOptions> options) {
     }
 }
 
-void Atlas::addMaterial(int landclass, bool isWater, SGMaterial* mat) {
+void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGMaterial* mat) {
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Atlas Landclass mapping: " << landclass << " : " << mat->get_names()[0]);
     _index[landclass] = _materialLookupIndex;
     _waterAtlas[landclass] = isWater;
+    _seaAtlas[landclass] = isSea;
     unsigned int textureList[Atlas::MAX_TEXTURES];
 
     if (mat != NULL) {

@@ -56,13 +56,14 @@ public:
     typedef std::map<int, bool> WaterAtlas;
 
     void addUniforms(osg::StateSet* stateset);
-    void addMaterial(int landclass, bool water, SGMaterial* mat);
+    void addMaterial(int landclass, bool water, bool sea, SGMaterial* mat);
 
     // Maximum number of material entries in the atlas
     static const unsigned int MAX_MATERIALS = 64;
 
     // Lookups into the Atlas from landclass
     bool isWater(int landclass) { return _waterAtlas[landclass]; };
+    bool isSea(int landclass) { return _seaAtlas[landclass];}
     int getIndex(int landclass) { return _index[landclass]; };
 
     AtlasImage getImage() { return _image; };
@@ -88,6 +89,7 @@ private:
     unsigned int _materialLookupIndex; // Index into the material lookup
 
     WaterAtlas _waterAtlas;
+    WaterAtlas _seaAtlas;
     TextureMap _textureMap;
 
     // Maximum number of textures per texture-set for the Atlas.

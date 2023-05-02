@@ -157,17 +157,18 @@ bool SGMaterialLib::load( const SGPath &fg_root, const SGPath& mpath,
     simgear::PropertyList::const_iterator lc_iter = landclasses.begin();
 
     for (; lc_iter != landclasses.end(); lc_iter++) {
-    	SGPropertyNode_ptr node = lc_iter->get();
-		int lc = node->getIntValue("landclass");
-		const std::string mat = node->getStringValue("material-name");
-		const bool water = node->getBoolValue("water");
+        SGPropertyNode_ptr node = lc_iter->get();
+        int lc = node->getIntValue("landclass");
+        const std::string mat = node->getStringValue("material-name");
+        const bool water = node->getBoolValue("water");
+        const bool sea = node->getBoolValue("sea");
         
         // Verify that the landclass mapping exists before creating the mapping
         const_material_map_iterator it = matlib.find( mat );
         if ( it == end() ) {
             SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << mat << " for landclass " << lc);
         } else {
-            landclasslib[lc] = std::pair(mat, water);
+            landclasslib[lc] = {._mat=mat, ._water=water, ._sea=sea};
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Landclass mapping: " << lc << " : " << mat);
         }
     }
@@ -214,7 +215,7 @@ SGMaterial *SGMaterialLib::find( int lc, const SGVec2f center ) const
             return nullptr;
         }
 
-        materialName = it->second.first;
+        materialName = it->second._mat;
     }
 
     return find(materialName, center);
@@ -238,7 +239,7 @@ SGMaterial *SGMaterialLib::find( int lc, const SGGeod& center ) const
             return nullptr;
         }
 
-        materialName = it->second.first;
+        materialName = it->second._mat;
     }
 
     return find(materialName, center);
@@ -258,7 +259,7 @@ SGMaterialCache *SGMaterialLib::generateMatCache(SGVec2f center, const simgear::
     // Collapse down the mapping from landclasses to materials.
     const_landclass_map_iterator lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
-        SGMaterial* mat = internalFind(lc_iter->second.first, center);
+        SGMaterial* mat = internalFind(lc_iter->second._mat, center);
         newCache->insert(lc_iter->first, mat);
         SG_LOG(SG_TERRAIN, SG_DEBUG, "MatCache Landclass mapping: " << lc_iter->first << " : " << mat->get_names()[0]);
     }
@@ -339,7 +340,7 @@ osg::ref_ptr<Atlas> SGMaterialLib::getOrCreateAtlas(SGMaterialLib::landclass_map
     std::string id;
     const_landclass_map_iterator lc_iter = landclasslib.begin();
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
-        SGMaterial* mat = find(lc_iter->second.first, center);
+        SGMaterial* mat = find(lc_iter->second._mat, center);
         const std::string texture = mat->get_one_texture(0,0);
         id.append(texture);
         id.append(";");
@@ -365,9 +366,10 @@ osg::ref_ptr<Atlas> SGMaterialLib::getOrCreateAtlas(SGMaterialLib::landclass_map
     for (; lc_iter != landclasslib.end(); ++lc_iter) {
         // Add all the materials to the atlas
         int landclass = lc_iter->first;
-        bool water = lc_iter->second.second;
-        SGMaterial* mat = find(lc_iter->second.first, center);
-        atlas->addMaterial(landclass, water, mat);
+        bool water = lc_iter->second._water;
+        bool sea = lc_iter->second._sea;
+        SGMaterial* mat = find(lc_iter->second._mat, center);
+        atlas->addMaterial(landclass, water, sea, mat);
     }
 
     SGMaterialLib::_atlasCache[id] = atlas;
