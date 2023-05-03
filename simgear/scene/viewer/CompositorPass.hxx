@@ -8,6 +8,7 @@
 #include <osg/Camera>
 #include <osg/View>
 
+#include <simgear/props/condition.hxx>
 #include <simgear/scene/material/Effect.hxx>
 #include <simgear/structure/Singleton.hxx>
 #include <simgear/props/props.hxx>
@@ -57,6 +58,7 @@ struct Pass : public osg::Referenced {
     float                            viewport_y_scale;
     float                            viewport_width_scale;
     float                            viewport_height_scale;
+    SGSharedPtr<SGCondition>         render_condition;
 
     struct PassUpdateCallback : public virtual osg::Referenced {
     public:

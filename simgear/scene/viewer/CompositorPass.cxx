@@ -14,6 +14,7 @@
 #include <simgear/props/vectorPropTemplates.hxx>
 #include <simgear/scene/material/EffectCullVisitor.hxx>
 #include <simgear/scene/material/EffectGeode.hxx>
+#include <simgear/scene/tgdb/userdata.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
 #include <simgear/scene/util/RenderConstants.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
@@ -151,6 +152,10 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
     }
     pass->type = root->getStringValue("type");
     pass->effect_scheme = root->getStringValue("effect-scheme");
+
+    const SGPropertyNode *p_render_condition = root->getChild("render-condition");
+    if (p_render_condition)
+        pass->render_condition = sgReadCondition(getPropertyRoot(), p_render_condition);
 
     osg::Camera *camera = new osg::Camera;
     pass->camera = camera;

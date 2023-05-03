@@ -266,7 +266,7 @@ Compositor::update(const osg::Matrix &view_matrix,
         case SG_UNIFORM_SUN_ZENITH_COSTHETA:
             u->set(float(sun_dir_world * world_up));
             break;
-	case SG_UNIFORM_MOON_DIRECTION:
+        case SG_UNIFORM_MOON_DIRECTION:
             u->set(osg::Vec3f(moon_dir_view.x(), moon_dir_view.y(), moon_dir_view.z()));
             break;
         case SG_UNIFORM_MOON_ZENITH_COSTHETA:
@@ -327,7 +327,7 @@ Compositor::resized()
                        viewport->y(),
                        viewport->width(),
                        viewport->height()));
-        _uniforms[Compositor::SG_UNIFORM_PIXEL_SIZE]->set(
+        _uniforms[SG_UNIFORM_PIXEL_SIZE]->set(
             osg::Vec2f(1.0f / viewport->width(),
                        1.0f / viewport->height()));
     }
@@ -434,11 +434,21 @@ void
 Compositor::setCullMask(osg::Node::NodeMask cull_mask)
 {
     for (auto &pass : _passes) {
-        if (pass->inherit_cull_mask) {
-            osg::Camera *camera = pass->camera;
-            camera->setCullMask(pass->cull_mask & cull_mask);
-            camera->setCullMaskLeft(pass->cull_mask & cull_mask & ~RIGHT_BIT);
-            camera->setCullMaskRight(pass->cull_mask & cull_mask & ~LEFT_BIT);
+        osg::Camera *camera = pass->camera;
+        if (!pass->render_condition || pass->render_condition->test()) {
+            if (pass->inherit_cull_mask) {
+                camera->setCullMask(pass->cull_mask & cull_mask);
+                camera->setCullMaskLeft(pass->cull_mask & cull_mask & ~RIGHT_BIT);
+                camera->setCullMaskRight(pass->cull_mask & cull_mask & ~LEFT_BIT);
+            } else {
+                camera->setCullMask(pass->cull_mask);
+                camera->setCullMaskLeft(pass->cull_mask & ~RIGHT_BIT);
+                camera->setCullMaskRight(pass->cull_mask & ~LEFT_BIT);
+            }
+        } else {
+            camera->setCullMask(0);
+            camera->setCullMaskLeft(0);
+            camera->setCullMaskRight(0);
         }
     }
 }
