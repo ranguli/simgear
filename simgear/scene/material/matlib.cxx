@@ -168,7 +168,7 @@ bool SGMaterialLib::load( const SGPath &fg_root, const SGPath& mpath,
         if ( it == end() ) {
             SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to find material " << mat << " for landclass " << lc);
         } else {
-            landclasslib[lc] = {._mat=mat, ._water=water, ._sea=sea};
+            landclasslib[lc] = {mat, water, sea};
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Landclass mapping: " << lc << " : " << mat);
         }
     }
