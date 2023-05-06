@@ -83,7 +83,7 @@ struct SGPropertyLockListener : SGPropertyChangeListener
     m_out(out),
     m_name(name)
     {}
-    
+
     void valueChanged(SGPropertyNode* node)
     {
         m_out = node->getBoolValue();
@@ -109,17 +109,17 @@ void SGPropertyLockControl(
                 << " timing: " << timing->getPath()
                 << " parent_listeners: " << parent_listeners->getPath()
                 << "\n";
-    
+
     s_main_tree_root = active->getRootNode();
     active->setBoolValue(s_property_locking_active);
     active->addChangeListener(new SGPropertyLockListener(s_property_locking_active, "active"));
-    
+
     verbose->setBoolValue(s_property_locking_verbose);
     verbose->addChangeListener(new SGPropertyLockListener(s_property_locking_verbose, "verbose"));
-    
+
     timing->setBoolValue(s_property_timing_active);
     timing->addChangeListener(new SGPropertyLockListener(s_property_timing_active, "timing"));
-    
+
     parent_listeners->setBoolValue(s_property_change_parent_listeners);
     parent_listeners->addChangeListener(new SGPropertyLockListener(s_property_change_parent_listeners, "parent-listeners"));
 }
@@ -156,7 +156,7 @@ static double TimeUTC()
 {
     time_t      sec;
     unsigned    nsec;
-    
+
     #ifdef _WIN32
         static bool qpc_init = false;
         static LARGE_INTEGER s_frequency;
@@ -218,7 +218,7 @@ struct ScopedTime
             m_total = nullptr;
         }
     }
-    
+
     ~ScopedTime()
     {
         if (!m_total) {
@@ -251,7 +251,7 @@ struct ScopedTime
                     << "\n";
         }
     }
-    
+
     double m_time_start;
     double* m_total;
     long* m_n;
@@ -298,17 +298,17 @@ struct SGPropertyLock
             s_property_locking_verbose = env_default("SG_PROPERTY_LOCKING_VERBOSE", false);
         }
     }
-    
+
     SGPropertyLock()
     {
         init_static();
     }
-    
+
     /* These are provided for the rare situations where share/non-shared
     agnostic code needs to release/acquire a lock. */
     virtual void acquire() = 0;
     virtual void release() = 0;
-    
+
     /* Acquires shared or exclusive lock on <mutex>, generating various
     diagnostics depending on s_property_locking_verbose. */
     void acquire_internal(const SGPropertyNode& node, bool shared)
@@ -345,7 +345,7 @@ struct SGPropertyLock
                     << "\n";
             throw;
         }
-        
+
         /* Non-blocking call failed to acquire, so now do a blocking lock. */
         std::cerr << __FILE__ << ":" << __LINE__ << ":"
                 << (shared ? "    shared" : " exclusive") << " lock contention"
@@ -366,7 +366,7 @@ struct SGPropertyLock
             throw;
         }
     }
-    
+
     void release_internal(const SGPropertyNode& node, bool shared)
     {
         #ifdef SG_PROPS_GATHER_TIMING
@@ -381,7 +381,7 @@ struct SGPropertyLock
         if (shared) node._mutex.unlock_shared();
         else node._mutex.unlock();
     }
-    
+
     const SGPropertyNode*   m_node = nullptr;
     bool                    m_own = false;
 };
@@ -394,21 +394,21 @@ struct SGPropertyLockExclusive : SGPropertyLock
     SGPropertyLock()
     {
     }
-    
+
     SGPropertyLockExclusive(const SGPropertyNode& node)
     :
     SGPropertyLock()
     {
         assign(node);
     }
-    
+
     void assign(const SGPropertyNode& node)
     {
         assert(!m_node);
         m_node = &node;
         acquire();
     }
-    
+
     void acquire() override
     {
         assert(m_node);
@@ -422,7 +422,7 @@ struct SGPropertyLockExclusive : SGPropertyLock
         release_internal(*m_node, false /*shared*/);
         m_own = false;
     }
-    
+
     ~SGPropertyLockExclusive()
     {
         if (m_own) release();
@@ -440,7 +440,7 @@ struct SGPropertyLockShared : SGPropertyLock
     SGPropertyLock()
     {
     }
-    
+
     /* Takes out shared lock for <node>. */
     SGPropertyLockShared(const SGPropertyNode& node)
     :
@@ -448,7 +448,7 @@ struct SGPropertyLockShared : SGPropertyLock
     {
         assign(node);
     }
-    
+
     /* Sets our SGPropertyNode and takes out a shared lock. Can only
     be called if we don't have a SGPropertyNode. */
     void assign(const SGPropertyNode& node)
@@ -457,7 +457,7 @@ struct SGPropertyLockShared : SGPropertyLock
         m_node = &node;
         acquire();
     }
-    
+
     void acquire() override
     {
         assert(m_node);
@@ -471,7 +471,7 @@ struct SGPropertyLockShared : SGPropertyLock
         release_internal(*m_node, true /*shared*/);
         m_own = false;
     }
-    
+
     ~SGPropertyLockShared()
     {
         if (m_own) release();
@@ -774,18 +774,21 @@ parse_path (const string &path, vector<PathComponent> &components)
 ////////////////////////////////////////////////////////////////////////
 
 
-static char *
-copy_string (const char * s)
+static char* copy_string(const char* s)
 {
-  size_t slen = strlen(s);
-  // REVIEW: Memory Leak - 1,963 bytes in 47 blocks are indirectly lost
-  char * copy = new char[slen + 1];
+    // assure there is data to be copied
+    if (s == nullptr)
+        return nullptr;
 
-  // the source string length is known so no need to check for '\0'
-  // when copying every single character
-  memcpy(copy, s, slen);
-  *(copy + slen) = '\0';
-  return copy;
+    size_t slen = strlen(s);
+    // REVIEW: Memory Leak - 1,963 bytes in 47 blocks are indirectly lost
+    char* copy = new char[slen + 1];
+
+    // the source string length is known so no need to check for '\0'
+    // when copying every single character
+    memcpy(copy, s, slen);
+    *(copy + slen) = '\0';
+    return copy;
 }
 
 static bool
@@ -941,7 +944,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.bool_val;
     }
-    
+
     static int get_int(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._tied)
@@ -949,7 +952,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.int_val;
     }
-    
+
     static int get_long(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._tied)
@@ -957,7 +960,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.long_val;
     }
-    
+
     static float get_float(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._tied)
@@ -965,7 +968,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.float_val;
     }
-    
+
     static double get_double(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._tied)
@@ -973,7 +976,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.double_val;
     }
-    
+
     static const char* get_string(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._tied)
@@ -981,7 +984,7 @@ struct SGPropertyNodeImpl
         else
             return node._local_val.string_val;
     }
-    
+
     static bool
     set_bool(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, bool val)
     {
@@ -1000,7 +1003,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static bool
     set_int(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, int val)
     {
@@ -1019,7 +1022,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static bool
     set_long(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, long val)
     {
@@ -1038,7 +1041,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static bool
     set_float(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, float val)
     {
@@ -1057,7 +1060,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static bool
     set_double(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, double val)
     {
@@ -1076,7 +1079,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static bool
     set_string(SGPropertyLockExclusive& exclusive, SGPropertyNode& node, const char* val)
     {
@@ -1096,7 +1099,7 @@ struct SGPropertyNodeImpl
         }
         return changed;
     }
-    
+
     static void
     appendNode(SGPropertyLockExclusive& exclusive, SGPropertyNode& parent, SGPropertyNode* child)
     {
@@ -1108,7 +1111,7 @@ struct SGPropertyNodeImpl
         }
         parent._children.push_back(child);
     }
-    
+
     static SGPropertyNode*
     getChildImplCreate(SGPropertyLockExclusive& exclusive, SGPropertyNode& node0, const char* begin, const char* end, int index)
     {
@@ -1127,7 +1130,7 @@ struct SGPropertyNodeImpl
             return node;
         }
     }
-    
+
     static SGPropertyNode*
     getExistingChild(SGPropertyLock& lock, SGPropertyNode& node, const char* begin, const char* end, int index)
     {
@@ -1136,7 +1139,7 @@ struct SGPropertyNodeImpl
             return node._children[pos];
         return 0;
     }
-    
+
     static SGPropertyNode*
     getChildImpl(SGPropertyLockShared& shared, SGPropertyNode& node, const char* begin, const char* end, int index)
     {
@@ -1155,7 +1158,7 @@ struct SGPropertyNodeImpl
             return getChildImpl(shared, node, begin, end, index);
         }
     }
-    
+
     /* Get the value as a string. */
     static std::string
     make_string(SGPropertyLock& lock, const SGPropertyNode& node, const char* defaultValue="")
@@ -1254,7 +1257,7 @@ struct SGPropertyNodeImpl
     {
         return ((node._attr & attr) != 0);
     }
-    
+
     static void setChildrenUpDown(SGPropertyLockExclusive& exclusive, SGPropertyNode& node)
     {
         for (SGPropertyNode* child: node._children) {
@@ -1274,7 +1277,7 @@ struct SGPropertyNodeImpl
         //
         if (node._attr & SGPropertyNode::VALUE_CHANGED_UP)      attr |= SGPropertyNode::VALUE_CHANGED_UP;
         if (node._attr & SGPropertyNode::VALUE_CHANGED_DOWN)    attr |= SGPropertyNode::VALUE_CHANGED_DOWN;
-        
+
         if ((attr & SGPropertyNode::VALUE_CHANGED_DOWN) && !(node._attr & SGPropertyNode::VALUE_CHANGED_DOWN)) {
             // We are changing VALUE_CHANGED_DOWN flag from 0 to 1, so set
             // VALUE_CHANGED_UP and VALUE_CHANGED_DOWN flags in all child
@@ -1282,7 +1285,7 @@ struct SGPropertyNodeImpl
             //
             setChildrenUpDown(exclusive, node);
         }
-        
+
         node._attr = attr;
     }
 
@@ -1895,7 +1898,7 @@ struct SGPropertyNodeImpl
     {
         return setStringValue(exclusive, node, value.c_str());
     }
-    
+
     static props::Type
     getType(SGPropertyLock& lock, const SGPropertyNode& node)
     {
@@ -2662,7 +2665,7 @@ SGPropertyNode::getChild (const std::string& name, int index, bool create)
 const SGPropertyNode *
 SGPropertyNode::getChild (const char * name, int index) const
 {
-  SGPropertyLockShared shared(*this);  
+  SGPropertyLockShared shared(*this);
   int pos = find_child(shared, name, name + strlen(name), index, _children);
   if (pos >= 0)
     return _children[pos];
@@ -2706,7 +2709,7 @@ bool SGPropertyNode::removeChild(SGPropertyNode* node)
   SGPropertyNodeImpl::clearValue(exclusive_node, *node);
   exclusive_node.release();
   SGPropertyNodeImpl::fireChildRemoved(exclusive, *this, this /*parent*/, node);
-  
+
   // Need to find again because fireChildRemoved() will have temporarily
   // released our exclusive lock.
   it = std::find(_children.begin(), _children.end(), node);
@@ -2771,7 +2774,7 @@ SGPropertyNode::removeChildren(const std::string& name)
     }
     sort(children.begin(), children.end(), CompareIndices());
   }
-  
+
   for (SGPropertyNode_ptr child: children) {
     removeChild(child);
   }
@@ -2823,7 +2826,7 @@ SGPropertyNode::getPath (bool simplify) const
     nodes.push_back(node);
     node = parent;
   }
-  
+
   std::string result;
   for (auto it = nodes.rbegin(); it != nodes.rend(); ++it) {
     result += '/';
@@ -3042,39 +3045,6 @@ bool SGPropertyNode::setStringValue(const std::string& value)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //------------------------------------------------------------------------------
 #if !PROPS_STANDALONE
 bool SGPropertyNode::interpolate( const std::string& type,
@@ -3082,7 +3052,7 @@ bool SGPropertyNode::interpolate( const std::string& type,
                                   double duration,
                                   const std::string& easing )
 {
-  
+
   if( !_interpolation_mgr )
   {
     SG_LOG(SG_GENERAL, SG_WARN, "No property interpolator available");
@@ -3251,6 +3221,8 @@ SGPropertyNode::untie()
     std::string val = SGPropertyNodeImpl::getStringValue(exclusive, *this);
     SGPropertyNodeImpl::clearValue(exclusive, *this);
     _type = props::STRING;
+    if (_local_val.string_val != nullptr)
+        delete[] _local_val.string_val;
     _local_val.string_val = copy_string(val.c_str());
     break;
   }
@@ -4004,7 +3976,7 @@ namespace simgear
             return compareNodeValue(shared_lhs, shared_rhs, lhs, rhs);
         }
         #endif
-        
+
         bool compareNodeValue(
                 SGPropertyLockShared& shared_lhs,
                 SGPropertyLockShared& shared_rhs,
@@ -4125,10 +4097,10 @@ bool SGPropertyNode::compare(const SGPropertyNode& lhs,
     int rhsChildren = rhs._children.size();
     if (lhsChildren != rhsChildren)
         return false;
-    
+
     if (lhsChildren == 0)
         return compareNodeValue(shared_lhs, shared_rhs, lhs, rhs);
-    
+
     for (size_t i = 0; i < lhs._children.size(); ++i) {
         const SGPropertyNode* lchild = lhs._children[i];
         const SGPropertyNode* rchild = rhs._children[i];
@@ -4200,11 +4172,8 @@ bool SGPropertyNode::tie(const SGRawValue<T> &rawValue, bool useDefault)
         _attr = save_attributes;
     }
     return true;
-    
+
 }
-
-
-
 
 
 template<typename T>
