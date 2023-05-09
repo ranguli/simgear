@@ -997,6 +997,12 @@ bool SGMetar::scanWeather()
 		return false;
 	}
 
+    // maintenance flag
+    if (*m == 'M' and *(m+1) == ' ') {
+        _m++;
+        return scanBoundary(&_m);
+    }
+
 	if ((a = scanToken(&m, special))) {
 		if (!scanBoundary(&m))
 			return false;
