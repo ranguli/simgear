@@ -52,13 +52,25 @@ Atlas::Atlas(osg::ref_ptr<const SGReaderWriterOptions> options) {
 
     // Add hardcoded atlas images.
     unsigned int standardTextureCount = size(Atlas::STANDARD_TEXTURES);
+    _internalFormat = GL_RGB;
     for (; _imageIndex < standardTextureCount; _imageIndex++) {
         // Copy the texture into the atlas in the appropriate place
         osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(Atlas::STANDARD_TEXTURES[_imageIndex], options);
 
         if (subtexture && subtexture->valid()) {
+
+            if (_imageIndex == 0) {
+                // The first subtexture determines the texture format.
+                _internalFormat = subtexture->getInternalTextureFormat();
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Internal Texture format for atlas: " << _internalFormat);
+            }
+
             if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
                 subtexture->scaleImage(2048,2048,1);
+            }
+
+            if (subtexture->getInternalTextureFormat() != _internalFormat) {
+                SG_LOG(SG_TERRAIN, SG_ALERT, "Atlas image " << subtexture->getFileName() << " has internal format " << subtexture->getInternalTextureFormat() << " rather than " << _internalFormat << " (6407=RGB 6408=RGBA)");
             }
 
             _image->setImage(_imageIndex,subtexture);
@@ -148,6 +160,10 @@ void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGMaterial* mat
                 osg::ref_ptr<osg::Image> subtexture = osgDB::readRefImageFile(fullPath, _options);
 
                 if (subtexture && subtexture->valid()) {
+
+                    if (subtexture->getInternalTextureFormat() != _internalFormat) {
+                        SG_LOG(SG_TERRAIN, SG_ALERT, "Atlas image " << subtexture->getFileName() << " has internal format " << subtexture->getInternalTextureFormat() << " rather than " << _internalFormat << " (6407=RGB 6408=RGBA)");
+                    }
 
                     if ((subtexture->s() != 2048) || (subtexture->t() != 2048)) {
                         subtexture->scaleImage(2048,2048,1);

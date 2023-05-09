@@ -71,6 +71,7 @@ public:
 private:
     AtlasIndex _index;
     AtlasImage _image;
+    GLint _internalFormat;
 
     osg::ref_ptr<const SGReaderWriterOptions> _options;
 
