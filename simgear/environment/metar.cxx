@@ -945,6 +945,7 @@ static const struct Token description[] = {
 	{ "FZ", "freezing" },
 	{ "MI", "shallow" },
 	{ "PR", "partial" },
+	{ "RE", "recent" },
 	{ 0, 0 }
 };
 
@@ -955,6 +956,7 @@ static const struct Token phenomenon[] = {
 	{ "GS",   "small hail and/or snow pellets" },
 	{ "IC",   "ice crystals" },
 	{ "PE",   "ice pellets" },
+	{ "PL",   "ice pellets" },
 	{ "RA",   "rain" },
 	{ "SG",   "snow grains" },
 	{ "SN",   "snow" },
@@ -968,12 +970,11 @@ static const struct Token phenomenon[] = {
 	{ "PY",   "spray" },
 	{ "SA",   "sand" },
 	{ "VA",   "volcanic ash" },
-	{ "DS",   "duststorm" },
+	{ "DS",   "dust storm" },
 	{ "FC",   "funnel cloud/tornado waterspout" },
 	{ "PO",   "well-developed dust/sand whirls" },
 	{ "SQ",   "squalls" },
 	{ "SS",   "sandstorm" },
-	{ "UP",   "unknown" },	// ... due to failed automatic acquisition
 	{ 0, 0 }
 };
 
@@ -998,7 +999,7 @@ bool SGMetar::scanWeather()
 	}
 
     // maintenance flag
-    if (*m == 'M' and *(m+1) == ' ') {
+    if (*m == 'M' && *(m+1) == ' ') {
         _m++;
         return scanBoundary(&_m);
     }
