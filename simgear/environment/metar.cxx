@@ -1314,7 +1314,7 @@ bool SGMetar::scanPressure()
 		}
     }
 
-	if (*m == ',')	// ignore trailing comma
+	if (*m == ',' || *m == '=')	// ignore trailing comma, equals
 		m++;
 
     if ((unitProvided || valueProvided) && !scanBoundary(&m))
