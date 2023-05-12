@@ -116,7 +116,7 @@ SGMetar::SGMetar(const string& m) :
 	if (!scanId() || !scanDate()) {
 		throw sg_io_exception("metar data bogus ", sg_location(_url));
 	}
-	scanModifier();
+	while (scanModifier()) ;
 
 	// base set
 	scanWind();
@@ -124,7 +124,7 @@ SGMetar::SGMetar(const string& m) :
 	while (scanVisibility()) ;
 	while (scanRwyVisRange()) ;
 	while (scanWeather()) ;
-	while (scanSkyCondition()) { }
+	while (scanSkyCondition()) ;
 
     if (!scanTemperature()) {
         throw sg_io_exception("metar temperature data malformed or missing ", sg_location(_url));
@@ -272,7 +272,7 @@ std::ostream& operator << (std::ostream& out, const SGMetarVisibilityManip& v)
 
 std::string SGMetar::getDescription(int tabstops) const
 {
-        std::ostringstream  out;
+    std::ostringstream  out;
 	const char *s;
 	char buf[256];
 	double d;
