@@ -25,13 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifndef INCL_ZONEDETECT_H_
 #define INCL_ZONEDETECT_H_
 
-// defined to nothing, since we're linking these symbols statically
+#if !defined(ZD_EXPORT)
+#if defined(_MSC_VER)
+#define ZD_EXPORT __declspec(dllimport)
+#else
 #define ZD_EXPORT
+#endif
+#endif
 
 typedef enum {
     ZD_LOOKUP_IGNORE = -3,
@@ -78,6 +84,7 @@ ZD_EXPORT const char *ZDGetErrorString(int errZD);
 ZD_EXPORT float* ZDPolygonToList(const ZoneDetect *library, uint32_t polygonId, size_t* length);
 
 ZD_EXPORT char* ZDHelperSimpleLookupString(const ZoneDetect* library, float lat, float lon);
+ZD_EXPORT void ZDHelperSimpleLookupStringFree(char* str);
 
 #ifdef __cplusplus
 }

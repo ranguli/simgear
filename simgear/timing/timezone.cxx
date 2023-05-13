@@ -269,8 +269,10 @@ SGTimeZone* SGTimeZoneContainer::getNearest(const SGGeod& ref) const
         }
       }
 
+      if (TimezoneIdPrefix && TimezoneId) {
         const auto desc = string{TimezoneIdPrefix} + string{TimezoneId};
-      match = new SGTimeZone(ref, CountryAlpha2, (char*)desc.c_str());
+        match = new SGTimeZone(ref, CountryAlpha2, (char*)desc.c_str());
+      }
     }
   }
 
