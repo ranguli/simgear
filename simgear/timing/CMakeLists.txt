@@ -22,7 +22,7 @@ set(SOURCES
 if(ENABLE_TESTS)
     function(create_test TEST_NAME)
         add_executable(${TEST_NAME} ${TEST_NAME}.cxx)
-        target_link_libraries(${TEST_NAME} SimGearScene ${SOUND_TEST_LIBS})
+        target_link_libraries(${TEST_NAME} SimGearCore)
         set_target_properties(${TEST_NAME} PROPERTIES
             COMPILE_DEFINITIONS "SRC_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"" )
 
