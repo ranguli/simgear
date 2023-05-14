@@ -41,6 +41,7 @@
 
 #include "timezone.h"
 
+#define ZD_EXPORT
 #include "zonedetect.h"
 
 using std::string;

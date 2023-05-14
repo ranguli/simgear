@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <filesystem>
 
+#define ZD_EXPORT
 #include "zonedetect.h"
 
 static void onError(int errZD, int errNative)
