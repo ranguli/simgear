@@ -29,7 +29,8 @@
 #include <string>
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
+
+#include <simgear/misc/sg_path.hxx>
 
 #define ZD_EXPORT
 #include "zonedetect.h"
@@ -84,7 +85,8 @@ int main(int argc, char *argv[])
                 const auto desc = std::string{TimezoneIdPrefix} + std::string{TimezoneId};
                 if (desc != prev) {
                     prev = desc;
-                    if (!std::filesystem::exists(path+desc)) {
+                    SGPath tzfile = path + desc;
+                    if (!tzfile.exists()) {
                         printf("Timezone file not found: %s\n", desc.c_str());
                     }
                 }
