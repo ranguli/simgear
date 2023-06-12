@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include <simgear/misc/sg_path.hxx>
+#include <simgear/props/props.hxx>
 
 static ThrowCallback static_callback;
 
@@ -50,6 +51,23 @@ sg_location::sg_location(const char* path, int line, int column) noexcept
 {
   setPath(path);
 }
+
+sg_location::sg_location(SGPropertyNode* node) noexcept : sg_location()
+{
+  if (!node) {
+      return;
+  }
+
+  const auto sourceLoc = node->getLocation();
+  if (!sourceLoc.isValid()) {
+      return;
+  }
+
+  setPath(sourceLoc.getPath());
+  _line = sourceLoc.getLine();
+  _column = sourceLoc.getColumn();
+}
+
 
 void sg_location::setPath(const char* path) noexcept
 {

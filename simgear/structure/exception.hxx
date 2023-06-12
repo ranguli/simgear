@@ -7,8 +7,7 @@
  * $Id$
  */
 
-#ifndef __SIMGEAR_MISC_EXCEPTION_HXX
-#define __SIMGEAR_MISC_EXCEPTION_HXX 1
+#pragma once
 
 #include <exception>
 #include <functional>
@@ -16,6 +15,7 @@
 #include <string>
 
 class SGPath;
+class SGPropertyNode;
 
 /**
  * Information encapsulating a single location in an external resource
@@ -32,6 +32,16 @@ public:
   sg_location(const std::string& path, int line = -1, int column = -1) noexcept;
   sg_location(const SGPath& path, int line = -1, int column = -1) noexcept;
   explicit sg_location(const char* path, int line = -1, int column = -1) noexcept;
+
+  /**
+   * @brief Construct from the location stored in a property node.
+   * 
+   * If the node wasn't created from XML, this may result in an invalid location.
+   * This is marked as explicit because the is automatic conversion in the other
+   * direction. Longer term we should replace this class with SGSourceLocation
+   * which is more efficient internally (no path copying)
+   */
+  explicit sg_location(SGPropertyNode* node) noexcept;
 
   ~sg_location() = default;
 
@@ -215,7 +225,5 @@ using ThrowCallback = std::function<void(
  * if a callback is defined
  */
 void setThrowCallback(ThrowCallback cb);
-
-#endif
 
 // end of exception.hxx
