@@ -745,11 +745,14 @@ void testAliasedListeners()
     defineSamplePropertyTree(tree);
     TestListener l(tree.get());
 
-    tree->getNode("position/world/x", true)->alias(tree->getNode("position/body/a"));
-    tree->getNode("position/earth", true)->alias(tree->getNode("position/body"));
+    tree->getNode("position/world/x", true)->alias(tree->getNode("position/body/a"), true);
+    tree->getNode("position/earth", true)->alias(tree->getNode("position/body"), true);
+    tree->getNode("position/world/y", true)->alias(tree->getNode("position/body/c"), false); // NO listener chaining
 
     tree->getNode("position/world/x")->addChangeListener(&l);
+    tree->getNode("position/world/y")->addChangeListener(&l);
     tree->getNode("position/earth")->addChangeListener(&l);
+    tree->getNode("position/body/c")->addChangeListener(&l);
 
     tree->setIntValue("position/body/a", 99);
     SG_CHECK_EQUAL(tree->getIntValue("position/world/x"), 99);
@@ -758,6 +761,17 @@ void testAliasedListeners()
     tree->setIntValue("position/world/x", 101);
     SG_CHECK_EQUAL(tree->getIntValue("position/body/a"), 101);
     SG_CHECK_EQUAL(l.checkValueChangeCount("position/world/x"), 2);
+
+    tree->setIntValue("position/body/c", 777);
+    SG_CHECK_EQUAL(tree->getIntValue("position/world/y"), 777);
+    SG_CHECK_EQUAL(l.checkValueChangeCount("position/world/y"), 0);
+    SG_CHECK_EQUAL(l.checkValueChangeCount("position/body/c"), 1);
+
+
+    tree->setIntValue("position/world/y", 747);
+    SG_CHECK_EQUAL(tree->getIntValue("position/body/c"), 747);
+    SG_CHECK_EQUAL(l.checkValueChangeCount("position/world/y"), 0);
+    SG_CHECK_EQUAL(l.checkValueChangeCount("position/body/c"), 2);
 }
 
 class TiedPropertyDonor
@@ -979,9 +993,7 @@ int main (int ac, char ** av)
     tiedPropertiesTest();
     tiedPropertiesListeners();
     testDeleterListener();
+    testAliasedListeners();
 
-    // disable test for the moment
-   // testAliasedListeners();
-
-  return 0;
+    return 0;
 }

@@ -259,13 +259,11 @@ PropsVisitor::startElement (const char * name, const XMLAttributes &atts)
       // Check for an alias.
       else if( att_name == "alias" )
       {
-        if( !node->alias(val) )
-          SG_LOG
-          (
-            SG_INPUT,
-            SG_ALERT,
-            "Failed to set alias to " << val << "\n at " << location.asString()
-          );
+        if (!node->alias(val, false))
+              SG_LOG(
+                  SG_INPUT,
+                  SG_ALERT,
+                  "Failed to set alias to " << val << "\n at " << location.asString());
       }
 
       // Check for an include.

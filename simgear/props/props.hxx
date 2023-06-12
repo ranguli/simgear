@@ -890,10 +890,10 @@ public:
         TRACE_WRITE = 32,
         USERARCHIVE = 64,
         PRESERVE = 128,
-        PROTECTED   = 1 << 8,
-        LISTENER_SAFE = 1 << 9, /// it's safe to listen to this property, even if it's tied
-        VALUE_CHANGED_UP = 1 << 10, // If true, value changes are propogated to parent's listeners.
-        VALUE_CHANGED_DOWN = 1 << 11,   // If true, sets new child nodes' VALUE_CHANGED_DOWN and VALUE_CHANGED_UP.
+        PROTECTED = 1 << 8,
+        LISTENER_SAFE = 1 << 9,       // it's safe to listen to this property, even if it's tied
+        VALUE_CHANGED_UP = 1 << 10,   // If true, value changes are propogated to parent's listeners.
+        VALUE_CHANGED_DOWN = 1 << 11, // If true, sets new child nodes' VALUE_CHANGED_DOWN and VALUE_CHANGED_UP.
         // beware: if you add another attribute here,
         // also update value of "LAST_USED_ATTRIBUTE".
     };
@@ -1006,11 +1006,11 @@ public:
     //
 
     /** Alias this node's leaf value to another's. */
-    bool alias(SGPropertyNode* target);
+    bool alias(SGPropertyNode* target, bool withListener);
 
     /** Alias this node's leaf value to another's by relative path. */
-    bool alias(const char* path);
-    bool alias(const std::string& path);
+    bool alias(const char* path, bool withListener);
+    bool alias(const std::string& path, bool withListener);
 
     /** Remove any alias for this node. */
     bool unalias();
@@ -1413,9 +1413,21 @@ private:
     bool _tied;
     int _attr = NO_ATTR;
 
+    /**
+     * @brief when a property is an alias, we record information about it in
+     * this struct
+     * 
+     */
+    struct AliasData {
+        AliasData(SGPropertyNode* t) : target(t) {}
+
+        SGPropertyNode_ptr target;
+        SGPropertyChangeListener* listener = nullptr;
+    };
+
     // The right kind of pointer...
     union {
-        SGPropertyNode* alias;
+        AliasData* alias;
         SGRaw* val;
     } _value;
 

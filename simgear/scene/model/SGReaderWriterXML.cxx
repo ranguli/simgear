@@ -465,7 +465,7 @@ void addTooltipAnimations(const SGPath& path, SGPropertyNode_ptr props, osg::ref
             SGPropertyNode* p = properties[i];
             /* Using an alias here (rather then just copying the path) ensures
             things work if <p> is itself an alias. */
-            hovered_binding->addChild("property")->alias(p);
+            hovered_binding->addChild("property")->alias(p, false);
             if (p->isAlias()) {
                 /* We only get things like "/rpm[0]" here, rather than the full
                 path of the property to which p points. */

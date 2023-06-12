@@ -512,6 +512,18 @@ public:
   }
 };
 
+class AliasChangeListener : public SGPropertyChangeListener
+{
+  public:
+  AliasChangeListener(SGPropertyNode* dest) : _destination(dest)
+  {
+  }
+
+  void valueChanged(SGPropertyNode* v) override;
+
+  private:
+  SGPropertyNode* _destination;
+};
 
 ////////////////////////////////////////////////////////////////////////
 // Local path normalization code.
@@ -1168,11 +1180,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
         case props::ALIAS:
             {
-                SGPropertyNode* p = node._value.alias;
-                lock.release();
-                std::string ret = p->getStringValue();
-                lock.acquire();
-                return ret;
+            auto p = node._value.alias->target;
+            lock.release();
+            std::string ret = p->getStringValue();
+            lock.acquire();
+            return ret;
             }
         case props::BOOL:
             return get_bool(lock, node) ? "true" : "false";
@@ -1304,8 +1316,13 @@ struct SGPropertyNodeImpl
     clearValue(SGPropertyLockExclusive& exclusive, SGPropertyNode& node)
     {
         if (node._type == props::ALIAS) {
-            node.put(node._value.alias);
-            node._value.alias = 0;
+            if (node._value.alias->listener) {
+                exclusive.release();
+                node._value.alias->target->removeChangeListener(node._value.alias->listener);
+                exclusive.acquire();
+            }
+            delete node._value.alias;
+            node._value.alias = nullptr;
         }
         else if (node._type != props::NONE) {
             switch (node._type) {
@@ -1369,9 +1386,9 @@ struct SGPropertyNodeImpl
         switch (node._type) {
         case props::ALIAS:
             {
-                SGPropertyNode* p = node._value.alias;
-                lock.release();
-                return p->getBoolValue(defaultValue);
+            auto p = node._value.alias->target;
+            lock.release();
+            return p->getBoolValue(defaultValue);
             }
         case props::BOOL:
             return get_bool(lock, node);
@@ -1406,9 +1423,9 @@ struct SGPropertyNodeImpl
          switch (node._type) {
          case props::ALIAS:
              {
-                 SGPropertyNode* p = node._value.alias;
-                 lock.release();
-                 return p->getIntValue(defaultValue);
+             auto p = node._value.alias->target;
+             lock.release();
+             return p->getIntValue(defaultValue);
              }
          case props::BOOL:
              return int(get_bool(lock, node));
@@ -1444,9 +1461,9 @@ struct SGPropertyNodeImpl
         switch (node._type) {
         case props::ALIAS:
             {
-                SGPropertyNode* p = node._value.alias;
-                lock.release();
-                return p->getLongValue();
+            auto p = node._value.alias->target;
+            lock.release();
+            return p->getLongValue();
             }
         case props::BOOL:
             return long(get_bool(lock, node));
@@ -1482,9 +1499,9 @@ struct SGPropertyNodeImpl
         switch (node._type) {
         case props::ALIAS:
             {
-                SGPropertyNode* p = node._value.alias;
-                lock.release();
-                return p->getFloatValue();
+            auto p = node._value.alias->target;
+            lock.release();
+            return p->getFloatValue();
             }
         case props::BOOL:
             return float(get_bool(lock, node));
@@ -1521,9 +1538,9 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    lock.release();
-                    return p->getDoubleValue(defaultValue);
+            auto p = node._value.alias->target;
+            lock.release();
+            return p->getDoubleValue(defaultValue);
                 }
             case props::BOOL:
                 return double(get_bool(lock, node));
@@ -1574,11 +1591,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setBoolValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setBoolValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, value);
@@ -1628,11 +1645,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setIntValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setIntValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, value == 0 ? false : true);
@@ -1684,11 +1701,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setLongValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setLongValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, value == 0L ? false : true);
@@ -1740,11 +1757,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setFloatValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setFloatValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, value == 0.0 ? false : true);
@@ -1796,11 +1813,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setDoubleValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setDoubleValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, value == 0.0L ? false : true);
@@ -1851,11 +1868,11 @@ struct SGPropertyNodeImpl
         switch (node._type) {
             case props::ALIAS:
                 {
-                    SGPropertyNode* p = node._value.alias;
-                    exclusive.release();
-                    result = p->setStringValue(value);
-                    exclusive.acquire();
-                    break;
+            auto p = node._value.alias->target;
+            exclusive.release();
+            result = p->setStringValue(value);
+            exclusive.acquire();
+            break;
                 }
             case props::BOOL:
                 result = set_bool(exclusive, node, (strings_equal(value, "true")
@@ -1903,7 +1920,7 @@ struct SGPropertyNodeImpl
     getType(SGPropertyLock& lock, const SGPropertyNode& node)
     {
         if (node._type == props::ALIAS) {
-            SGPropertyNode* n = node._value.alias;
+            auto n = node._value.alias->target;
             lock.release();
             props::Type ret = n->getType();
             lock.acquire();
@@ -2223,9 +2240,15 @@ SGPropertyNode::SGPropertyNode (const SGPropertyNode &node)
     if (_type == props::NONE)
         return;
     if (_type == props::ALIAS) {
-        _value.alias = node._value.alias;
-        get(_value.alias);
+        auto aliasTargetNode = node._value.alias->target;
+        _value.alias = new AliasData(aliasTargetNode);
         _tied = false;
+        if (node._value.alias->listener) {
+      auto l = new AliasChangeListener{this};
+      _value.alias->listener = l;
+      exclusive.release();
+      node._value.alias->target->addChangeListener(l);
+        }
         return;
     }
     if (_tied || _type == props::EXTENDED) {
@@ -2328,25 +2351,32 @@ SGPropertyNode::~SGPropertyNode ()
 /**
  * Alias to another node.
  */
-bool
-SGPropertyNode::alias (SGPropertyNode * target)
+bool SGPropertyNode::alias(SGPropertyNode* target, bool withListener)
 {
+  SGPropertyLockExclusive exclusive(*this);
+  // check for correct/common use first
   if (target && (_type != props::ALIAS) && (!_tied))
   {
     /* loop protection: check alias chain; must not contain self */
     for (auto p = target; p; ) {
       if (p == this) return false;
       SGPropertyLockShared target_shared(*p);
-      p = (p->_type == props::ALIAS) ? p->_value.alias : nullptr;
+      p = (p->_type == props::ALIAS) ? p->_value.alias->target.get() : nullptr;
     }
 
-    clearValue();
-    get(target);
-    _value.alias = target;
+    SGPropertyNodeImpl::clearValue(exclusive, *this);
+    _value.alias = new AliasData{target};
     _type = props::ALIAS;
+    if (withListener) {
+      auto l = new AliasChangeListener(this);
+      _value.alias->listener = l;
+      exclusive.release();
+      target->addChangeListener(l);
+    }
     return true;
   }
 
+  // error handling cases
   if (!target)
   {
     SG_LOG(SG_GENERAL, SG_ALERT,
@@ -2356,11 +2386,9 @@ SGPropertyNode::alias (SGPropertyNode * target)
   else
   if (_type == props::ALIAS)
   {
-    if (_value.alias == target)
-        return true; // ok, identical alias requested
-    SG_LOG(SG_GENERAL, SG_ALERT, "alias(): "<< getPath() <<
-        " is already pointing to " << _value.alias->getPath() <<
-        " so it cannot alias '" << target->getPath() << ". Use unalias() first.");
+    if (_value.alias->target == target)
+      return true; // ok, identical alias requested
+    SG_LOG(SG_GENERAL, SG_ALERT, "alias(): " << getPath() << " is already pointing to " << _value.alias->target->getPath() << " so it cannot alias '" << target->getPath() << ". Use unalias() first.");
   }
   else
   if (_tied)
@@ -2376,15 +2404,14 @@ SGPropertyNode::alias (SGPropertyNode * target)
 /**
  * Alias to another node by path.
  */
-bool
-SGPropertyNode::alias(const char * path)
+bool SGPropertyNode::alias(const char* path, bool withListener)
 {
-  return alias(getNode(path, true));
+  return alias(getNode(path, true), withListener);
 }
 
-bool SGPropertyNode::alias (const std::string& path)
+bool SGPropertyNode::alias(const std::string& path, bool withListener)
 {
-    return alias(path.c_str());
+  return alias(getNode(path, true), withListener);
 }
 
 /**
@@ -2413,7 +2440,7 @@ SGPropertyNode *
 SGPropertyNode::getAliasTarget ()
 {
   SGPropertyLockShared shared(*this);
-  return (_type == props::ALIAS ? _value.alias : 0);
+  return (_type == props::ALIAS ? _value.alias->target.get() : nullptr);
 }
 
 
@@ -2421,7 +2448,7 @@ const SGPropertyNode *
 SGPropertyNode::getAliasTarget () const
 {
   SGPropertyLockShared shared(*this);
-  return (_type == props::ALIAS ? _value.alias : 0);
+  return (_type == props::ALIAS ? _value.alias->target.get() : nullptr);
 }
 
 /**
@@ -2954,7 +2981,7 @@ SGPropertyNode::setUnspecifiedValue (const std::string &value)
   switch (type) {
   case props::ALIAS:
     {
-      SGPropertyNode* p = _value.alias;
+      auto p = _value.alias->target;
       exclusive.release();
       result = p->setUnspecifiedValue(value);
       exclusive.acquire();
@@ -3108,9 +3135,9 @@ std::ostream& SGPropertyNode::printOn(std::ostream& stream) const
     switch (_type) {
     case props::ALIAS:
         {
-            SGPropertyNode* p = _value.alias;
-            shared.release();
-            return p->printOn(stream);
+        auto p = _value.alias->target;
+        shared.release();
+        return p->printOn(stream);
         }
     case props::BOOL:
         stream << (SGPropertyNodeImpl::get_bool(shared, *this) ? "true" : "false");
@@ -3900,6 +3927,17 @@ SGPropertyChangeListener::unregister_property (SGPropertyNode * node)
   if (it != _properties.end())
     _properties.erase(it);
 }
+
+////////////////////////////////////////////////////////////////////////
+// Implementation of AliasChangeListener.
+////////////////////////////////////////////////////////////////////////
+
+void AliasChangeListener::valueChanged(SGPropertyNode* node)
+{
+  SG_UNUSED(node);
+  _destination->fireValueChanged();
+}
+
 
 #if !PROPS_STANDALONE
 template<>
