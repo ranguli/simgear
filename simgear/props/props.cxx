@@ -2370,6 +2370,7 @@ bool SGPropertyNode::alias(SGPropertyNode* target, bool withListener)
     if (withListener) {
       auto l = new AliasChangeListener(this);
       _value.alias->listener = l;
+      SGPropertyNodeImpl::setAttribute(exclusive, *this, LISTENER_SAFE, true);
       exclusive.release();
       target->addChangeListener(l);
     }
@@ -2423,6 +2424,9 @@ SGPropertyNode::unalias ()
   SGPropertyLockExclusive exclusive(*this);
   if (_type != props::ALIAS)
     return false;
+  // we always cleae this flag when un-aliasing; since the property
+  // cannot be tied anyway
+  SGPropertyNodeImpl::setAttribute(exclusive, *this, LISTENER_SAFE, false);
   SGPropertyNodeImpl::clearValue(exclusive, *this);
   return true;
 }
