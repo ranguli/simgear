@@ -2170,44 +2170,12 @@ SGPropertyNode::clearValue ()
  */
 const int SGPropertyNode::LAST_USED_ATTRIBUTE = VALUE_CHANGED_DOWN;
 
-namespace {
-/// A lock that is vaguely usable after destruction.
-class NecroLock
-{
-public:
-    ~NecroLock()
-    {
-        // Record that the lock should no longer be considered valid
-        usable = false;
-    }
-
-    /// Lock for reading if possible.
-    std::shared_lock<std::shared_mutex> lockReading()
-    {
-        std::shared_lock<std::shared_mutex> ret;
-        if (usable)
-            ret = std::shared_lock(lock);
-        return ret;
-    }
-
-    /// Lock for writing if possible.
-    std::unique_lock<std::shared_mutex> lockWriting()
-    {
-        std::unique_lock<std::shared_mutex> ret;
-        if (usable)
-            ret = std::unique_lock(lock);
-        return ret;
-    }
-
-protected:
-    /// Allow for fallback to lockless after destruction.
-    bool usable = true;
-    /// The lock.
-    std::shared_mutex lock;
-};
-} // namespace
-/// Mutex to protect access to nodeOrigins.
-static NecroLock nodeOriginsLock;
+/**
+ * Mutex to protect access to nodeOrigins.
+ * This is kept on the heap and never deleted so that it remains usable even
+ * after static globals are destructed.
+ */
+static std::shared_mutex& nodeOriginsLock = *new std::shared_mutex;
 
 typedef std::map<const SGPropertyNode*, SGSourceLocation> NodeOriginMap;
 /**
@@ -2904,7 +2872,7 @@ SGPropertyNode::getPath (bool simplify) const
 
 SGSourceLocation SGPropertyNode::getLocation() const
 {
-    auto rlock = nodeOriginsLock.lockReading();
+    std::shared_lock rlock(nodeOriginsLock);
     if (!nodeOrigins)
         return SGSourceLocation();
     auto it = nodeOrigins->find(this);
@@ -2916,7 +2884,7 @@ SGSourceLocation SGPropertyNode::getLocation() const
 
 void SGPropertyNode::setLocation(const SGSourceLocation& location)
 {
-    auto lock = nodeOriginsLock.lockWriting();
+    std::unique_lock lock(nodeOriginsLock);
     if (location.isValid()) {
         if (!nodeOrigins)
             nodeOrigins = new NodeOriginMap;
