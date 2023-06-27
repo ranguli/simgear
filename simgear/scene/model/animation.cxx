@@ -759,14 +759,15 @@ const SGLineSegment<double>* SGAnimation::setCenterAndAxisFromObject(osg::Node* 
 
     const SGPropertyNode* axisNode = _configNode->getNode(axisName);
 
-    if (axisNode->hasValue("object-name")) {
-        axis_object_name = axisNode->getStringValue("object-name");
-    } else if (!axisNode) {
+    if (!axisNode) {
         axis_object_name = _configNode->getStringValue("object-name") + std::string("-" + axisName);
         // for compatibility we will not warn if no axis object can be found when there was nothing 
         // specified - as the axis could just be the default at the origin
         // so if there is a [objectname]-axis use it, otherwise fallback to the previous behaviour
         can_warn = false;
+    }
+    else if (axisNode->hasValue("object-name")) {
+        axis_object_name = axisNode->getStringValue("object-name");
     }
 
     if (!axis_object_name.empty())
