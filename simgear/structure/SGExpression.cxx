@@ -602,36 +602,6 @@ SGReadExpression(SGPropertyNode *inputRoot, const SGPropertyNode *expression)
         }
         return new SGAtan2Expression<T>(inputExpressions[0], inputExpressions[1]);
     }
-    if (name == "div") {
-        if (expression->nChildren() != 2) {
-            SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
-            return 0;
-        }
-        SGSharedPtr<SGExpression<T> > inputExpressions[2] = {
-            SGReadExpression<T>(inputRoot, expression->getChild(0)),
-            SGReadExpression<T>(inputRoot, expression->getChild(1))
-        };
-        if (!inputExpressions[0] || !inputExpressions[1]) {
-            SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
-            return 0;
-        }
-        return new SGDivExpression<T>(inputExpressions[0], inputExpressions[1]);
-    }
-    if (name == "mod") {
-        if (expression->nChildren() != 2) {
-            SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
-            return 0;
-        }
-        SGSharedPtr<SGExpression<T> > inputExpressions[2] = {
-            SGReadExpression<T>(inputRoot, expression->getChild(0)),
-            SGReadExpression<T>(inputRoot, expression->getChild(1))
-        };
-        if (!inputExpressions[0] || !inputExpressions[1]) {
-            SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
-            return 0;
-        }
-        return new SGModExpression<T>(inputExpressions[0], inputExpressions[1]);
-    }
     if (name == "pow") {
         if (expression->nChildren() != 2) {
             SG_LOG(SG_IO, SG_ALERT, "Cannot read \"" << name << "\" expression.");
