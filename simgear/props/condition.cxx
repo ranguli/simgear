@@ -661,6 +661,15 @@ SGConditional::test () const
 SGCondition *
 sgReadCondition( SGPropertyNode *prop_root, const SGPropertyNode *node )
 {
+  // detect the case where someone creates a condition with no property children
+  // this typically means the user wrote either a literal value or a property path.
+  // unfortunately we can't decide what to do here, so instead we throw an
+  // exception.
+  if (node->nChildren() == 0) {
+    throw sg_exception("condition with no children: textual value is:" + node->getStringValue(),
+                       "sgReadCondition", sg_location{node}, true);
+  }
+
   return readAndConditions(prop_root, node);
 }
 

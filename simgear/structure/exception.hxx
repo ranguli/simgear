@@ -41,7 +41,7 @@ public:
    * direction. Longer term we should replace this class with SGSourceLocation
    * which is more efficient internally (no path copying)
    */
-  explicit sg_location(SGPropertyNode* node) noexcept;
+  explicit sg_location(const SGPropertyNode* node) noexcept;
 
   ~sg_location() = default;
 

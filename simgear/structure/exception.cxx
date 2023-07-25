@@ -52,7 +52,7 @@ sg_location::sg_location(const char* path, int line, int column) noexcept
   setPath(path);
 }
 
-sg_location::sg_location(SGPropertyNode* node) noexcept : sg_location()
+sg_location::sg_location(const SGPropertyNode* node) noexcept : sg_location()
 {
   if (!node) {
       return;
