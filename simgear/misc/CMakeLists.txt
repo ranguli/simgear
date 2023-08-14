@@ -8,6 +8,7 @@ set(HEADERS
     SimpleMarkdown.hxx
     SVGpreserveAspectRatio.hxx
     argparse.hxx
+    inputvalue.hxx
     interpolator.hxx
     make_new.hxx
     sg_dir.hxx
@@ -29,6 +30,7 @@ set(SOURCES
     SimpleMarkdown.cxx
     SVGpreserveAspectRatio.cxx
     argparse.cxx
+    inputvalue.cxx
     interpolator.cxx
     sg_dir.cxx
     sg_path.cxx
