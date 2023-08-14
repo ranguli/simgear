@@ -839,7 +839,7 @@ sgLoad3DModel_internal(const SGPath& path,
     for (unsigned i = 0; i < light_nodes.size(); ++i) {
         group->addChild(SGLight::appendLight(light_nodes[i],
                                              prop_root,
-                                             options.get()));
+                                             false /* legacy mode */));
     }
 
     PropertyList effect_nodes = props->getChildren("effect");

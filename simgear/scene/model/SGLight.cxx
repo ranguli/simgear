@@ -30,78 +30,137 @@ private:
     osg::ref_ptr<osg::Switch> _sw;
 };
 
-
-void SGLight::UpdateCallback::configure(const osg::Vec4& ambient,
-                                        const osg::Vec4& diffuse,
-                                        const osg::Vec4& specular)
+osg::Vec3f toVec3f(const osg::Vec4f& v)
 {
-    _ambient = ambient;
-    _diffuse = diffuse;
-    _specular = specular;
+    return osg::Vec3f{v.x(), v.y(), v.z()};
 }
 
 void SGLight::UpdateCallback::operator()(osg::Node* node, osg::NodeVisitor* nv)
 {
-    double value = 1.0;
-    if (_expression) {
-        value = _expression->getValue();
-    }
-    if (value != _prev_value) {
-        SGLight* light = dynamic_cast<SGLight*>(node);
-        if (light) {
-            light->setAmbient(_ambient * value);
-            light->setDiffuse(_diffuse * value);
-            light->setSpecular(_specular * value);
-        }
-        _prev_value = value;
-    }
+    auto light = dynamic_cast<SGLight*>(node);
+    assert(light);
+
+    // since we're in an update callback, it's safe to evaluate conditions
+    // and expressions here.
+    light->_dim_factor = light->_dim_factor_value->get_value();
+    light->_ambient = light->_ambient_value.get_value() * light->_dim_factor;
+    light->_diffuse = light->_diffuse_value.get_value() * light->_dim_factor;
+    light->_specular = light->_specular_value.get_value() * light->_dim_factor;
+    light->_range = light->_range_value->get_value();
+    light->_constant_attenuation = light->_constant_attenuation_value->get_value();
+    light->_linear_attenuation = light->_linear_attenuation_value->get_value();
+    light->_quadratic_attenuation = light->_quadratic_attenuation_value->get_value();
+    light->_spot_exponent = light->_spot_exponent_value->get_value();
+    light->_spot_cutoff = light->_spot_cutoff_value->get_value();
+    light->_intensity = light->_intensity_value->get_value();
+    light->_color = toVec3f(light->_color_value.get_value());
 }
 
 class SGLightConfigListener : public SGPropertyChangeListener {
 public:
-    SGLightConfigListener(SGLight *light) : _light(light) {}
+    SGLightConfigListener(SGLight* light) : _light(light) {}
 
     void valueChanged(SGPropertyNode* node) override
     {
+        // walk up to find the light node
         while (node->getNameString() != "light" && node->getParent()) {
             node = node->getParent();
         }
+
         _light->configure(node);
-        auto cb = dynamic_cast<SGLight::UpdateCallback*>(_light->getUpdateCallback());
-        if (cb) {
-            cb->configure(_light->getAmbient(), _light->getDiffuse(), _light->getSpecular());
-        }
     }
 
 private:
-    SGLight *_light;
+    SGLight* _light;
 };
 
-SGLight::SGLight(const SGLight& l, const osg::CopyOp& copyop) :
-    osg::Node(l, copyop),
-    _type(l._type),
-    _range(l._range),
-    _ambient(l._ambient),
-    _diffuse(l._diffuse),
-    _specular(l._specular),
-    _constant_attenuation(l._constant_attenuation),
-    _linear_attenuation(l._linear_attenuation),
-    _quadratic_attenuation(l._quadratic_attenuation),
-    _spot_exponent(l._spot_exponent),
-    _spot_cutoff(l._spot_cutoff)
-{}
+SGLight::ColorValue::ColorValue() : ColorValue(1.0f, 1.0f, 1.0f, 1.0f)
+{
+}
+
+SGLight::ColorValue::ColorValue(float r, float g, float b, float a)
+{
+    _red = new simgear::Value(r);
+    _green = new simgear::Value(g);
+    _blue = new simgear::Value(b);
+    _alpha = new simgear::Value(a);
+}
+
+SGLight::ColorValue::ColorValue(const SGPropertyNode* colorNode, const SGPropertyNode* modelRoot)
+{
+    auto mr = const_cast<SGPropertyNode*>(modelRoot);
+    auto cn = const_cast<SGPropertyNode*>(colorNode);
+    if (colorNode) {
+        _red = new simgear::Value(*mr, *cn->getChild("r"), 1.0f);
+        _green = new simgear::Value(*mr, *cn->getChild("g"), 1.0f);
+        _blue = new simgear::Value(*mr, *cn->getChild("b"), 1.0f);
+        _alpha = new simgear::Value(*mr, *cn->getChild("a"), 1.0f);
+    } else {
+        _red = new simgear::Value(1.0f);
+        _green = new simgear::Value(1.0f);
+        _blue = new simgear::Value(1.0f);
+        _alpha = new simgear::Value(1.0f);
+    }
+}
+
+osg::Vec4 SGLight::ColorValue::get_value()
+{
+    return {static_cast<float>(_red->get_value()),
+            static_cast<float>(_green->get_value()),
+            static_cast<float>(_blue->get_value()),
+            static_cast<float>(_alpha->get_value())};
+}
+
+osg::Vec3 SGLight::ColorValue::get_linear_sRGB_value()
+{
+    const osg::Vec3 srgb = toVec3f(get_value());
+    float linear_srgb[3];
+    simgear::eotf_inverse_sRGB(const_cast<float*>(srgb.ptr()), linear_srgb);
+    return {linear_srgb[0], linear_srgb[1], linear_srgb[2]};
+}
+
+SGLight::SGLight(const bool legacy) : _legacyPropertyNames(legacy)
+{
+    // Do not let OSG cull lights by default, we usually leave that job to
+    // other algorithms, like clustered shading.
+    setCullingActive(false);
+}
+
+SGLight::SGLight(const SGLight& l, const osg::CopyOp& copyop) : osg::Node(l, copyop),
+                                                                _type(l._type),
+                                                                _legacyPropertyNames(l._legacyPropertyNames),
+                                                                _range(l._range),
+                                                                _ambient(l._ambient),
+                                                                _diffuse(l._diffuse),
+                                                                _specular(l._specular),
+                                                                _constant_attenuation(l._constant_attenuation),
+                                                                _linear_attenuation(l._linear_attenuation),
+                                                                _quadratic_attenuation(l._quadratic_attenuation),
+                                                                _spot_exponent(l._spot_exponent),
+                                                                _spot_cutoff(l._spot_cutoff)
+{
+    _range_value = l._range_value;
+    _dim_factor_value = l._dim_factor_value;
+    _ambient_value = l._ambient_value;
+    _diffuse_value = l._diffuse_value;
+    _specular_value = l._specular_value;
+    _constant_attenuation_value = l._constant_attenuation_value;
+    _linear_attenuation_value = l._linear_attenuation_value;
+    _quadratic_attenuation_value = l._quadratic_attenuation_value;
+}
 
 osg::ref_ptr<osg::Node>
 SGLight::appendLight(const SGPropertyNode* configNode,
-                     SGPropertyNode* modelRoot,
-                     const osgDB::Options* options)
+                     SGPropertyNode* modelRoot, bool legacy)
 {
     //-- create return variable
     osg::ref_ptr<osg::MatrixTransform> align = new osg::MatrixTransform;
 
-    SGLight *light = new SGLight(align);
-    align->addChild(light);
+    SGLight* light = new SGLight{legacy};
+    light->_transform = align;
+    light->_modelRoot = modelRoot;
 
+    align->addChild(light);
     //-- copy config to prop tree --
     const std::string propPath {"/scenery/lights"};
     const std::string propName {"light"};
@@ -110,23 +169,11 @@ SGLight::appendLight(const SGPropertyNode* configNode,
     _pConfig = _pConfig->addChild(propName);
 
     copyProperties(configNode, _pConfig);
-    
-    //-- setup osg::NodeCallback --
-    const SGPropertyNode *dim_factor = configNode->getChild("dim-factor");
-    if (dim_factor) {
-        const SGExpressiond *expression =
-            read_value(dim_factor, modelRoot, "", 0, 1);
-        if (expression)
-            light->setUpdateCallback(new SGLight::UpdateCallback(expression));
-    }
-    else {
-        //need UpdateCallback to activate config changes at runtime
-        light->setUpdateCallback(new SGLight::UpdateCallback());
-    }
-    
+
     //-- configure light and add listener to conf in prop tree
-    light->configure(configNode);
     _pConfig->addChangeListener(new SGLightConfigListener(light), true);
+    light->setUpdateCallback(new SGLight::UpdateCallback());
+    light->configure(configNode);
 
     //-- debug visualisation --
     osg::Shape *debug_shape = nullptr;
@@ -173,31 +220,22 @@ SGLight::appendLight(const SGPropertyNode* configNode,
     return align;
 }
 
-SGLight::SGLight()
+SGLight::~SGLight() = default;
+
+simgear::Value_ptr SGLight::buildValue(const SGPropertyNode* node, double defaultVal)
 {
-    // Default values taken from osg::Light
-    // They don't matter anyway as they are overwritten by the XML config values
+    if (!node) {
+        return new simgear::Value(defaultVal);
+    }
 
-    // TODO: can this be moved to initalizer in hxx?
-    _ambient.set(0.05f, 0.05f, 0.05f, 1.0f);
-    _diffuse.set(0.8f, 0.8f, 0.8f, 1.0f);
-    _specular.set(0.05f, 0.05f, 0.05f, 1.0f);
-    _color.set(1.0f, 1.0f, 1.0f);
-
-    // Do not let OSG cull lights by default, we usually leave that job to
-    // other algorithms, like clustered shading.
-    setCullingActive(false);
+    simgear::Value_ptr expr = new simgear::Value(*_modelRoot, *(const_cast<SGPropertyNode*>(node)), defaultVal);
+    return expr;
 }
 
-SGLight::~SGLight()
-{
-
-}
-
-void SGLight::configure(const SGPropertyNode *configNode)
+void SGLight::configure(const SGPropertyNode* configNode)
 {
     SGConstPropertyNode_ptr p;
-    if((p = configNode->getNode("type")) != NULL) {
+    if ((p = configNode->getNode(_legacyPropertyNames ? "light-type" : "type")) != NULL) {
         std::string type = p->getStringValue();
         if (type == "point")
             setType(SGLight::Type::POINT);
@@ -213,33 +251,22 @@ void SGLight::configure(const SGPropertyNode *configNode)
     else if (priority == "medium")
         setPriority(SGLight::MEDIUM);
 
-    setRange(configNode->getFloatValue("range-m"));
+    _dim_factor_value = buildValue(configNode->getChild("dim-factor"), 1.0f);
+    _range_value = buildValue(configNode->getChild(_legacyPropertyNames ? "far-m" : "range-m"), 1.0f);
 
-#define SGLIGHT_GET_COLOR_VALUE(n)                \
-    osg::Vec4(configNode->getFloatValue(n "/r"),  \
-              configNode->getFloatValue(n "/g"),  \
-              configNode->getFloatValue(n "/b"),  \
-              configNode->getFloatValue(n "/a"))
-    setAmbient(SGLIGHT_GET_COLOR_VALUE("ambient"));
-    setDiffuse(SGLIGHT_GET_COLOR_VALUE("diffuse"));
-    setSpecular(SGLIGHT_GET_COLOR_VALUE("specular"));
-#undef SGLIGHT_GET_COLOR_VALUE
+    _diffuse_value = ColorValue(configNode->getChild("diffuse"), _modelRoot);
+    _ambient_value = ColorValue(configNode->getChild("ambient"), _modelRoot);
+    _specular_value = ColorValue(configNode->getChild("specular"), _modelRoot);
 
-    setConstantAttenuation(configNode->getFloatValue("attenuation/c"));
-    setLinearAttenuation(configNode->getFloatValue("attenuation/l"));
-    setQuadraticAttenuation(configNode->getFloatValue("attenuation/q"));
+    _constant_attenuation_value = buildValue(configNode->getNode("attenuation/c"), 1.0f);
+    _linear_attenuation_value = buildValue(configNode->getNode("attenuation/l"), 0.0f);
+    _quadratic_attenuation_value = buildValue(configNode->getNode("attenuation/q"), 0.0f);
 
-    setSpotExponent(configNode->getFloatValue("spot-exponent"));
-    setSpotCutoff(configNode->getFloatValue("spot-cutoff"));
+    _spot_exponent_value = buildValue(configNode->getNode(_legacyPropertyNames ? "exponent" : "spot-exponent"), 0.0f);
+    _spot_cutoff_value = buildValue(configNode->getNode(_legacyPropertyNames ? "cutoff" : "spot-cutoff"), 180.0f);
 
-    float srgb[3], linear_srgb[3];
-    srgb[0] = configNode->getFloatValue("color/r");
-    srgb[1] = configNode->getFloatValue("color/g");
-    srgb[2] = configNode->getFloatValue("color/b");
-    simgear::eotf_inverse_sRGB(srgb, linear_srgb);
-    setColor(osg::Vec3(linear_srgb[0], linear_srgb[1], linear_srgb[2]));
-
-    setIntensity(configNode->getFloatValue("intensity"));
+    _color_value = ColorValue(configNode->getChild("color"), _modelRoot);
+    _intensity_value = buildValue(configNode->getNode("intensity"), 1.0f);
 
     osg::Matrix t;
     osg::Vec3 pos(configNode->getFloatValue("position/x-m"),
