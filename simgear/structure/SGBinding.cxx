@@ -17,10 +17,58 @@
 #include <simgear/props/props_io.hxx>
 #include <simgear/structure/exception.hxx>
 
-SGBinding::SGBinding()
+SGAbstractBinding::SGAbstractBinding()
     : _arg(new SGPropertyNode)
 {
 }
+
+void SGAbstractBinding::clear()
+{
+    _arg.clear();
+}
+
+void SGAbstractBinding::fire() const
+{
+    if (test()) {
+        innerFire();
+    }
+}
+
+void SGAbstractBinding::fire(SGPropertyNode* params) const
+{
+    if (test()) {
+        if (params != nullptr) {
+            copyProperties(params, _arg);
+        }
+
+        innerFire();
+    }
+}
+
+void SGAbstractBinding::fire(double offset, double max) const
+{
+    if (test()) {
+        _arg->setDoubleValue("offset", offset / max);
+        innerFire();
+    }
+}
+
+void SGAbstractBinding::fire(double setting) const
+{
+    if (test()) {
+        // A value is automatically added to
+        // the args
+        if (!_setting) { // save the setting node for efficiency
+            _setting = _arg->getChild("setting", 0, true);
+        }
+        _setting->setDoubleValue(setting);
+        innerFire();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+SGBinding::SGBinding() = default;
 
 SGBinding::SGBinding(const std::string& commandName)
 {
@@ -35,9 +83,9 @@ SGBinding::SGBinding(const SGPropertyNode* node, SGPropertyNode* root)
 void
 SGBinding::clear()
 {
-    _arg.clear();
-    _root.clear();
-    _setting.clear();
+  SGAbstractBinding::clear();
+  _root.clear();
+  _setting.clear();
 }
 
 void SGBinding::read(const SGPropertyNode* node, SGPropertyNode* root)
@@ -54,14 +102,6 @@ void SGBinding::read(const SGPropertyNode* node, SGPropertyNode* root)
     _arg = const_cast<SGPropertyNode*>(node);
     _root = const_cast<SGPropertyNode*>(root);
     _setting.clear();
-}
-
-void
-SGBinding::fire() const
-{
-  if (test()) {
-    innerFire();
-  }
 }
 
 void
@@ -83,42 +123,16 @@ SGBinding::innerFire () const
     }
 }
 
-void
-SGBinding::fire (SGPropertyNode* params) const
-{
-  if (test()) {
-      if (params != nullptr) {
-          copyProperties(params, _arg);
-      }
-
-    innerFire();
-  }
-}
-
-void
-SGBinding::fire (double offset, double max) const
-{
-  if (test()) {
-    _arg->setDoubleValue("offset", offset/max);
-    innerFire();
-  }
-}
-
-void
-SGBinding::fire (double setting) const
-{
-  if (test()) {
-                                // A value is automatically added to
-                                // the args
-                                if (!_setting) { // save the setting node for efficiency
-                                    _setting = _arg->getChild("setting", 0, true);
-                                }
-    _setting->setDoubleValue(setting);
-    innerFire();
-  }
-}
+///////////////////////////////////////////////////////////////////////////////
 
 void fireBindingList(const SGBindingList& aBindings, SGPropertyNode* params)
+{
+    for (auto b : aBindings) {
+        b->fire(params);
+    }
+}
+
+void fireBindingList(const std::vector<SGBinding_ptr>& aBindings, SGPropertyNode* params)
 {
     for (auto b : aBindings) {
         b->fire(params);

@@ -22,6 +22,61 @@
 
 #include "commands.hxx"
 
+class SGAbstractBinding : public SGConditional
+{
+public:
+    virtual ~SGAbstractBinding() = default;
+
+    virtual void clear();
+
+    /**
+   * Get the argument that will be passed to the command.
+   *
+   * @return A property node that will be passed to the command as its
+   * argument, or 0 if none was supplied.
+   */
+    const SGPropertyNode* getArg() { return _arg; }
+
+
+    void fire() const;
+
+
+    /**
+   * Fire a binding with a scaled movement (rather than absolute position).
+   */
+    void fire(double offset, double max) const;
+
+
+    /**
+   * Fire a binding with a setting (i.e. joystick axis).
+   *
+   * A double 'setting' property will be added to the arguments.
+   *
+   * @param setting The input setting, usually between -1.0 and 1.0.
+   */
+    void fire(double setting) const;
+
+    /**
+   * Fire a binding with a number of additional parameters
+   * 
+   * The children of params will be merged with the fixed arguments.
+   */
+    void fire(SGPropertyNode* params) const;
+
+protected:
+    SGAbstractBinding();
+
+    virtual void innerFire() const = 0;
+
+    mutable SGPropertyNode_ptr _arg;
+    mutable SGPropertyNode_ptr _setting;
+};
+
+
+typedef SGSharedPtr<SGAbstractBinding> SGAbstractBinding_ptr;
+
+typedef std::vector<SGAbstractBinding_ptr> SGBindingList;
+
 /**
  * An input binding of some sort.
  *
@@ -29,7 +84,7 @@
  * keyboard key, a joystick button or axis, or even a panel
  * instrument.</p>
  */
-class SGBinding : public SGConditional
+class SGBinding : public SGAbstractBinding
 {
 public:
 
@@ -67,7 +122,7 @@ public:
    * This was particularly useful when SGBinding's destructor had its 'remove
    * on delete' behaviour, however this is not the case anymore.
    */
-  void clear();
+  void clear() override;
 
 
   /**
@@ -77,14 +132,6 @@ public:
    */
   const std::string &getCommandName () const { return _command_name; }
 
-  /**
-   * Get the argument that will be passed to the command.
-   *
-   * @return A property node that will be passed to the command as its
-   * argument, or 0 if none was supplied.
-   */
-  const SGPropertyNode * getArg () { return _arg; }
-  
 
   /**
    * Read a binding from a property node.
@@ -93,51 +140,20 @@ public:
    * @param root The property root node used while building the binding from
    *             \a node.
    */
-  void read (const SGPropertyNode * node, SGPropertyNode* root);
+  void read(const SGPropertyNode* node, SGPropertyNode* root);
 
-
-  /**
-   * Fire a binding.
-   */
-  void fire () const;
-
-
-  /**
-   * Fire a binding with a scaled movement (rather than absolute position).
-   */
-  void fire (double offset, double max) const;
-
-
-  /**
-   * Fire a binding with a setting (i.e. joystick axis).
-   *
-   * A double 'setting' property will be added to the arguments.
-   *
-   * @param setting The input setting, usually between -1.0 and 1.0.
-   */
-  void fire (double setting) const;
-
-  /**
-   * Fire a binding with a number of additional parameters
-   * 
-   * The children of params will be merged with the fixed arguments.
-   */
-  void fire (SGPropertyNode* params) const;
-  
-private:
-  void innerFire() const;
-                                // just to be safe.
+  private:
+  void innerFire() const override;
+  // just to be safe.
   SGBinding (const SGBinding &binding);
 
   std::string _command_name;
-  mutable SGPropertyNode_ptr _arg;
-  mutable SGPropertyNode_ptr _setting;
   mutable SGPropertyNode_ptr _root;
 };
 
 typedef SGSharedPtr<SGBinding> SGBinding_ptr;
 
-typedef std::vector<SGBinding_ptr > SGBindingList;
+//typedef std::vector<SGBinding_ptr > SGBindingList;
 typedef std::map<unsigned,SGBindingList> SGBindingMap;
 
 /**
@@ -145,6 +161,9 @@ typedef std::map<unsigned,SGBindingList> SGBindingMap;
  
  */
 void fireBindingList(const SGBindingList& aBindings, SGPropertyNode* params = NULL);
+
+// temporary overload
+void fireBindingList(const std::vector<SGBinding_ptr>& aBindings, SGPropertyNode* params = NULL);
 
 /**
  * fire every binding in a list with a setting value
