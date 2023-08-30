@@ -85,6 +85,12 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
+  bool Event::isPropagationStopped() const
+  {
+    return propagation_stopped;
+  }
+
+  //----------------------------------------------------------------------------
   void Event::preventDefault()
   {
     default_prevented = true;

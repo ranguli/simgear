@@ -275,6 +275,15 @@ namespace canvas
       canvas->setFocusElement(this);
   }
 
+  bool Element::hasFocus() const
+  {
+    if (auto canvas = _canvas.lock()) {
+      return canvas->getFocusedElement() == this;
+    }
+
+    return false;
+  }
+
   //----------------------------------------------------------------------------
   bool Element::accept(EventVisitor& visitor)
   {

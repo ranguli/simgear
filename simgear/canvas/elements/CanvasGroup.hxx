@@ -31,6 +31,9 @@ namespace canvas
 
   typedef std::map<std::string, ElementFactory> ElementFactories;
 
+  // forward decls
+  class FocusScope;
+
   class Group:
     public Element
   {
@@ -91,13 +94,19 @@ namespace canvas
 
       bool traverse(EventVisitor& visitor) override;
 
+      bool handleEvent(const EventPtr& event) override;
+
       bool setStyle( const SGPropertyNode* child,
                      const StyleInfo* style_info = 0 ) override;
 
       osg::BoundingBox
       getTransformedBounds(const osg::Matrix& m) const override;
 
-    protected:
+
+      FocusScope* getOrCreateFocusScope();
+      FocusScope* getFocusScope() const;
+
+  protected:
 
       static ElementFactories   _child_factories;
 
@@ -118,6 +127,8 @@ namespace canvas
       ElementPtr getChildByIndex(size_t index) const;
       ElementPtr findChild( const SGPropertyNode* node,
                             const std::string& id ) const;
+
+      std::unique_ptr<FocusScope> _focus_scope;
   };
 
 } // namespace canvas

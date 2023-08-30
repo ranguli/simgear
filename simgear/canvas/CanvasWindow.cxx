@@ -23,6 +23,7 @@
 #include "CanvasWindow.hxx"
 
 #include <simgear/canvas/Canvas.hxx>
+#include <simgear/canvas/events/CanvasKeyBinding.hxx>
 #include <simgear/misc/strutils.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
 
@@ -114,6 +115,14 @@ namespace canvas
     return windowPos + toSG(pos) + _contentOffset;
   }
 
+  //----------------------------------------------------------------------------
+  FocusScope* Window::focusScope()
+  {
+    if (!_focus_scope) {
+      _focus_scope.reset(new FocusScope);
+    }
+    return _focus_scope.get();
+  }
 
   //----------------------------------------------------------------------------
   const SGRect<float> Window::getScreenRegion() const
@@ -232,7 +241,15 @@ namespace canvas
         mouse_event->screen_pos - toOsg(getPosition());
     }
 
-    return Image::handleEvent(event);
+    bool handled = Image::handleEvent(event);
+
+    // we can't use 'handled' value here because EventManager::propogateEvent
+    // always returns true, hmmmm.
+    if (_focus_scope && !event->isPropagationStopped()) {
+      handled = _focus_scope->handleEvent(event);
+    }
+
+    return handled;
   }
 
   //----------------------------------------------------------------------------

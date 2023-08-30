@@ -101,6 +101,8 @@ namespace canvas
        */
       void stopPropagation();
 
+      bool isPropagationStopped() const;
+
       /**
        * Cancel any default action normally taken as result of this event.
        *

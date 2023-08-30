@@ -841,6 +841,13 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
+  ElementPtr Canvas::getFocusedElement() const
+  {
+    return _focus_element.lock();
+  }
+
+
+  //----------------------------------------------------------------------------
   Canvas::PlacementFactoryMap Canvas::_placement_factories;
   SystemAdapterPtr Canvas::_system_adapter;
 

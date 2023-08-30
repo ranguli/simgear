@@ -156,6 +156,8 @@ namespace canvas
        */
       void setFocusElement(const ElementPtr& el);
 
+      ElementPtr getFocusedElement() const;
+
       /**
        * Clear the focus element.
        *

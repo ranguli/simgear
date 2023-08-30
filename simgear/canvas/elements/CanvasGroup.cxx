@@ -26,6 +26,7 @@
 #include "CanvasText.hxx"
 
 #include <simgear/canvas/CanvasEventVisitor.hxx>
+#include <simgear/canvas/events/CanvasKeyBinding.hxx>
 #include <simgear/canvas/events/MouseEvent.hxx>
 
 namespace simgear
@@ -391,7 +392,7 @@ namespace canvas
     return ud ? ud->element : ElementPtr();
   }
 
-  //----------------------------------------------------------------------------
+
   ElementPtr Group::findChild( const SGPropertyNode* node,
                                const std::string& id ) const
   {
@@ -419,6 +420,40 @@ namespace canvas
 
     return {};
   }
+
+  //----------------------------------------------------------------------------
+  FocusScope* Group::getOrCreateFocusScope()
+  {
+    if (_focus_scope) {
+      return _focus_scope.get();
+    }
+
+    _focus_scope.reset(new FocusScope);
+    return _focus_scope.get();
+  }
+
+  //----------------------------------------------------------------------------
+  FocusScope* Group::getFocusScope() const
+  {
+    return _focus_scope.get();
+  }
+
+  //----------------------------------------------------------------------------
+  bool Group::handleEvent(const EventPtr& event)
+  {
+    // can't rely on return value from handleEvent,
+    // so we don't look at it here.
+    bool handled = Element::handleEvent(event);
+
+    // the event manager which calls us in propagateEvent
+    // will check the propogation_stopped flag
+    if (!event->isPropagationStopped() && _focus_scope) {
+      return _focus_scope->handleEvent(event);
+    }
+
+    return handled;
+  }
+
 
 } // namespace canvas
 } // namespace simgear

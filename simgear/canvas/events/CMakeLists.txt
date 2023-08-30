@@ -5,6 +5,7 @@ set(HEADERS
   DeviceEvent.hxx
   KeyboardEvent.hxx
   MouseEvent.hxx
+  CanvasKeyBinding.hxx
 )
 
 set(SOURCES
@@ -12,6 +13,7 @@ set(SOURCES
   DeviceEvent.cxx
   KeyboardEvent.cxx
   MouseEvent.cxx
+  CanvasKeyBinding.cxx
 )
 
 simgear_scene_component(canvas-events canvas/events "${SOURCES}" "${HEADERS}")

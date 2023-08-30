@@ -212,6 +212,8 @@ namespace canvas
         return true;
     }
 
+    // NOTE: James thinks this should maybe return false, otherwise we always cascade a
+    // handled=true value up to callers.
     return true;
   }
 

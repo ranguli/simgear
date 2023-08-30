@@ -110,6 +110,8 @@ namespace canvas
       /// Get (keyboard) input focus.
       void setFocus();
 
+      bool hasFocus() const;
+
       virtual bool accept(EventVisitor& visitor);
       virtual bool ascend(EventVisitor& visitor);
       virtual bool traverse(EventVisitor& visitor);
