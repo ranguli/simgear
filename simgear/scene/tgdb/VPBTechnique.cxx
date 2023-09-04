@@ -885,7 +885,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
   
     osg::ref_ptr<Effect> landEffect = makeEffect(landEffectProp, true, _options);
     buffer._landGeode->setEffect(landEffect.get());
-    buffer._landGeode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
+    buffer._landGeode->setNodeMask( ~(simgear::CASTSHADOW_BIT | simgear::MODELLIGHT_BIT) );
 
     unsigned int numRows = 20;
     unsigned int numColumns = 20;
@@ -1821,7 +1821,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             geode->setMaterial(mat);
             geode->setEffect(mat->get_one_effect(0));
             geode->runGenerators(geometry);
-            geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
+            geode->setNodeMask( ~(simgear::CASTSHADOW_BIT | simgear::MODELLIGHT_BIT) );
 
             osg::StateSet* stateset = geode->getOrCreateStateSet();
             stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(loc)))));
@@ -2063,7 +2063,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
 
             geode->setMaterial(mat);
             geode->setEffect(mat->get_one_effect(0));
-            geode->setNodeMask(SG_NODEMASK_TERRAIN_BIT);
+            geode->setNodeMask( ~(simgear::CASTSHADOW_BIT | simgear::MODELLIGHT_BIT) );
             buffer._transform->addChild(geode);
         }
     }
