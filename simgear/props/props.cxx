@@ -2384,6 +2384,7 @@ bool SGPropertyNode::alias(SGPropertyNode* target, bool withListener)
   // error handling cases
   if (!target)
   {
+    exclusive.release(); // before calling getPath()
     SG_LOG(SG_GENERAL, SG_ALERT,
            "Failed to set alias " << getPath() << ". "
            "The target property does not exist.");
@@ -2391,13 +2392,17 @@ bool SGPropertyNode::alias(SGPropertyNode* target, bool withListener)
   else
   if (_type == props::ALIAS)
   {
-    if (_value.alias->target == target)
+    const auto existingTarget = _value.alias->target;
+    if (existingTarget == target)
       return true; // ok, identical alias requested
-    SG_LOG(SG_GENERAL, SG_ALERT, "alias(): " << getPath() << " is already pointing to " << _value.alias->target->getPath() << " so it cannot alias '" << target->getPath() << ". Use unalias() first.");
+
+    exclusive.release(); // before calling getPath()
+    SG_LOG(SG_GENERAL, SG_ALERT, "alias(): " << getPath() << " is already pointing to " << existingTarget->getPath() << " so it cannot alias '" << target->getPath() << ". Use unalias() first.");
   }
   else
   if (_tied)
   {
+    exclusive.release(); // before calling getPath()
     SG_LOG(SG_GENERAL, SG_ALERT, "alias(): " << getPath() <<
         " is a tied property. It cannot alias " << target->getPath() << ".");
   }
