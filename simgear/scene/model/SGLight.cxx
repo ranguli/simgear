@@ -74,6 +74,19 @@ private:
     SGLight* _light;
 };
 
+static simgear::Value_ptr buildColorValue(const SGPropertyNode* modelRoot, const SGPropertyNode* node, const std::string& componentName, double defaultVal)
+{
+    if (!node || !node->hasChild(componentName)) {
+        return new simgear::Value(defaultVal);
+    }
+
+    auto mr = const_cast<SGPropertyNode*>(modelRoot);
+    auto n = const_cast<SGPropertyNode*>(node); // cast away the const-ness so we can call getChild
+    auto componentNode = n->getChild(componentName);
+    simgear::Value_ptr expr = new simgear::Value(*mr, *componentNode, defaultVal);
+    return expr;
+}
+
 SGLight::ColorValue::ColorValue() : ColorValue(1.0f, 1.0f, 1.0f, 1.0f)
 {
 }
@@ -88,19 +101,10 @@ SGLight::ColorValue::ColorValue(float r, float g, float b, float a)
 
 SGLight::ColorValue::ColorValue(const SGPropertyNode* colorNode, const SGPropertyNode* modelRoot)
 {
-    auto mr = const_cast<SGPropertyNode*>(modelRoot);
-    auto cn = const_cast<SGPropertyNode*>(colorNode);
-    if (colorNode) {
-        _red = new simgear::Value(*mr, *cn->getChild("r"), 1.0f);
-        _green = new simgear::Value(*mr, *cn->getChild("g"), 1.0f);
-        _blue = new simgear::Value(*mr, *cn->getChild("b"), 1.0f);
-        _alpha = new simgear::Value(*mr, *cn->getChild("a"), 1.0f);
-    } else {
-        _red = new simgear::Value(1.0f);
-        _green = new simgear::Value(1.0f);
-        _blue = new simgear::Value(1.0f);
-        _alpha = new simgear::Value(1.0f);
-    }
+    _red = buildColorValue(modelRoot, colorNode, "r", 1.0);
+    _green = buildColorValue(modelRoot, colorNode, "g", 1.0);
+    _blue = buildColorValue(modelRoot, colorNode, "b", 1.0);
+    _alpha = buildColorValue(modelRoot, colorNode, "a", 1.0);
 }
 
 osg::Vec4 SGLight::ColorValue::get_value()
