@@ -62,8 +62,6 @@ Value::Value(SGPropertyNode& prop_root,
 
 Value::Value(double value) : _value(value)
 {
-  SGPropertyNode empty;
-  parse(empty, empty, value, 0.0, 1.0);
 }
 
 Value::~Value()
@@ -166,17 +164,18 @@ void Value::parse(SGPropertyNode& prop_root,
     return;
   } // of have a <property> or <prop>
 
-  if( !valueNode )
-  {
-    // no <value>, <prop> or <expression> element, use text node
-    std::string textnode = cfg.getStringValue();
-    char * endp = NULL;
+  const std::string nodeText = cfg.getStringValue();
+  if (!valueNode && !nodeText.empty()) {
+    char* endp = nullptr;
+    auto startp = nodeText.c_str();
     // try to convert to a double value. If the textnode does not start with a number
     // endp will point to the beginning of the string. We assume this should be
     // a property name
-    _value = strtod( textnode.c_str(), &endp );
-    if( endp == textnode.c_str() )
-      _property = prop_root.getNode(textnode, true);
+    _value = strtod(startp, &endp);
+    if (endp == startp) {
+        const auto trimmed = simgear::strutils::strip(nodeText);
+        _property = prop_root.getNode(trimmed, true);
+    }
   }
 }
 
