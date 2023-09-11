@@ -530,6 +530,12 @@ void logstream::setDeveloperMode(bool devMode)
     d->m_developerMode = devMode;
 }
 
+bool logstream::inDeveloperMode() const
+{
+    return d->m_developerMode;
+}
+
+
 void logstream::setFileLine(bool fileLine)
 {
     d->m_fileLine = fileLine;

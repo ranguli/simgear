@@ -101,6 +101,11 @@ public:
     void setDeveloperMode(bool devMode);
 
     /**
+     * @brief check if developer mode is set or not
+     */
+    bool inDeveloperMode() const;
+
+    /**
      * set output of file:line mode on/off. If on, all log messages are
      * prefixed by the file:line of the caller of SG_LOG().
      */

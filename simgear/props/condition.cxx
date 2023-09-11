@@ -1,24 +1,17 @@
-// condition.cxx - Declarations and inline methods for property conditions.
-//
-// Written by David Megginson, started 2000.
-// CLO May 2003 - Split out condition specific code.
-//
-// This file is in the Public Domain, and comes with no warranty.
-//
-// $Id$
+// SPDX-FileName: condtion.cxx
+// SPDX-License-Identifier: LGPL-2.1-only
+// SPDX-FileComment: Declarations and inline methods for property conditions
 
-#ifdef HAVE_CONFIG_H
-#  include <simgear_config.h>
-#endif
+#include <simgear_config.h>
 
-// #include <iostream>
-
+#include <simgear/debug/ErrorReportingCallback.hxx>
+#include <simgear/debug/logstream.hxx>
+#include <simgear/structure/SGExpression.hxx>
 #include <simgear/structure/exception.hxx>
 
 #include "props.hxx"
 #include "condition.hxx"
 
-#include <simgear/structure/SGExpression.hxx>
 
 using std::istream;
 using std::ostream;
@@ -663,11 +656,24 @@ sgReadCondition( SGPropertyNode *prop_root, const SGPropertyNode *node )
 {
   // detect the case where someone creates a condition with no property children
   // this typically means the user wrote either a literal value or a property path.
-  // unfortunately we can't decide what to do here, so instead we throw an
-  // exception.
+  // unfortunately we can't decide what to do here.
   if (node->nChildren() == 0) {
-    throw sg_exception("condition with no children: textual value is:" + node->getStringValue(),
-                       "sgReadCondition", sg_location{node}, true);
+    // always report the error
+    simgear::reportFailure(simgear::LoadFailure::Misconfigured,
+                           simgear::ErrorCode::XMLModelLoad,
+                           "sgReadCondition: condition has no children, textual value is:" + node->getStringValue() +
+                               ", condition will always be false.",
+                           sg_location{node});
+
+    // aircraft developer mode: throw an exception, will become the default behaviour
+    // in the future
+    if (sglog().inDeveloperMode()) {
+      throw sg_exception("condition with no children: textual value is:" + node->getStringValue(),
+                         "sgReadCondition", sg_location{node}, false /* don't report, we did it above */);
+    } else {
+      // legacy compat behaviour: create an empty and-expression which therefore evaluates to 'true'
+      return new SGAndCondition;
+    }
   }
 
   return readAndConditions(prop_root, node);
