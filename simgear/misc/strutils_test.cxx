@@ -742,6 +742,26 @@ void test_makeStringSafeForPropertyName()
     SG_CHECK_EQUAL(strutils::makeStringSafeForPropertyName(" ABC/01234\t:\\\"_*$"), "-ABC-01234-_-_-__");
 }
 
+void test_to_bool()
+{
+    SG_VERIFY(strutils::is_bool("FAlse"));
+    SG_VERIFY(strutils::is_bool("nO"));
+    SG_VERIFY(strutils::is_bool("0"));
+    SG_VERIFY(!strutils::is_bool("f"));
+    SG_VERIFY(!strutils::is_bool("2"));
+
+    SG_CHECK_EQUAL(strutils::to_bool("FaLsE"), false);
+    SG_CHECK_EQUAL(strutils::to_bool("truE"), true);
+    SG_CHECK_EQUAL(strutils::to_bool("1"), true);
+    SG_CHECK_EQUAL(strutils::to_bool("0"), false);
+}
+
+void test_case_convert()
+{
+    SG_CHECK_EQUAL(strutils::lowercase("ABcdEf09"), "abcdef09");
+    SG_CHECK_EQUAL(strutils::uppercase("ABcdEf09_"), "ABCDEF09_");
+}
+
 int main(int argc, char* argv[])
 {
     test_strip();
@@ -767,6 +787,8 @@ int main(int argc, char* argv[])
     test_iequals();
     testDecodeHex();
     test_makeStringSafeForPropertyName();
+    test_case_convert();
+    test_to_bool();
 
     return EXIT_SUCCESS;
 }

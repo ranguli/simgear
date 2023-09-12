@@ -233,6 +233,11 @@ namespace simgear {
     bool to_bool(const std::string& s);
 
     /**
+     * Check if given string is a boolean value ("true", "false", "1", "0", "yes" or "no")
+     */
+    bool is_bool(const std::string& s);
+
+    /**
      * Compare dotted versions strings NN.NN.NN (analogous to strcmp())
      *
      * @note Any number of terms are supported.
@@ -267,17 +272,12 @@ namespace simgear {
     * Convert a string to lower case.
     * @return lower case string
     */
-   std::string lowercase(const std::string &s);
-   
-  /**
-   * Convert a string to lower case in place
-   */
-  void lowercase(std::string &s);
-  
-      /**
+    std::string lowercase(const std::string& s);
+
+    /**
        * case-insensitive string comparisom
        */
-      bool iequals(const std::string& a, const std::string& b);
+    bool iequals(const std::string& a, const std::string& b);
       
 	/**
      * convert a string in the local Windows 8-bit encoding to UTF-8

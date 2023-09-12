@@ -668,29 +668,20 @@ namespace simgear {
         return result;
     }
 
-    string uppercase(const string &s) {
-      string rslt(s);
-      for(string::iterator p = rslt.begin(); p != rslt.end(); p++){
-        *p = toupper(*p);
-      }
-      return rslt;
+    string uppercase(const string& s)
+    {
+        string result;
+        std::transform(s.begin(), s.end(), std::back_inserter(result), ::toupper);
+        return result;
     }
 
-    string lowercase(const string &s) {
-      string rslt(s);
-      for(string::iterator p = rslt.begin(); p != rslt.end(); p++){
-        *p = tolower(*p);
-      }
-      return rslt;
+    string lowercase(const string& s)
+    {
+        string result;
+        std::transform(s.begin(), s.end(), std::back_inserter(result), ::tolower);
+        return result;
     }
 
-    void lowercase(string &s) {
-      for(string::iterator p = s.begin(); p != s.end(); p++){
-        *p = tolower(*p);
-      }
-    }
-        
-        
 bool iequals(const std::string& a, const std::string& b)
 {
     const auto lenA = a.length();
@@ -1210,6 +1201,13 @@ bool to_bool(const std::string& s)
 
     SG_LOG(SG_GENERAL, SG_WARN, "Unable to parse string as boolean:" << s);
     return false;
+}
+
+bool is_bool(const std::string& s)
+{
+    const string_list strings = {"yes", "no", "true", "false", "1", "0"};
+    auto it = std::find(strings.begin(), strings.end(), strutils::lowercase(s));
+    return it != strings.end();
 }
 
 enum PropMatchState
