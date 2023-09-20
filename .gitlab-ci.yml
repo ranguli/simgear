@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: James Turner <james@flightgear.org>
+#
+# SPDX-License-Identifier: GPL-2.0
+
+
+variables:
+  BUILD_DIR: "$CI_PROJECT_DIR/../build"
+  PREFIX_DIR: "$CI_PROJECT_DIR/../dist"
+
+# ci:
+#   image: docker
+#   services:
+#     - docker:dind
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "schedule"
+#   script:
+#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+#     - docker build -t $CI_REGISTRY_IMAGE .gitlab-image/
+#     - docker push $CI_REGISTRY_IMAGE
+
+build:
+  image: registry.gitlab.com/flightgear/flightgear
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+  script:
+    - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    - cmake --build -B $BUILD_DIR
+  artifacts:
+    paths:
+      - $PREFIX_DIR
+  cache:
+    paths:
+      - $BUILD_DIR
+
+
+
+# test:doc:
+#   image: registry.gitlab.com/ahayzen/home-dash-alpha-g1
+#   stage: test
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE != "schedule"
+#   script:
+#     - cargo test --all-features --doc
+#     - cargo test --all-features --all-targets
+#   cache:
+#     paths:
+#       - .cargo
+#     policy: pull
+#   dependencies:
+#     - build
+
+
+# run tests using the binary built before
+test:
+  stage: test
+  script:
+    - ctest
+
+# deploy:
+#   stage: deploy
+#   script: echo "Define your deployment script!"
+#   environment: production
