@@ -14,6 +14,7 @@ set(HEADERS
     OsgSingleton.hxx
     parse_color.hxx
     PrimitiveUtils.hxx
+    ProjectionMatrix.hxx
     QuadTreeBuilder.hxx
     RenderConstants.hxx
     SGDebugDrawCallback.hxx
@@ -48,6 +49,7 @@ set(SOURCES
     OsgDebug.cxx
     parse_color.cxx
     PrimitiveUtils.cxx
+    ProjectionMatrix.cxx
     QuadTreeBuilder.cxx
     SGEnlargeBoundingBox.cxx
     SGImageUtils.cxx

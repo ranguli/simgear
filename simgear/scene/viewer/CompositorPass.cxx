@@ -16,6 +16,7 @@
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/tgdb/userdata.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
+#include <simgear/scene/util/ProjectionMatrix.hxx>
 #include <simgear/scene/util/RenderConstants.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/scene/util/SGUpdateVisitor.hxx>
@@ -751,7 +752,8 @@ public:
         if (_zNear != 0.0 || _zFar != 0.0) {
             if (_zNear != 0.0) znear = _zNear;
             if (_zFar  != 0.0) zfar  = _zFar;
-            makeNewProjMat(given_proj_matrix, znear, zfar, new_proj_matrix);
+            ProjectionMatrix::makeNearFarPlanes(given_proj_matrix, znear, zfar,
+                                                new_proj_matrix);
         }
 
         if (_cubemap_face < 0) {
