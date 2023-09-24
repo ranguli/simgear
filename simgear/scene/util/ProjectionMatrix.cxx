@@ -151,23 +151,39 @@ getOrtho(const osg::Matrixd &m,
 }
 
 void
-makeNearFarPlanes(osg::Matrixd &old_proj, double near, double far,
-                  osg::Matrixd &new_proj)
+clampNearFarPlanes(osg::Matrixd &old_proj, double near, double far,
+                   osg::Matrixd &new_proj)
 {
+    new_proj = old_proj;
+
+    Type type = getType(old_proj);
+    if (type != STANDARD) {
+        // TODO: Projection matrix clamping is only implemented for
+        // standard matrices using the default OpenGL convention.
+        return;
+    }
+
     // Slightly inflate the near & far planes to avoid objects at the
     // extremes being clipped out.
     near *= 0.999;
     far  *= 1.001;
 
-    Type type = getType(old_proj);
-
-    double left, right, bottom, top, old_near, old_far;
     if (isOrtho(old_proj)) {
-        getOrtho( old_proj, left, right, bottom, top, old_near, old_far);
-        makeOrtho(new_proj, left, right, bottom, top, near, far, type);
+        double e = -1.0 / (far - near);
+        new_proj(2,2) = 2.0 * e;
+        new_proj(3,2) = (far + near) * e;
     } else {
-        getFrustum( old_proj, left, right, bottom, top, old_near, old_far);
-        makeFrustum(new_proj, left, right, bottom, top, near, far, type);
+        double trans_near = (-near * new_proj(2,2) + new_proj(3,2)) /
+            (-near * new_proj(2,3) + new_proj(3,3));
+        double trans_far = (-far * new_proj(2,2) + new_proj(3,2)) /
+            (-far * new_proj(2,3) + new_proj(3,3));
+        double ratio = fabs(2.0 / (trans_near - trans_far));
+        double center = -0.5 * (trans_near + trans_far);
+
+        new_proj.postMult(osg::Matrixd(1.0, 0.0, 0.0, 0.0,
+                                       0.0, 1.0, 0.0, 0.0,
+                                       0.0, 0.0, ratio, 0.0,
+                                       0.0, 0.0, center*ratio, 1.0));
     }
 }
 

@@ -62,8 +62,8 @@ bool getOrtho(const osg::Matrixd &m,
  * Given a projection matrix, return a new one with the same frustum sides and
  * new near/far planes.
  */
-void makeNearFarPlanes(osg::Matrixd &old_proj, double near, double far,
-                       osg::Matrixd &new_proj);
+void clampNearFarPlanes(osg::Matrixd &old_proj, double near, double far,
+                        osg::Matrixd &new_proj);
 
 } // namespace ProjectionMatrix
 } // namespace simgear

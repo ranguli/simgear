@@ -752,8 +752,8 @@ public:
         if (_zNear != 0.0 || _zFar != 0.0) {
             if (_zNear != 0.0) znear = _zNear;
             if (_zFar  != 0.0) zfar  = _zFar;
-            ProjectionMatrix::makeNearFarPlanes(given_proj_matrix, znear, zfar,
-                                                new_proj_matrix);
+            ProjectionMatrix::clampNearFarPlanes(given_proj_matrix, znear, zfar,
+                                                 new_proj_matrix);
         }
 
         if (_cubemap_face < 0) {
