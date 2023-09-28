@@ -121,10 +121,10 @@ SGMetar::SGMetar(const string& m) :
 	// base set
 	scanWind();
 	scanVariability();
-	while (scanVisibility()) ;
-	while (scanRwyVisRange()) ;
-	while (scanWeather()) ;
-	while (scanSkyCondition()) ;
+	while (scanVisibility()) { /* empty loop body */}
+	while (scanRwyVisRange()) { /* empty loop body */}
+	while (scanWeather()) { /* empty loop body */}
+	while (scanSkyCondition()) { /* empty loop body */}
 
     if (!scanTemperature()) {
         throw sg_io_exception("metar temperature data malformed or missing ", sg_location(_url));
@@ -133,14 +133,14 @@ SGMetar::SGMetar(const string& m) :
         throw sg_io_exception("metar pressure data malformed or missing ", sg_location(_url));
     }
 
-	while (scanSkyCondition()) ;
-	while (scanRunwayReport()) ;
+	while (scanSkyCondition()) { /* empty loop body */}
+	while (scanRunwayReport()) { /* empty loop body */}
 	scanWindShear();
 
 	// appendix
-	while (scanColorState()) ;
+	while (scanColorState()) { /* empty loop body */}
 	scanTrendForecast();
-	while (scanRunwayReport()) ;
+	while (scanRunwayReport()) { /* empty loop body */}
 	scanRemainder();
 	scanRemark();
 
