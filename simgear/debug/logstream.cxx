@@ -584,14 +584,14 @@ void logstream::hexdump(sgDebugClass c, sgDebugPriority p,
         /* print offset */
         if (i % columns == 0)
         {
-            sprintf(temp1, "0x%06x: ", i);
+            snprintf(temp1, 3000, "0x%06x: ", i);
             strcat(temp, temp1);
         }
 
         /* print hex data */
         if (i < len)
         {
-            sprintf(temp1, "%02x ", 0xFF & ((char*)mem)[i]);
+            snprintf(temp1, 3000, "%02x ", 0xFF & ((char*)mem)[i]);
             strcat(temp, temp1);
         }
         else /* end of block, just aligning for ASCII dump */
