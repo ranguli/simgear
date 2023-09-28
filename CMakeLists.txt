@@ -241,7 +241,7 @@ if(ENABLE_CYCLONE)
         message(STATUS "Data Distribution Service support: CycloneDDS")
         set(SG_HAVE_DDS 1)
     else(CycloneDDS_FOUND)
-        message(STATUS "Data Distribution Service support: DISBLED")
+        message(STATUS "Data Distribution Service support: DISABLED")
     endif(CycloneDDS_FOUND)
 endif(ENABLE_CYCLONE)
 
