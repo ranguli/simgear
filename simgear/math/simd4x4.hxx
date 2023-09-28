@@ -24,13 +24,10 @@
 # include <simgear/simgear_config.h>
 #endif
 
-#if defined(__GNUC__) && defined(__ARM_NEON__)
-# include <simgear/math/simd4x4_neon.hxx>
-#endif
+template <typename T, int N>
+class simd4x4_t;
 
 #include <simgear/math/simd.hxx>
-
-template<typename T, int N> class simd4x4_t;
 
 namespace simd4x4
 {
@@ -293,6 +290,9 @@ inline simd4x4_t<T,N> operator*(const simd4x4_t<T,N>& m1, const simd4x4_t<T,N>& 
     return m;
 }
 
+#if defined(__GNUC__) && defined(__ARM_NEON__)
+#include <simgear/math/simd4x4_neon.hxx>
+#endif
 
 #ifdef ENABLE_SIMD_CODE
 

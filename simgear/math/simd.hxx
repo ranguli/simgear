@@ -15,27 +15,15 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifndef __SIMD_H__
-#define __SIMD_H__	1
+#pragma once
 
-#ifdef HAVE_CONFIG_H
-# include <simgear/simgear_config.h>
-#endif
+#include <simgear/simgear_config.h>
 
 #include <cstdint>
 #include <cstring>
 #include <cassert>
 #include <cmath>
 #include <new>
-
-#if defined(_MSC_VER)
-# include <intrin.h>
-#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__) || defined(__e2k__))
-# include <x86intrin.h>
-#elif defined(__GNUC__) && defined(__ARM_NEON__)
-# include <arm_neon.h>
-# include <simgear/math/simd_neon.hxx>
-#endif
 
 #include <simgear/math/SGLimits.hxx>
 #include <simgear/math/SGMisc.hxx>
@@ -309,6 +297,14 @@ inline simd4_t<T,N> operator*(simd4_t<T,N> v, T f) {
     return v;
 }
 
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+#include <x86intrin.h>
+#elif defined(__GNUC__) && defined(__ARM_NEON__)
+#include <simgear/math/simd_neon.hxx>
+#endif
+
 #ifdef ENABLE_SIMD_CODE
 
 # ifdef __SSE__
@@ -521,6 +517,7 @@ namespace simd4
     sums        = _mm_add_ss(sums, shuf);
     return      _mm_cvtss_f32(sums);
   }
+
 # endif
 
 template<>
@@ -563,7 +560,7 @@ inline simd4_t<float,N>abs(simd4_t<float,N> v) {
     return v;
 }
 
-} /* namsepace simd4 */
+} /* namespace simd4 */
 
 # endif
 
@@ -1306,6 +1303,3 @@ inline simd4_t<int,N> max(simd4_t<int,N> v1, const simd4_t<int,N>& v2) {
 # endif
 
 #endif /* ENABLE_SIMD_CODE */
-
-#endif /* __SIMD_H__ */
-

@@ -321,7 +321,10 @@ if (CLANG)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
     set(CMAKE_C_FLAGS_RELWITHDEBINFO  "-O3 -g -DNDEBUG")
 
-    set(SIMD_COMPILER_FLAGS "-msse2 -mfpmath=sse -ftree-vectorize -ftree-slp-vectorize")
+    if (X86 OR X86_64)
+        set(SIMD_COMPILER_FLAGS "-msse2 -mfpmath=sse")
+    endif()
+    set(SIMD_COMPILER_FLAGS "${SIMD_COMPILER_FLAGS} -ftree-vectorize -ftree-slp-vectorize")
 endif()
 
 if (ENABLE_ASAN)

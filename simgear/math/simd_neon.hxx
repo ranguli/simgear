@@ -20,14 +20,16 @@
 
 #ifdef __ARM_NEON__
 
-static const uint32_t m2a32[] alignas(16) = { 0xffffffff,0xffffffff,0,0 };
-static const uint32_t m3a32[] alignas(16) = { 0xffffffff,0xffffffff,0xffffffff,0 };
+#include <arm_neon.h>
+
+alignas(16) static const uint32_t m2a32[] = {0xffffffff, 0xffffffff, 0, 0};
+alignas(16) static const uint32_t m3a32[] = {0xffffffff, 0xffffffff, 0xffffffff, 0};
 
 template<int N>
 class simd4_t<float,N>
 {
 private:
-   typedef float  __vec4f_t[N];
+    typedef float __vec4f_t[N];
 
     union alignas(16) {
         float32x4_t simd4;
@@ -125,8 +127,8 @@ public:
  
 # define vandq_f32(a,b) vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(a), vreinterpretq_u32_f32(b)))
 
-static const float32x4_t fmask2 = vld1q_f32((const float*)m2a32);
-static const float32x4_t fmask3 = vld1q_f32((const float*)m3a32);
+#define fmask2 vld1q_f32((const float*)m2a32)
+#define fmask3 vld1q_f32((const float*)m3a32)
 
 template<>
 inline simd4_t<float,4>::simd4_t(const __vec4f_t v) {
@@ -163,13 +165,15 @@ inline static float hsum_float32x4_neon(float32x4_t v) {
     return vget_lane_f32(vpadd_f32(r, r), 0);
 }
 
-template<>
-inline float magnitude2(simd4_t<float,4> v) {
+template <>
+inline float magnitude2(const simd4_t<float, 4>& v)
+{
     return hsum_float32x4_neon(v.v4()*v.v4());
 }
 
-template<>
-inline float dot(simd4_t<float,4> v1, const simd4_t<float,4>& v2) {
+template <>
+inline float dot(const simd4_t<float, 4>& v1, const simd4_t<float, 4>& v2)
+{
     return hsum_float32x4_neon(v1.v4()*v2.v4());
 }
 
@@ -493,8 +497,8 @@ public:
     }
 };
 
-static const int32x4_t imask2 = vld1q_s32((int32_t*)m2a32);
-static const int32x4_t imask3 = vld1q_s32((int32_t*)m3a32);
+#define imask2 vld1q_s32((int32_t*)m2a32)
+#define imask3 vld1q_s32((int32_t*)m3a32)
 
 template<>
 inline simd4_t<int,4>::simd4_t(const __vec4i_t v) {

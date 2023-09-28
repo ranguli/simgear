@@ -31,7 +31,7 @@ private:
         float32x4_t simd4x4[4];
         __mtx4f_t mtx;
         float array[4*4];
-    }g;
+    };
 
 public:
     simd4x4_t(void) {}
@@ -495,7 +495,7 @@ private:
         int32x4_t simd4x4[4];
         __mtx4i_t mtx;
         int array[4*4];
-    }g;
+    };
 
 public:
     simd4x4_t(void) {}
