@@ -312,17 +312,25 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 if (CLANG)
+    message(STATUS "CMAKE_OSX_ARCHITECTURES has value: ${CMAKE_OSX_ARCHITECTURES}")
+
     # Boost redeclares class members
     # OSG doesn't use override but we subclass from it, so we will
     # have inconsistent overrides until it's fixed
     set(WARNING_FLAGS_CXX "-Wall -fPIC -Wno-overloaded-virtual -Wno-redeclared-class-member -Wno-inconsistent-missing-override")
     set(WARNING_FLAGS_C   "-Wall -fPIC")
-#    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
     set(CMAKE_C_FLAGS_RELWITHDEBINFO  "-O3 -g -DNDEBUG")
 
-    if (X86 OR X86_64)
-        set(SIMD_COMPILER_FLAGS "-msse2 -mfpmath=sse")
+    # special case for macOS cross-compilation: use the values in CMAKE_OSX_ARCHITECTURES,
+    # rather than the CMake properties which reflect the host system.
+    if(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+      set(SIMD_COMPILER_FLAGS "-msse2 -mfpmath=sse")
+    elseif(CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+      # set(SIMD_COMPILER_FLAGS "-mfpmath=vfp4")
+    elseif(X86 OR X86_64)
+      set(SIMD_COMPILER_FLAGS "-msse2 -mfpmath=sse")
     endif()
     set(SIMD_COMPILER_FLAGS "${SIMD_COMPILER_FLAGS} -ftree-vectorize -ftree-slp-vectorize")
 endif()
@@ -379,20 +387,25 @@ if(WIN32)
     set( RT_LIBRARY "winmm" )
 endif(WIN32)
 
-# append the SIMD flags if requested
-if (ENABLE_SIMD)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SIMD_COMPILER_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIMD_COMPILER_FLAGS}")
+message(STATUS "SIMD flags are ${SIMD_COMPILER_FLAGS}")
 
-  # set for multi-configuration generators
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${SIMD_COMPILER_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${SIMD_COMPILER_FLAGS}")
+# append flags, but ensure we don't duplicate them for multi-config generators
+if (CMAKE_CONFIGURATION_TYPES)
+  if (ENABLE_SIMD)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${SIMD_COMPILER_FLAGS}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${SIMD_COMPILER_FLAGS}")
 
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${SIMD_COMPILER_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${SIMD_COMPILER_FLAGS}")
+    set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${SIMD_COMPILER_FLAGS}")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${SIMD_COMPILER_FLAGS}")
+  endif()
+else()
+  if (ENABLE_SIMD)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SIMD_COMPILER_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIMD_COMPILER_FLAGS}")
+  endif()
 endif()
 
-
+# TODO: should this be special-cased for multi-config as well?
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS_C} ${MSVC_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS_CXX} ${MSVC_FLAGS} ${BOOST_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MSVC_LD_FLAGS}")
