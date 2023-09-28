@@ -172,8 +172,6 @@ void CloudShaderGeometry::generateGeometry()
     osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array;
     osg::ref_ptr<osg::Vec2Array> t = new osg::Vec2Array;
     
-    int idx = 0;
-
     for (CloudShaderGeometry::CloudSpriteList::iterator iter = _cloudsprites.begin();
          iter != _cloudsprites.end();
          ++iter) 
@@ -212,9 +210,7 @@ void CloudShaderGeometry::generateGeometry()
         c->push_back(osg::Vec4(iter->position.x(), iter->position.y(), iter->position.z(), zscale));
         c->push_back(osg::Vec4(iter->position.x(), iter->position.y(), iter->position.z(), zscale));
         c->push_back(osg::Vec4(iter->position.x(), iter->position.y(), iter->position.z(), zscale));
-        c->push_back(osg::Vec4(iter->position.x(), iter->position.y(), iter->position.z(), zscale));
-        
-        idx++;      
+        c->push_back(osg::Vec4(iter->position.x(), iter->position.y(), iter->position.z(), zscale));    
     }
     
     //Quads now created, add it to the geometry.
