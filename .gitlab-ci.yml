@@ -41,7 +41,7 @@ windows_build:
     - cmake -B $env:BUILD_DIR -S $env:CI_PROJECT_DIR -G Ninja 
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       -DCMAKE_INSTALL_PREFIX=$env:PREFIX_DIR
-      -DMSVC_3RDPARTY_ROOT=$env:$CI_PREFIX_DIR
+      -DMSVC_3RDPARTY_ROOT=$env:$CI_PROJECT_DIR
       -DOSG_FSTREAM_EXPORT_FIXED:BOOL=ON
     - cmake --build $BUILD_DIR
     - cmake --build $BUILD_DIR --target install
@@ -100,10 +100,14 @@ macos-x64-build:
       - export HOMEBREW_NO_INSTALL_CLEANUP=1
       - brew install ninja cmake boost
   script:
+  # we build with tests disabled becuase they need cross-compiled Boost test
+  # libs, but that would mean installing x86_64 version of Boost via Homebrew in
+  # the 'other' prefix (/usr/local), which gets messy.
     - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja 
       -DCMAKE_BUILD_TYPE=RelWithDebInfo 
       -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR
       -DCMAKE_OSX_ARCHITECTURES=x86_64
+      -DENABLE_TESTS:BOOL=OFF
     - cmake --build $BUILD_DIR
     - cmake --build $BUILD_DIR --target install
   needs:
