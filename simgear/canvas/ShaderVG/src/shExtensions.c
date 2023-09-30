@@ -20,7 +20,12 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#if defined( __APPLE__)
+#include <OpenGL/gl3.h>
+#else
 #include <GL/glcorearb.h>
+#endif
 
 #define VG_API_EXPORT
 #include "shExtensions.h"
