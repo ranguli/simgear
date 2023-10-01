@@ -6,8 +6,6 @@
 namespace simgear {
 namespace ProjectionMatrix {
 
-const double EPSILON = 1.0e-6;
-
 bool
 isOrtho(const osg::Matrixd &m)
 {
