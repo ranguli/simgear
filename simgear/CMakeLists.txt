@@ -184,7 +184,7 @@ if(NOT SIMGEAR_HEADLESS)
     endif()
 
     if(ENABLE_GDAL)
-        # FIXME: should be RIVATE, but we leak GDAL headers
+        # FIXME: should be PRIVATE, but we leak GDAL headers
         # in our own headers :(
         target_link_libraries(SimGearScene PUBLIC GDAL::GDAL)
     endif()
