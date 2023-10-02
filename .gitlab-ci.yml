@@ -11,6 +11,10 @@ variables:
   # complains about INTERFACE_INCLUDE_DIRECTORIES being the source dir
   WIN_FG_DIR: $CI_BUILDS_DIR\flightgear
 
+  # we need a stable prefix for SG+FG otherwise CMake exported targets get sad
+  # probably should be fixed to use relative paths inside our exported targets really
+  WIN_PREFIX_DIR: $WIN_FG_DIR\dist
+
   # FIXME detect this using vswhere 
   VS160COMNTOOLS: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\Common7\\Tools"
   VCVARSALL: "${VS160COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
@@ -50,7 +54,7 @@ windows-build:
   script:
     - cmake -B $env:BUILD_DIR -S $env:CI_PROJECT_DIR -G Ninja 
       -D CMAKE_BUILD_TYPE=RelWithDebInfo
-      -D CMAKE_INSTALL_PREFIX=$env:PREFIX_DIR
+      -D CMAKE_INSTALL_PREFIX=$env:WIN_PREFIX_DIR
       -D MSVC_3RDPARTY_ROOT=$WIN_FG_DIR
       -DOSG_FSTREAM_EXPORT_FIXED:BOOL=ON
     - cmake --build $BUILD_DIR
@@ -65,8 +69,9 @@ windows-build:
       ref: master
       artifacts: true
   artifacts:
+  # hope a path outside the CI_PROJECT_DIR is ok
     paths:
-      - dist
+      - $WIN_PREFIX_DIR
 
 macos-build:
   stage: build
