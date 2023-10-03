@@ -5,15 +5,11 @@
 
 variables:
   BUILD_DIR: "$CI_PROJECT_DIR/build"
-  PREFIX_DIR: "$CI_PROJECT_DIR/dist"
+  PREFIX_DIR: "$CI_PROJECT_DIR/simgear-dist"
   
   # create a root dir *above* the Simgear chekcout, otherwise CMake
   # complains about INTERFACE_INCLUDE_DIRECTORIES being the source dir
   WIN_FG_DIR: $CI_BUILDS_DIR\flightgear
-
-  # we need a stable prefix for SG+FG otherwise CMake exported targets get sad
-  # probably should be fixed to use relative paths inside our exported targets really
-  WIN_PREFIX_DIR: $WIN_FG_DIR\dist
 
   # FIXME detect this using vswhere 
   VS160COMNTOOLS: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\Common7\\Tools"
@@ -35,7 +31,7 @@ linux-build:
     - cmake --build $BUILD_DIR --target install
   artifacts:
     paths:
-      - dist
+      - $PREFIX_DIR
   cache:
     paths:
       - $BUILD_DIR
@@ -54,7 +50,8 @@ windows-build:
   script:
     - cmake -B $env:BUILD_DIR -S $env:CI_PROJECT_DIR -G Ninja 
       -D CMAKE_BUILD_TYPE=RelWithDebInfo
-      -D CMAKE_INSTALL_PREFIX=$env:WIN_PREFIX_DIR
+      -D CMAKE_INSTALL_PREFIX=$env:PREFIX_DIR
+      -D CMAKE_PREFIX_PATH=$env:CI_PROJECT_DIR/osg-dist
       -D MSVC_3RDPARTY_ROOT=$WIN_FG_DIR
       -DOSG_FSTREAM_EXPORT_FIXED:BOOL=ON
     - cmake --build $BUILD_DIR
@@ -69,9 +66,8 @@ windows-build:
       ref: master
       artifacts: true
   artifacts:
-  # hope a path outside the CI_PROJECT_DIR is ok
     paths:
-      - $WIN_PREFIX_DIR
+      - $PREFIX_DIR
 
 macos-build:
   stage: build
@@ -86,9 +82,10 @@ macos-build:
       - brew install ninja cmake boost
   script:
     - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja 
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-      -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR
-      -DCMAKE_OSX_ARCHITECTURES=arm64
+      -D CMAKE_BUILD_TYPE=RelWithDebInfo 
+      -D CMAKE_INSTALL_PREFIX=$PREFIX_DIR
+      -D CMAKE_PREFIX_PATH=$CI_PROJECT_DIR/osg-dist
+      -D CMAKE_OSX_ARCHITECTURES=arm64
     - cmake --build $BUILD_DIR
     - cmake --build $BUILD_DIR --target install
   needs:
@@ -98,7 +95,7 @@ macos-build:
       artifacts: true
   artifacts:
     paths:
-      - dist
+      - $PREFIX_DIR
   cache:
     paths:
       - $BUILD_DIR
@@ -119,9 +116,10 @@ macos-x64-build:
   # libs, but that would mean installing x86_64 version of Boost via Homebrew in
   # the 'other' prefix (/usr/local), which gets messy.
     - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja 
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-      -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR
-      -DCMAKE_OSX_ARCHITECTURES=x86_64
+      -D CMAKE_BUILD_TYPE=RelWithDebInfo 
+      -D CMAKE_INSTALL_PREFIX=$PREFIX_DIR
+      -D CMAKE_PREFIX_PATH=$CI_PROJECT_DIR/osg-dist
+      -D CMAKE_OSX_ARCHITECTURES=x86_64
       -DENABLE_TESTS:BOOL=OFF
     - cmake --build $BUILD_DIR
     - cmake --build $BUILD_DIR --target install
@@ -132,7 +130,7 @@ macos-x64-build:
       artifacts: true
   artifacts:
     paths:
-      - dist
+      - $PREFIX_DIR
   cache:
     paths:
       - $BUILD_DIR
