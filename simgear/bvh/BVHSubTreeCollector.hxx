@@ -24,6 +24,7 @@
 #include "BVHNode.hxx"
 #include "BVHGroup.hxx"
 #include "BVHStaticNode.hxx"
+#include "BVHTerrainTile.hxx"
 
 namespace simgear {
 
@@ -48,6 +49,7 @@ public:
     virtual void apply(BVHMotionTransform&);
     virtual void apply(BVHLineGeometry&);
     virtual void apply(BVHStaticGeometry&);
+    virtual void apply(BVHTerrainTile&);
     
     virtual void apply(const BVHStaticBinary&, const BVHStaticData&);
     virtual void apply(const BVHStaticTriangle&, const BVHStaticData&);

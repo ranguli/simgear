@@ -29,6 +29,9 @@
 #include <osgTerrain/Locator>
 
 #include <simgear/bucket/newbucket.hxx>
+#include <simgear/bvh/BVHLineSegmentVisitor.hxx>
+#include <simgear/bvh/BVHMaterial.hxx>
+#include <simgear/math/SGGeometry.hxx>
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/material/matlib.hxx>
 #include <simgear/scene/tgdb/AreaFeatureBin.hxx>
@@ -63,6 +66,9 @@ class VPBTechnique : public TerrainTechnique
 
         /** Traverse the terain subgraph.*/
         virtual void traverse(osg::NodeVisitor& nv);
+
+        virtual BVHMaterial* getMaterial(simgear::BVHLineSegmentVisitor* visitor);
+        virtual SGSphered computeBoundingSphere() const;
 
         virtual void cleanSceneGraph();
 
@@ -123,6 +129,7 @@ class VPBTechnique : public TerrainTechnique
             osg::ref_ptr<osg::Group>            _lineFeatures;
             float                               _width;
             float                               _height;
+            Atlas::AtlasMap                     _BVHMaterialMap;
 
         protected:
             ~BufferData() {}

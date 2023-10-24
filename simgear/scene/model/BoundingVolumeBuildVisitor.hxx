@@ -20,12 +20,15 @@
 #define SimGear_BoundingVolumeBuildVisitor_hxx
 
 #include <osg/Camera>
+#include <osg/CoordinateSystemNode>
 #include <osg/Drawable>
 #include <osg/Geode>
 #include <osg/Group>
 #include <osg/PagedLOD>
 #include <osg/Transform>
 #include <osg/TriangleFunctor>
+#include <osgTerrain/TerrainTile>
+#include <osgTerrain/Terrain>
 
 #include <simgear/scene/material/mat.hxx>
 #include <simgear/scene/material/matlib.hxx>
@@ -35,6 +38,7 @@
 #include <simgear/math/SGGeometry.hxx>
 
 #include <simgear/bvh/BVHStaticGeometryBuilder.hxx>
+#include <simgear/bvh/BVHTerrainTile.hxx>
 
 #include "PrimitiveCollector.hxx"
 
@@ -54,9 +58,9 @@ public:
         { }
         virtual void addLine(const osg::Vec3d& v1, const osg::Vec3d& v2)
         { }
-        virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3)
+        virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3, unsigned i1, unsigned i2, unsigned i3)
         {
-            _geometryBuilder->addTriangle(toVec3f(toSG(v1)), toVec3f(toSG(v2)), toVec3f(toSG(v3)));
+            _geometryBuilder->addTriangle(toVec3f(toSG(v1)), toVec3f(toSG(v2)), toVec3f(toSG(v3)), i1, i2, i3);
         }
 
         BVHNode* buildTreeAndClear()
@@ -142,7 +146,38 @@ public:
     }
 
     virtual void apply(osg::Group& group)
-    { traverseAndCollect(group); }
+    { 
+        osgTerrain::TerrainTile* tile = dynamic_cast<osgTerrain::TerrainTile*>(&group);
+
+        if (tile) {
+            SGSharedPtr<BVHTerrainTile> bvhTile = new BVHTerrainTile(tile); 
+
+            // push the current active primitive list
+            _PrimitiveCollector previousPrimitives;
+            _primitiveCollector.swap(previousPrimitives);
+
+            const BVHMaterial* mat = previousPrimitives.getCurrentMaterial();
+            _primitiveCollector.setCurrentMaterial(mat);
+
+            // walk the children
+            traverse(group);
+
+            // Build the flat tree and add it as a chile of this node.  This way the BVHTerrain
+            // tile methods can intercept and modify any intersections.
+            BVHNode* bvNode = _primitiveCollector.buildTreeAndClear();
+            bvhTile->addChild(bvNode);
+
+            SGSceneUserData* userData;
+            userData = SGSceneUserData::getOrCreateSceneUserData(&group);
+            if (userData) {
+                userData->setBVHNode(bvhTile);
+            }
+            // pop the current active primitive list
+            _primitiveCollector.swap(previousPrimitives);
+        } else {
+            traverseAndCollect(group); 
+        }
+    }
 
     virtual void apply(osg::Transform& transform)
     { traverseAndDump(transform); }
@@ -157,6 +192,11 @@ public:
         if (camera.getRenderOrder() != osg::Camera::NESTED_RENDER)
             return;
         traverseAndDump(camera);
+    }
+
+    virtual void apply(osg::CoordinateSystemNode& node)
+    {
+        traverseAndCollect(node);
     }
 
     void traverseAndDump(osg::Node& node)

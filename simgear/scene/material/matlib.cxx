@@ -368,8 +368,8 @@ osg::ref_ptr<Atlas> SGMaterialLib::getOrCreateAtlas(SGMaterialLib::landclass_map
         int landclass = lc_iter->first;
         bool water = lc_iter->second._water;
         bool sea = lc_iter->second._sea;
-        SGMaterial* mat = find(lc_iter->second._mat, center);
-        atlas->addMaterial(landclass, water, sea, mat);
+        SGSharedPtr<SGMaterial> mat = find(lc_iter->second._mat, center);
+        if (mat != NULL ) atlas->addMaterial(landclass, water, sea, mat);
     }
 
     SGMaterialLib::_atlasCache[id] = atlas;

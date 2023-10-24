@@ -28,6 +28,7 @@
 #include "BVHTransform.hxx"
 #include "BVHLineGeometry.hxx"
 #include "BVHStaticGeometry.hxx"
+#include "BVHTerrainTile.hxx"
 
 #include "BVHStaticData.hxx"
 
@@ -113,7 +114,13 @@ public:
             return;
         node.traverse(*this);
     }
-    
+    virtual void apply(BVHTerrainTile& leaf)
+    {
+        if (!intersects(_sphere, leaf.getBoundingSphere()))
+            return;
+        leaf.traverse(*this);
+    }
+
     virtual void apply(const BVHStaticBinary& node, const BVHStaticData& data)
     {
         if (!intersects(_sphere, node.getBoundingBox()))

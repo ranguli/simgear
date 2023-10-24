@@ -26,7 +26,7 @@ namespace simgear {
 
 class BVHStaticTriangle : public BVHStaticLeaf {
 public:
-  BVHStaticTriangle(unsigned material, const unsigned indices[3]);
+  BVHStaticTriangle(unsigned material, const unsigned indices[3], const unsigned original_indices[3]);
   virtual ~BVHStaticTriangle();
 
   virtual void accept(BVHVisitor& visitor, const BVHStaticData& data) const;
@@ -43,9 +43,12 @@ public:
 
   unsigned getMaterialIndex() const
   { return _material; }
+  unsigned getOriginalIndex(unsigned i) const { return _original_indices[i]; }
+  std::array<unsigned, 3> getOriginalIndices() const { return _original_indices; }
 
 private:
   unsigned _indices[3];
+  std::array<unsigned, 3> _original_indices;
   unsigned _material;
 };
 

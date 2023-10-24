@@ -38,6 +38,8 @@
 #include <osg/Math>
 #include <osg/Timer>
 
+#include <simgear/bvh/BVHLineSegmentVisitor.hxx>
+#include <simgear/bvh/BVHSubTreeCollector.hxx>
 #include <simgear/debug/logstream.hxx>
 #include <simgear/math/sg_random.hxx>
 #include <simgear/math/SGMath.hxx>
@@ -1249,6 +1251,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     buffer._landGeometry->setUseDisplayList(false);
     buffer._landGeometry->setUseVertexBufferObjects(true);
+    buffer._landGeometry->computeBoundingBox();
     buffer._landGeode->runGenerators(buffer._landGeometry);
 
     // Tile-specific information for the shaders
@@ -1301,6 +1304,8 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
 {   
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
     Atlas* atlas = matcache->getAtlas();
+    buffer._BVHMaterialMap = atlas->getBVHMaterialMap();
+
     auto tileID = _terrainTile->getTileID();
 
     bool photoScenery = false;
@@ -2633,4 +2638,36 @@ float VPBTechnique::getMeanLoadTime(int tileLevel) {
     if (_loadStats.find(tileLevel) == _loadStats.end()) return 0.0;
 
     return _loadStats[tileLevel].second / _loadStats[tileLevel].first;
+}
+
+BVHMaterial* VPBTechnique::getMaterial(simgear::BVHLineSegmentVisitor* lsv) {
+    const osg::Array* texCoords = _currentBufferData->_landGeometry->getTexCoordArray(0);
+    const osg::Vec2* texPtr = static_cast<const osg::Vec2*>(texCoords->getDataPointer());
+    const std::array<unsigned, 3> index = lsv->getIndices();
+
+    osg::Vec2 tc =   texPtr[index[0]] + 
+                   ( texPtr[index[1]] -  texPtr[index[0]] ) * lsv->getUV().x() +
+                   ( texPtr[index[2]] -  texPtr[index[0]] ) * lsv->getUV().y();
+
+    auto image = _terrainTile->getColorLayer(0)->getImage();
+    // Blue channel indicates if this is water, green channel is an index into the landclass data
+    unsigned int tx = (unsigned int) (image->s() * tc.x()) % image->s();
+    unsigned int ty = (unsigned int) (image->t() * tc.y()) % image->t();
+    auto c = image->getColor(tx, ty);
+    unsigned int lc = (unsigned int) std::abs(std::round(c.g() * 255.0));
+    SGSharedPtr<SGMaterial> mat = _currentBufferData->_BVHMaterialMap[lc];
+    if (mat) {
+        return mat;
+    } else {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unexpected Landclass index in landclass texture: " << lc << " original texture value: " << c.g());
+        return new BVHMaterial();
+    }
+}
+
+SGSphered VPBTechnique::computeBoundingSphere() const {
+    SGSphered bs;
+    osg::Vec3d center = _currentBufferData->_transform->getBound().center();
+    bs.setCenter(SGVec3d(center.x(), center.y(), center.z()));
+    bs.setRadius(_currentBufferData->_transform->getBound().radius());
+    return bs;
 }
