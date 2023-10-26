@@ -18,7 +18,6 @@
 #ifndef BVHLineSegmentVisitor_hxx
 #define BVHLineSegmentVisitor_hxx
 
-#include <array>
 #include <simgear/math/SGGeometry.hxx>
 #include <simgear/structure/SGSharedPtr.hxx>
 
@@ -99,7 +98,7 @@ private:
     SGVec3d _linearVelocity;
     SGVec3d _angularVelocity;
     SGVec2f _uv;
-    std::array<unsigned, 3> _indices = { 0U };
+    std::array<unsigned, 3> _indices;
     const BVHMaterial* _material;
     BVHNode::Id _id;
     

@@ -18,7 +18,6 @@
 #ifndef BVHStaticTriangle_hxx
 #define BVHStaticTriangle_hxx
 
-#include <array>
 #include <simgear/math/SGGeometry.hxx>
 #include "BVHStaticData.hxx"
 #include "BVHStaticLeaf.hxx"
@@ -49,7 +48,7 @@ public:
 
 private:
   unsigned _indices[3];
-  std::array<unsigned, 3> _original_indices = { 0U };
+  std::array<unsigned, 3> _original_indices;
   unsigned _material;
 };
 
