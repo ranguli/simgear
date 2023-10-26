@@ -32,7 +32,6 @@
 #include "BVHMotionTransform.hxx"
 #include "BVHLineGeometry.hxx"
 #include "BVHStaticGeometry.hxx"
-#include "BVHTerrainTile.hxx"
 
 #include "BVHStaticData.hxx"
 
@@ -91,7 +90,7 @@ BVHLineSegmentVisitor::apply(BVHMotionTransform& transform)
     if (!intersects(_lineSegment, transform.getBoundingSphere()))
         return;
     
-    bool haveHit = _haveHit;    
+    bool haveHit = _haveHit;
     _haveHit = false;
 
     // Push the line segment
@@ -133,22 +132,6 @@ BVHLineSegmentVisitor::apply(BVHStaticGeometry& node)
 }
 
 void
-BVHLineSegmentVisitor::apply(BVHTerrainTile& node)
-{
-    if (!intersects(_lineSegment, node.getBoundingSphere()))
-        return;
-
-    node.traverse(*this);
-
-    if (_haveHit && (_material == NULL)) {
-        // Any hit within a BVHTerrainTile won't have a material associated, as that
-        // information is not available within the BVH for a Terrain tile.  So
-        // get it from the tile itself now.
-        _material = node.getMaterial(this);
-    }
-}
-
-void
 BVHLineSegmentVisitor::apply(const BVHStaticBinary& node,
                              const BVHStaticData& data)
 {
@@ -168,11 +151,10 @@ BVHLineSegmentVisitor::apply(const BVHStaticTriangle& triangle,
 {
     SGTrianglef tri = triangle.getTriangle(data);
     SGVec3f point;
-    if (!intersects(point, _uv, tri, SGLineSegmentf(_lineSegment), 1e-4f))
+    if (!intersects(point, tri, SGLineSegmentf(_lineSegment), 1e-4f))
         return;
     setLineSegmentEnd(SGVec3d(point));
     _normal = SGVec3d(tri.getNormal());
-    _indices = triangle.getOriginalIndices();
     _linearVelocity = SGVec3d::zeros();
     _angularVelocity = SGVec3d::zeros();
     _material = data.getMaterial(triangle.getMaterialIndex());

@@ -104,24 +104,17 @@ public:
     const BVHMaterial* _currentMaterial;
     unsigned _currentMaterialIndex;
 
-    void addTriangle(const SGVec3f& v1, const SGVec3f& v2, const SGVec3f& v3, unsigned idx1=0, unsigned idx2=0, unsigned idx3=0)
+    void addTriangle(const SGVec3f& v1, const SGVec3f& v2, const SGVec3f& v3)
     {
-        std::tuple<unsigned, unsigned> indicePair[3];
-        indicePair[0] = std::make_tuple(addVertex(v1), idx1);
-        indicePair[1] = std::make_tuple(addVertex(v2), idx2);
-        indicePair[2] = std::make_tuple(addVertex(v3), idx3);
-
-        std::sort(indicePair, indicePair + 6);
-
-        unsigned indices[3] = { std::get<0>(indicePair[0]), std::get<0>(indicePair[1]), std::get<0>(indicePair[2]) };
-        unsigned original_indices[3] = { std::get<1>(indicePair[0]), std::get<1>(indicePair[1]), std::get<1>(indicePair[2]) };
+        unsigned indices[3] = { addVertex(v1), addVertex(v2), addVertex(v3) };
+        std::sort(indices, indices + 3);
         SGVec3<unsigned> indexKey(indices);
         if (_triangleSet.find(indexKey) != _triangleSet.end())
             return;
         _triangleSet.insert(indexKey);
         BVHStaticTriangle* staticTriangle;
         // REVIEW: Memory Leak - 11,680 bytes in 365 blocks are indirectly lost
-        staticTriangle = new BVHStaticTriangle(_currentMaterialIndex, indices, original_indices);
+        staticTriangle = new BVHStaticTriangle(_currentMaterialIndex, indices);
         _leafRefList.push_back(LeafRef(staticTriangle, *_staticData));
     }
     unsigned addVertex(const SGVec3f& v)

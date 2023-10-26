@@ -337,7 +337,7 @@ PrimitiveCollector::addTriangle(unsigned i1, unsigned i2, unsigned i3)
     size_t size = _vertices.size();
     if (size <= i1 || size <= i2 || size <= i3)
         return;
-    addTriangle(_vertices[i1], _vertices[i2], _vertices[i3], i1, i2, i3);
+    addTriangle(_vertices[i1], _vertices[i2], _vertices[i3]);
 }
 
 void

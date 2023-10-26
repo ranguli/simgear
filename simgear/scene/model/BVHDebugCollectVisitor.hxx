@@ -83,13 +83,6 @@ public:
         node.traverse(*this);
         --_currentLevel;
     }
-    virtual void apply(BVHTerrainTile& node)
-    {
-        addNodeSphere(node);
-        ++_currentLevel;
-        node.traverse(*this);
-        --_currentLevel;
-    }
     virtual void apply(BVHTransform& node)
     {
         addNodeSphere(node);

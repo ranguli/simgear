@@ -23,7 +23,6 @@
 #include "BVHNode.hxx"
 #include "BVHGroup.hxx"
 #include "BVHTransform.hxx"
-#include "BVHTerrainTile.hxx"
 
 #include "BVHStaticData.hxx"
 
@@ -150,15 +149,6 @@ BVHSubTreeCollector::apply(BVHStaticGeometry& node)
     staticTree = new BVHStaticGeometry(_staticNode, node.getStaticData());
     addNode(staticTree);
     _staticNode = 0;
-}
-
-void
-BVHSubTreeCollector::apply(BVHTerrainTile& node)
-{
-    if (!intersects(_sphere, node.getBoundingSphere()))
-        return;
-
-    addNode(&node);
 }
 
 void

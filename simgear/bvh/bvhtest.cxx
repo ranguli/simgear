@@ -47,7 +47,7 @@ buildSingleTriangle(const SGVec3f& v1, const SGVec3f& v2, const SGVec3f& v3)
         staticData->addVertex(v2),
         staticData->addVertex(v3)
     };
-    BVHStaticTriangle* staticTriangle = new BVHStaticTriangle(~0u, indices, indices);
+    BVHStaticTriangle* staticTriangle = new BVHStaticTriangle(~0u, indices);
     return new BVHStaticGeometry(staticTriangle, staticData);
 }
 

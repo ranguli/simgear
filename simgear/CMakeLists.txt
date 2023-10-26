@@ -3,6 +3,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/simgear/version.h "#define SIMGEAR_VERSION ${SI
 
 foreach( mylibfolder
         bucket
+        bvh
         debug
         embedded_resources
         emesary
@@ -28,7 +29,6 @@ foreach( mylibfolder
 endforeach( mylibfolder )
 
 if(NOT SIMGEAR_HEADLESS)
-    add_subdirectory(bvh)
     add_subdirectory(canvas)
     add_subdirectory(environment)
     add_subdirectory(screen)

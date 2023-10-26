@@ -27,12 +27,9 @@ namespace simgear {
 
 class BVHMaterial : public SGReferenced {
 public:
+    BVHMaterial() = default;
     virtual ~BVHMaterial() = default;
 
-    BVHMaterial(bool solid=true, double friction_factor=1.0, double rolling_friction=0.02, double bumpiness=0.0, double load_resistance=1e30) :
-      _solid(solid), _friction_factor(friction_factor), _rolling_friction(rolling_friction), _bumpiness(bumpiness), _load_resistance(load_resistance)
-    { }
-    
     /**
      * Return if the surface material is solid, if it is not solid, a fluid
      * can be assumed, that is usually water.

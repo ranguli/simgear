@@ -65,7 +65,7 @@ public:
     /// The callback functions that are called on an apropriate primitive
     virtual void addPoint(const osg::Vec3d& v1) = 0;
     virtual void addLine(const osg::Vec3d& v1, const osg::Vec3d& v2) = 0;
-    virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3, unsigned i1, unsigned i2, unsigned i3) = 0;
+    virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3) = 0;
 
 private:
     std::vector<osg::Vec3d> _vertices;

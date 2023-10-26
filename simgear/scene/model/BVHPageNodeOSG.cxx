@@ -34,7 +34,6 @@
 #include <osg/ProxyNode>
 #include <osg/Transform>
 #include <osgDB/ReadFile>
-#include <osgTerrain/TerrainTile>
 
 #include <simgear/scene/material/mat.hxx>
 #include <simgear/scene/material/matlib.hxx>
@@ -44,7 +43,6 @@
 #include <simgear/math/SGGeometry.hxx>
 
 #include <simgear/bvh/BVHStaticGeometryBuilder.hxx>
-#include <simgear/bvh/BVHTerrainTile.hxx>
 
 #include "PrimitiveCollector.hxx"
 
@@ -62,8 +60,8 @@ public:
         { }
         virtual void addLine(const osg::Vec3d& v1, const osg::Vec3d& v2)
         { }
-        virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3, unsigned i1, unsigned i2, unsigned i3)
-        { _nodeVisitor.addTriangle(v1, v2, v3, i1, i2, i3); }
+        virtual void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3)
+        { _nodeVisitor.addTriangle(v1, v2, v3); }
     private:
         _NodeVisitor& _nodeVisitor;
     };
@@ -124,12 +122,11 @@ public:
     {
     }
 
-    void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3, unsigned i1, unsigned i2, unsigned i3)
+    void addTriangle(const osg::Vec3d& v1, const osg::Vec3d& v2, const osg::Vec3d& v3)
     {
         _geometryBuilder->addTriangle(toVec3f(toSG(_localToWorldMatrix.preMult(v1))),
                                       toVec3f(toSG(_localToWorldMatrix.preMult(v2))),
-                                      toVec3f(toSG(_localToWorldMatrix.preMult(v3))),
-                                      i1, i2, i3);
+                                      toVec3f(toSG(_localToWorldMatrix.preMult(v3))));
     }
 
     void setCenter(const osg::Vec3& center)
@@ -193,7 +190,7 @@ public:
             if (!transform.computeLocalToWorldMatrix(localToWorldMatrix, this))
                 return;
 
-            // evaluate the local to world matrix here in this group node.
+            // evaluate the loca to world matrix here in this group node.
             _NodeVisitor nodeVisitor(_flatten);
             nodeVisitor.traverse(transform);
             _nodeBin.addNode(nodeVisitor.getNode(localToWorldMatrix));
@@ -272,21 +269,6 @@ public:
         apply(static_cast<osg::Group&>(proxyNode));
     }
 
-    virtual void apply(osg::Group& group)
-    {
-        osgTerrain::TerrainTile* tile = dynamic_cast<osgTerrain::TerrainTile*>(&group);
-
-        if (tile) {
-            SGSceneUserData* userData = SGSceneUserData::getOrCreateSceneUserData(tile);
-            if (userData) {
-                BVHTerrainTile* bvhTerrainTile = new BVHTerrainTile(tile);
-                userData->setBVHNode(bvhTerrainTile);
-            }
-        } else {
-            apply(static_cast<osg::Node&>(group));
-        }
-    }
-
     static osg::ref_ptr<const osgDB::Options>
     getOptions(const osg::Referenced* referenced, const std::string& databasePath)
     {
@@ -306,7 +288,7 @@ public:
 
     SGSharedPtr<BVHNode> getNode(const osg::Matrix& matrix = osg::Matrix())
     {
-        // Flush any pending leaf nodes
+        // Flush any pendig leaf nodes
         if (_geometryBuilder.valid()) {
             _nodeBin.addNode(_geometryBuilder->buildTree());
             _geometryBuilder.clear();

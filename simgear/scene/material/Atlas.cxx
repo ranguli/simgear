@@ -79,7 +79,7 @@ Atlas::Atlas(osg::ref_ptr<const SGReaderWriterOptions> options) {
     }
 }
 
-void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGSharedPtr<SGMaterial> mat) {
+void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGMaterial* mat) {
 
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Atlas Landclass mapping: " << landclass << " : " << mat->get_names()[0]);
     _index[landclass] = _materialLookupIndex;
@@ -185,9 +185,6 @@ void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGSharedPtr<SGM
         // 11-15th textures for the various overlay textures for terrain-default.eff, we do the same for ws30.eff
         _textureLookup1->setElement(_materialLookupIndex, osg::Vec4f( (float) (textureList[0] / 255.0), (float) (textureList[11] / 255.0), (float) (textureList[12] / 255.0), (float) (textureList[13] / 255.0)));
         _textureLookup2->setElement(_materialLookupIndex, osg::Vec4f( (float) (textureList[14] / 255.0), (float) (textureList[15] / 255.0), (float) (textureList[20] / 255.0), (float) (textureList[21] / 255.0)));
-        _bvhMaterialMap[_materialLookupIndex] = mat;
-    } else {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Attempt to add undefined material to Material Atlas: " << landclass);
     }
 
     ++_materialLookupIndex;

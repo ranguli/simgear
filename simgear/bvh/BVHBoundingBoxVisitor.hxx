@@ -27,7 +27,6 @@
 #include "BVHTransform.hxx"
 #include "BVHMotionTransform.hxx"
 #include "BVHLineGeometry.hxx"
-#include "BVHTerrainTile.hxx"
 
 #include "BVHStaticData.hxx"
 
@@ -56,8 +55,6 @@ public:
     virtual void apply(BVHLineGeometry& node)
     { expandBy(node.getBoundingSphere()); }
     virtual void apply(BVHStaticGeometry& node)
-    { expandBy(node.getBoundingSphere()); }
-    virtual void apply(BVHTerrainTile& node)
     { expandBy(node.getBoundingSphere()); }
     
     virtual void apply(const BVHStaticBinary& node, const BVHStaticData& data)
