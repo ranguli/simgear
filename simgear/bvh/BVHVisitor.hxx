@@ -28,6 +28,7 @@ class BVHTransform;
 class BVHMotionTransform;
 class BVHStaticGeometry;
 class BVHLineGeometry;
+class BVHTerrainTile;
 
 class BVHStaticBinary;
 class BVHStaticTriangle;
@@ -47,7 +48,8 @@ public:
     virtual void apply(BVHMotionTransform&) = 0;
     virtual void apply(BVHLineGeometry&) = 0;
     virtual void apply(BVHStaticGeometry&) = 0;
-    
+    virtual void apply(BVHTerrainTile&) = 0;
+
     // Static tree nodes to handle
     virtual void apply(const BVHStaticBinary&, const BVHStaticData&) = 0;
     virtual void apply(const BVHStaticTriangle&, const BVHStaticData&) = 0;

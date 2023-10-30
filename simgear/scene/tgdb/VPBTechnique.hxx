@@ -29,6 +29,8 @@
 #include <osgTerrain/Locator>
 
 #include <simgear/bucket/newbucket.hxx>
+#include <simgear/bvh/BVHMaterial.hxx>
+#include <simgear/math/SGGeometry.hxx>
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/material/matlib.hxx>
 #include <simgear/scene/tgdb/AreaFeatureBin.hxx>
@@ -63,6 +65,9 @@ class VPBTechnique : public TerrainTechnique
 
         /** Traverse the terain subgraph.*/
         virtual void traverse(osg::NodeVisitor& nv);
+
+        virtual BVHMaterial* getMaterial(osg::Vec3d point);
+        virtual SGSphered computeBoundingSphere() const;
 
         virtual void cleanSceneGraph();
 
@@ -123,26 +128,27 @@ class VPBTechnique : public TerrainTechnique
             osg::ref_ptr<osg::Group>            _lineFeatures;
             float                               _width;
             float                               _height;
+            Atlas::AtlasMap                     _BVHMaterialMap;
+            osg::ref_ptr<Locator>               _masterLocator;
 
         protected:
             ~BufferData() {}
         };
 
-        virtual osg::Vec3d computeCenter(BufferData& buffer, Locator* masterLocator);
-        virtual osg::Vec3d computeCenterModel(BufferData& buffer, Locator* masterLocator);
-        const virtual SGGeod computeCenterGeod(BufferData& buffer, Locator* masterLocator);
+        virtual osg::Vec3d computeCenter(BufferData& buffer);
+        virtual osg::Vec3d computeCenterModel(BufferData& buffer);
+        const virtual SGGeod computeCenterGeod(BufferData& buffer);
 
-        virtual void generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache);
+        virtual void generateGeometry(BufferData& buffer, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache);
 
-        virtual void applyColorLayers(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
+        virtual void applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
 
         virtual double det2(const osg::Vec2d a, const osg::Vec2d b);
 
-        virtual void applyMaterials(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
+        virtual void applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
 
-        virtual void applyLineFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
+        virtual void applyLineFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
         virtual void generateLineFeature(BufferData& buffer, 
-            Locator* masterLocator, 
             LineFeatureBin::LineFeature road, 
             osg::Vec3d modelCenter, 
             osg::Vec3Array* v, 
@@ -157,9 +163,8 @@ class VPBTechnique : public TerrainTechnique
             bool light_edge_offset,
             double elevation_offset_m);
 
-        virtual void applyAreaFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache);
+        virtual void applyAreaFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
         virtual void generateAreaFeature(BufferData& buffer, 
-            Locator* masterLocator, 
             AreaFeatureBin::AreaFeature area, 
             osg::Vec3d modelCenter, 
             osg::Geometry* geometry,
@@ -169,13 +174,13 @@ class VPBTechnique : public TerrainTechnique
             unsigned int xsize,
             unsigned int ysize);
 
-        virtual osg::Image* generateCoastTexture(BufferData& buffer, Locator* masterLocator);
+        virtual osg::Image* generateCoastTexture(BufferData& buffer);
         virtual osg::Image* generateWaterTexture(Atlas* atlas);
         virtual void addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
         virtual void updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y);
         virtual void writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy);
 
-        virtual osg::Vec3d getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up);
+        virtual osg::Vec3d getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up);
 
         static void updateStats(int tileLevel, float loadTime);
         static float getMeanLoadTime(int tileLevel);

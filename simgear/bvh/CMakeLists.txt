@@ -21,6 +21,7 @@ set(HEADERS
     BVHSubTreeCollector.hxx
     BVHMaterial.hxx
     BVHTransform.hxx
+    BVHTerrainTile.hxx
     BVHVisitor.hxx
 )
 
@@ -39,11 +40,12 @@ set(SOURCES
     BVHStaticNode.cxx
     BVHStaticTriangle.cxx
     BVHSubTreeCollector.cxx
+    BVHTerrainTile.cxx
     BVHTransform.cxx
 )
 
-simgear_component(bvh bvh "${SOURCES}" "${HEADERS}")
+simgear_scene_component(bvh bvh "${SOURCES}" "${HEADERS}")
 
 if(ENABLE_TESTS)
-  add_simgear_autotest(bvhtest bvhtest.cxx)
+  add_simgear_scene_autotest(bvhtest bvhtest.cxx)
 endif(ENABLE_TESTS)

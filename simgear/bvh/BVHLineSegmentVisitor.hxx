@@ -57,6 +57,8 @@ public:
     { return _angularVelocity; }
     const BVHMaterial* getMaterial() const
     { return _material; }
+    void setMaterial(BVHMaterial* material) { _material = material; }
+    
     BVHNode::Id getId() const
     { return _id; }
 
@@ -66,10 +68,13 @@ public:
     virtual void apply(BVHMotionTransform& transform);
     virtual void apply(BVHLineGeometry&);
     virtual void apply(BVHStaticGeometry& node);
-    
+    virtual void apply(BVHTerrainTile& tile);
+
     virtual void apply(const BVHStaticBinary&, const BVHStaticData&);
     virtual void apply(const BVHStaticTriangle&, const BVHStaticData&);
-    
+
+    void setHit(bool hit) { _haveHit = hit; }
+
 protected:
     void setLineSegmentEnd(const SGVec3d& end)
     {
@@ -80,7 +85,7 @@ protected:
 #endif
         _lineSegment.set(_lineSegment.getStart(), end);
     }
-    
+
 private:
     SGLineSegmentd _lineSegment;
     double _time;

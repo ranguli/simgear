@@ -21,6 +21,7 @@
 
 #include <simgear/compiler.h>
 
+#include <simgear/bvh/BVHMaterial.hxx>
 #include <simgear/math/SGMath.hxx>
 #include <simgear/structure/SGReferenced.hxx>
 #include <simgear/structure/SGSharedPtr.hxx>
@@ -47,6 +48,7 @@ public:
     // Mapping of landclass numbers to indexes within the atlas
     // materialLookup
     typedef std::map<int, int> AtlasIndex;
+    typedef std::map<unsigned, SGSharedPtr<SGMaterial> >  AtlasMap;
 
     // Mapping of texture filenames to their index in the Atlas image itself.
     typedef std::map<std::string, unsigned int> TextureMap;
@@ -56,7 +58,7 @@ public:
     typedef std::map<int, bool> WaterAtlas;
 
     void addUniforms(osg::StateSet* stateset);
-    void addMaterial(int landclass, bool water, bool sea, SGMaterial* mat);
+    void addMaterial(int landclass, bool water, bool sea, SGSharedPtr<SGMaterial> mat);
 
     // Maximum number of material entries in the atlas
     static const unsigned int MAX_MATERIALS = 64;
@@ -66,6 +68,7 @@ public:
     bool isSea(int landclass) { return _seaAtlas[landclass];}
     int getIndex(int landclass) { return _index[landclass]; };
 
+    AtlasMap getBVHMaterialMap() { return _bvhMaterialMap; };
     AtlasImage getImage() { return _image; };
 
 private:
@@ -85,13 +88,14 @@ private:
     osg::ref_ptr<osg::Uniform> _materialParams1;
     osg::ref_ptr<osg::Uniform> _materialParams2;
     osg::ref_ptr<osg::Uniform> _materialParams3;
-
+    
     unsigned int _imageIndex; // Index into the image
     unsigned int _materialLookupIndex; // Index into the material lookup
 
     WaterAtlas _waterAtlas;
     WaterAtlas _seaAtlas;
     TextureMap _textureMap;
+    AtlasMap _bvhMaterialMap;
 
     // Maximum number of textures per texture-set for the Atlas.
     static const unsigned int MAX_TEXTURES = 22;

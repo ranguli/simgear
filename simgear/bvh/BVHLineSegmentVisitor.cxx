@@ -32,6 +32,7 @@
 #include "BVHMotionTransform.hxx"
 #include "BVHLineGeometry.hxx"
 #include "BVHStaticGeometry.hxx"
+#include "BVHTerrainTile.hxx"
 
 #include "BVHStaticData.hxx"
 
@@ -90,7 +91,7 @@ BVHLineSegmentVisitor::apply(BVHMotionTransform& transform)
     if (!intersects(_lineSegment, transform.getBoundingSphere()))
         return;
     
-    bool haveHit = _haveHit;
+    bool haveHit = _haveHit;    
     _haveHit = false;
 
     // Push the line segment
@@ -129,6 +130,22 @@ BVHLineSegmentVisitor::apply(BVHStaticGeometry& node)
     if (!intersects(_lineSegment, node.getBoundingSphere()))
         return;
     node.traverse(*this);
+}
+
+void
+BVHLineSegmentVisitor::apply(BVHTerrainTile& node)
+{
+    if (!intersects(_lineSegment, node.getBoundingSphere()))
+        return;
+
+    node.traverse(*this);
+
+    if (_haveHit && (_material == NULL)) {
+        // Any hit within a BVHTerrainTile won't have a material associated, as that
+        // information is not available within the BVH for a Terrain tile.  So
+        // get it from the tile itself now.
+        _material = node.getMaterial(this);
+    }
 }
 
 void

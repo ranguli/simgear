@@ -38,6 +38,7 @@
 #include <osg/Math>
 #include <osg/Timer>
 
+#include <simgear/bvh/BVHSubTreeCollector.hxx>
 #include <simgear/debug/logstream.hxx>
 #include <simgear/math/sg_random.hxx>
 #include <simgear/math/SGMath.hxx>
@@ -176,13 +177,13 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     osg::ref_ptr<BufferData> buffer = new BufferData;
 
-    Locator* masterLocator = computeMasterLocator();
+    buffer->_masterLocator = computeMasterLocator();
 
-    osg::Vec3d centerModel = computeCenterModel(*buffer, masterLocator);
+    osg::Vec3d centerModel = computeCenterModel(*buffer);
 
     // Generate a set of material definitions for this location.
     SGMaterialLibPtr matlib  = _options->getMaterialLib();
-    const SGGeod loc = computeCenterGeod(*buffer, masterLocator);
+    const SGGeod loc = computeCenterGeod(*buffer);
     osg::ref_ptr<SGMaterialCache> matcache;
     if (matlib) {
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Applying VPB material " << loc);
@@ -194,7 +195,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     if ((dirtyMask & TerrainTile::IMAGERY_DIRTY)==0)
     {
-        generateGeometry(*buffer, masterLocator, centerModel, matcache);
+        generateGeometry(*buffer, centerModel, matcache);
 
         osg::ref_ptr<BufferData> read_buffer = _currentBufferData;
 
@@ -205,20 +206,20 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
         }
         else
         {
-            applyColorLayers(*buffer, masterLocator, matcache);
-            applyLineFeatures(*buffer, masterLocator, matcache);
-            applyAreaFeatures(*buffer, masterLocator, matcache);
-            applyMaterials(*buffer, masterLocator, matcache);
+            applyColorLayers(*buffer, matcache);
+            applyLineFeatures(*buffer, matcache);
+            applyAreaFeatures(*buffer, matcache);
+            applyMaterials(*buffer, matcache);
         }
     }
     else
     {
-        generateGeometry(*buffer, masterLocator, centerModel, matcache);
+        generateGeometry(*buffer, centerModel, matcache);
         
-        applyColorLayers(*buffer, masterLocator, matcache);
-        applyLineFeatures(*buffer, masterLocator, matcache);
-        applyAreaFeatures(*buffer, masterLocator, matcache);
-        applyMaterials(*buffer, masterLocator, matcache);
+        applyColorLayers(*buffer, matcache);
+        applyLineFeatures(*buffer, matcache);
+        applyAreaFeatures(*buffer, matcache);
+        applyMaterials(*buffer, matcache);
     }
 
     if (buffer->_transform.valid()) buffer->_transform->setThreadSafeRefUnref(true);
@@ -260,9 +261,9 @@ Locator* VPBTechnique::computeMasterLocator()
     return masterLocator;
 }
 
-osg::Vec3d VPBTechnique::computeCenter(BufferData& buffer, Locator* masterLocator)
+osg::Vec3d VPBTechnique::computeCenter(BufferData& buffer)
 {
-    if (!masterLocator) return osg::Vec3d(0.0,0.0,0.0);
+    if (!buffer._masterLocator) return osg::Vec3d(0.0,0.0,0.0);
 
     osgTerrain::Layer* elevationLayer = _terrainTile->getElevationLayer();
     osgTerrain::Layer* colorLayer = _terrainTile->getColorLayer(0);
@@ -270,17 +271,17 @@ osg::Vec3d VPBTechnique::computeCenter(BufferData& buffer, Locator* masterLocato
     Locator* elevationLocator = elevationLayer ? elevationLayer->getLocator() : 0;
     Locator* colorLocator = colorLayer ? colorLayer->getLocator() : 0;
 
-    if (!elevationLocator) elevationLocator = masterLocator;
-    if (!colorLocator) colorLocator = masterLocator;
+    if (!elevationLocator) elevationLocator = buffer._masterLocator;
+    if (!colorLocator) colorLocator = buffer._masterLocator;
 
     osg::Vec3d bottomLeftNDC(DBL_MAX, DBL_MAX, 0.0);
     osg::Vec3d topRightNDC(-DBL_MAX, -DBL_MAX, 0.0);
 
     if (elevationLayer)
     {
-        if (elevationLocator!= masterLocator)
+        if (elevationLocator!= buffer._masterLocator)
         {
-            masterLocator->computeLocalBounds(*elevationLocator, bottomLeftNDC, topRightNDC);
+            buffer._masterLocator->computeLocalBounds(*elevationLocator, bottomLeftNDC, topRightNDC);
         }
         else
         {
@@ -293,9 +294,9 @@ osg::Vec3d VPBTechnique::computeCenter(BufferData& buffer, Locator* masterLocato
 
     if (colorLayer)
     {
-        if (colorLocator!= masterLocator)
+        if (colorLocator!= buffer._masterLocator)
         {
-            masterLocator->computeLocalBounds(*colorLocator, bottomLeftNDC, topRightNDC);
+            buffer._masterLocator->computeLocalBounds(*colorLocator, bottomLeftNDC, topRightNDC);
         }
         else
         {
@@ -313,11 +314,11 @@ osg::Vec3d VPBTechnique::computeCenter(BufferData& buffer, Locator* masterLocato
     return centerNDC;
 }
 
-osg::Vec3d VPBTechnique::computeCenterModel(BufferData& buffer, Locator* masterLocator)
+osg::Vec3d VPBTechnique::computeCenterModel(BufferData& buffer)
 {
-    osg::Vec3d centerNDC = computeCenter(buffer, masterLocator);
+    osg::Vec3d centerNDC = computeCenter(buffer);
     osg::Vec3d centerModel = centerNDC;
-    masterLocator->convertLocalToModel(centerNDC, centerModel);
+    buffer._masterLocator->convertLocalToModel(centerNDC, centerModel);
 
     buffer._transform = new osg::MatrixTransform;
     buffer._transform->setMatrix(osg::Matrix::translate(centerModel));
@@ -325,7 +326,7 @@ osg::Vec3d VPBTechnique::computeCenterModel(BufferData& buffer, Locator* masterL
     return centerModel;
 }
 
-const SGGeod VPBTechnique::computeCenterGeod(BufferData& buffer, Locator* masterLocator)
+const SGGeod VPBTechnique::computeCenterGeod(BufferData& buffer)
 {
     const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
     return SGGeod::fromCart(toSG(world));
@@ -850,7 +851,7 @@ void VertexNormalGenerator::computeNormals()
     }
 }
 
-void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache)
+void VPBTechnique::generateGeometry(BufferData& buffer, const osg::Vec3d& centerModel, osg::ref_ptr<SGMaterialCache> matcache)
 {
     osg::ref_ptr<Atlas> atlas;
 
@@ -925,7 +926,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     bool createSkirt = skirtHeight != 0.0f;
 
     // construct the VertexNormalGenerator which will manage the generation and the vertices and normals
-    VertexNormalGenerator VNG(masterLocator, centerModel, numRows, numColumns, scaleHeight, constraint_gap, createSkirt);
+    VertexNormalGenerator VNG(buffer._masterLocator, centerModel, numRows, numColumns, scaleHeight, constraint_gap, createSkirt);
 
     unsigned int numVertices = VNG.capacity();
 
@@ -1014,7 +1015,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     //
     // populate the primitive data
     //
-    bool swapOrientation = !(masterLocator->orientationOpenGL());
+    bool swapOrientation = !(buffer._masterLocator->orientationOpenGL());
     bool smallTile = numVertices < 65536;
 
     // OSG_NOTICE<<"smallTile = "<<smallTile<<std::endl;
@@ -1249,6 +1250,7 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
 
     buffer._landGeometry->setUseDisplayList(false);
     buffer._landGeometry->setUseVertexBufferObjects(true);
+    buffer._landGeometry->computeBoundingBox();
     buffer._landGeode->runGenerators(buffer._landGeometry);
 
     // Tile-specific information for the shaders
@@ -1297,10 +1299,12 @@ void VPBTechnique::generateGeometry(BufferData& buffer, Locator* masterLocator, 
     }
 }
 
-void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
+void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache)
 {   
     const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
     Atlas* atlas = matcache->getAtlas();
+    buffer._BVHMaterialMap = atlas->getBVHMaterialMap();
+
     auto tileID = _terrainTile->getTileID();
 
     bool photoScenery = false;
@@ -1360,7 +1364,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
             stateset->setTextureAttributeAndModes(7, waterTexture);
 
             stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, true));
-            stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer, masterLocator))))));
+            stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer))))));
             stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
             atlas->addUniforms(stateset);
 
@@ -1424,7 +1428,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
         osg::ref_ptr<osg::Texture2D> coastTexture  = new osg::Texture2D;
-        coastTexture->setImage(generateCoastTexture(buffer, masterLocator));
+        coastTexture->setImage(generateCoastTexture(buffer));
         coastTexture->setMaxAnisotropy(16.0f);
         coastTexture->setResizeNonPowerOfTwoHint(false);
         coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
@@ -1437,7 +1441,7 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, Locator* masterLocator, 
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(7, coastTexture, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
-        stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer, masterLocator))))));
+        stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer))))));
         stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
         atlas->addUniforms(stateset);
         //SG_LOG(SG_TERRAIN, SG_ALERT, "modeOffset:" << buffer._transform->getMatrix().getTrans().length() << " " << buffer._transform->getMatrix().getTrans());
@@ -1449,7 +1453,7 @@ double VPBTechnique::det2(const osg::Vec2d a, const osg::Vec2d b)
     return a.x() * b.y() - b.x() * a.y();
 }
 
-void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
+void VPBTechnique::applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache)
 {
     if (!matcache) return;
     pc_init(2718281);
@@ -1475,7 +1479,7 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, os
 
     SGMaterial* mat = 0;
 
-    const SGGeod loc = computeCenterGeod(buffer, masterLocator);
+    const SGGeod loc = computeCenterGeod(buffer);
 
     osg::Vec3d up = buffer._transform->getMatrix().getTrans();
     up.normalize();
@@ -1716,7 +1720,7 @@ void VPBTechnique::applyMaterials(BufferData& buffer, Locator* masterLocator, os
     }
 }
 
-void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
+void VPBTechnique::applyLineFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache)
 {
     if (! matcache) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate roads");
@@ -1791,7 +1795,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
             auto lineFeatures = (*rb)->getLineFeatures();
 
             for (auto r = lineFeatures.begin(); r != lineFeatures.end(); ++r) {
-                if (r->_width > minWidth) generateLineFeature(buffer, masterLocator, *r, world, v, t, n, lights, x0, x1, ysize, light_edge_spacing, light_edge_height, light_edge_offset, elevation_offset_m);
+                if (r->_width > minWidth) generateLineFeature(buffer, *r, world, v, t, n, lights, x0, x1, ysize, light_edge_spacing, light_edge_height, light_edge_offset, elevation_offset_m);
             }
 
             if (v->size() == 0) {
@@ -1857,12 +1861,12 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, Locator* masterLocator,
     if (lightbin.getNumLights() > 0) buffer._transform->addChild(createLights(lightbin, osg::Matrix::identity(), _options));
 }
 
-void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocator, LineFeatureBin::LineFeature road, osg::Vec3d modelCenter, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, osg::Vec3Array* lights, double x0, double x1, unsigned int ysize, double light_edge_spacing, double light_edge_height, bool light_edge_offset, double elevation_offset_m)
+void VPBTechnique::generateLineFeature(BufferData& buffer, LineFeatureBin::LineFeature road, osg::Vec3d modelCenter, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, osg::Vec3Array* lights, double x0, double x1, unsigned int ysize, double light_edge_spacing, double light_edge_height, bool light_edge_offset, double elevation_offset_m)
 {
     // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
     osg::Vec3d up = modelCenter;
     up.normalize();
-    TileBounds tileBounds(masterLocator, up);
+    TileBounds tileBounds(buffer._masterLocator, up);
 
     std::list<osg::Vec3d> nodes = tileBounds.clipToTile(road._nodes);
 
@@ -1873,11 +1877,11 @@ void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocato
     std::list<osg::Vec3d> roadPoints;
     auto road_iter = nodes.begin();
 
-    ma = getMeshIntersection(buffer, masterLocator, *road_iter - modelCenter, up);
+    ma = getMeshIntersection(buffer, *road_iter - modelCenter, up);
     road_iter++;
 
     for (; road_iter != nodes.end(); road_iter++) {
-        mb = getMeshIntersection(buffer, masterLocator, *road_iter - modelCenter, up);
+        mb = getMeshIntersection(buffer, *road_iter - modelCenter, up);
         auto esl = VPBElevationSlice::computeVPBElevationSlice(buffer._landGeometry, ma, mb, up);
 
         for(auto eslitr = esl.begin(); eslitr != esl.end(); ++eslitr) {
@@ -1982,7 +1986,7 @@ void VPBTechnique::generateLineFeature(BufferData& buffer, Locator* masterLocato
     }
 }
 
-void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator, osg::ref_ptr<SGMaterialCache> matcache)
+void VPBTechnique::applyAreaFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache)
 {
     if (! matcache) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to get materials library to generate areas");
@@ -2050,7 +2054,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
             auto areaFeatures = (*rb)->getAreaFeatures();
 
             for (auto r = areaFeatures.begin(); r != areaFeatures.end(); ++r) {
-                if (r->_area > minArea) generateAreaFeature(buffer, masterLocator, *r, world, geometry, v, t, n, xsize, ysize);
+                if (r->_area > minArea) generateAreaFeature(buffer, *r, world, geometry, v, t, n, xsize, ysize);
             }
 
             if (v->size() == 0) continue;
@@ -2069,7 +2073,7 @@ void VPBTechnique::applyAreaFeatures(BufferData& buffer, Locator* masterLocator,
     }
 }
 
-void VPBTechnique::generateAreaFeature(BufferData& buffer, Locator* masterLocator, AreaFeatureBin::AreaFeature area, osg::Vec3d modelCenter, osg::Geometry* geometry, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, unsigned int xsize, unsigned int ysize)
+void VPBTechnique::generateAreaFeature(BufferData& buffer, AreaFeatureBin::AreaFeature area, osg::Vec3d modelCenter, osg::Geometry* geometry, osg::Vec3Array* v, osg::Vec2Array* t, osg::Vec3Array* n, unsigned int xsize, unsigned int ysize)
 {
     if (area._nodes.size() < 3) { 
         SG_LOG(SG_TERRAIN, SG_ALERT, "Coding error - AreaFeatureBin::LineFeature with fewer than three nodes"); 
@@ -2095,7 +2099,7 @@ void VPBTechnique::generateAreaFeature(BufferData& buffer, Locator* masterLocato
 
     auto area_iter = area._nodes.begin();
     osg::Vec3d pt = *area_iter - modelCenter;
-    ma = getMeshIntersection(buffer, masterLocator, pt, up);
+    ma = getMeshIntersection(buffer, pt, up);
 
     // Only build this area if the first vertex is on the mesh.  This ensures that the
     // area is only generated once, no matter how many tiles it spans.
@@ -2107,7 +2111,7 @@ void VPBTechnique::generateAreaFeature(BufferData& buffer, Locator* masterLocato
         // Ignore small segments - we really don't need resolution less than 10m
         if ((pt - last_pt).length2() < 100.0) continue;
 
-        ma = getMeshIntersection(buffer, masterLocator, pt, up);
+        ma = getMeshIntersection(buffer, pt, up);
         if (ma !=pt) {
             elev += up*ma;
             elev_count++;
@@ -2168,7 +2172,7 @@ osg::Image* VPBTechnique::generateWaterTexture(Atlas* atlas) {
 }
 
 
-osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* masterLocator) {
+osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer) {
 
     unsigned int coast_features_lod_range = 4;
     unsigned int waterTextureSize = 2048;
@@ -2197,7 +2201,7 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
     osg::Vec3d up = world;
     up.normalize();
 
-    TileBounds tileBounds(masterLocator, up);
+    TileBounds tileBounds(buffer._masterLocator, up);
 
     bool coastsFound = false;
 
@@ -2244,7 +2248,7 @@ osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer, Locator* mast
                     if (clipped.size() > 1) {                    
                         // We need at least two points to render a line.
                         LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
-                        addCoastline(masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
+                        addCoastline(buffer._masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
                     }
                 }
             }
@@ -2376,7 +2380,7 @@ void VPBTechnique::addCoastline(Locator* masterLocator, osg::Image* waterTexture
 }
 
 // Find the intersection of a given SGGeod with the terrain mesh
-osg::Vec3d VPBTechnique::getMeshIntersection(BufferData& buffer, Locator* masterLocator, osg::Vec3d pt, osg::Vec3d up) 
+osg::Vec3d VPBTechnique::getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up) 
 {
     osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
     intersector = new osgUtil::LineSegmentIntersector(pt - up*100.0, pt + up*8000.0);
@@ -2633,4 +2637,32 @@ float VPBTechnique::getMeanLoadTime(int tileLevel) {
     if (_loadStats.find(tileLevel) == _loadStats.end()) return 0.0;
 
     return _loadStats[tileLevel].second / _loadStats[tileLevel].first;
+}
+
+BVHMaterial* VPBTechnique::getMaterial(osg::Vec3d point) {
+    osg::Vec3d local;
+    _currentBufferData->_masterLocator->convertModelToLocal(point, local);
+
+    auto image = _terrainTile->getColorLayer(0)->getImage();
+    // Blue channel indicates if this is water, green channel is an index into the landclass data
+    unsigned int tx = (unsigned int) (image->s() * local.x()) % image->s();
+    unsigned int ty = (unsigned int) (image->t() * local.y()) % image->t();
+    auto c = image->getColor(tx, ty);
+    unsigned int lc = (unsigned int) std::abs(std::round(c.g() * 255.0));
+    SGSharedPtr<SGMaterial> mat = _currentBufferData->_BVHMaterialMap[lc];
+    if (mat) {
+        //SG_LOG(SG_TERRAIN, SG_ALERT, "Material: " << mat->get_names()[0]);
+        return mat;
+    } else {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unexpected Landclass index in landclass texture: " << lc << " original texture value: " << c.g() << " at point " << local);
+        return new BVHMaterial();
+    }
+}
+
+SGSphered VPBTechnique::computeBoundingSphere() const {
+    SGSphered bs;
+    osg::Vec3d center = _currentBufferData->_transform->getBound().center();
+    bs.setCenter(SGVec3d(center.x(), center.y(), center.z()));
+    bs.setRadius(_currentBufferData->_transform->getBound().radius());
+    return bs;
 }

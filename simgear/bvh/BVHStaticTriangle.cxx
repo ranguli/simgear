@@ -21,8 +21,7 @@
 
 namespace simgear {
 
-BVHStaticTriangle::BVHStaticTriangle(unsigned material,
-                                       const unsigned indices[3]) :
+BVHStaticTriangle::BVHStaticTriangle(unsigned material, const unsigned indices[3]) :
   _material(material)
 {
     for (unsigned i = 0; i < 3; ++i)

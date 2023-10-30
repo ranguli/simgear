@@ -34,6 +34,7 @@
 #include <osg/ProxyNode>
 #include <osg/Transform>
 #include <osgDB/ReadFile>
+#include <osgTerrain/TerrainTile>
 
 #include <simgear/scene/material/mat.hxx>
 #include <simgear/scene/material/matlib.hxx>
@@ -43,6 +44,7 @@
 #include <simgear/math/SGGeometry.hxx>
 
 #include <simgear/bvh/BVHStaticGeometryBuilder.hxx>
+#include <simgear/bvh/BVHTerrainTile.hxx>
 
 #include "PrimitiveCollector.hxx"
 
@@ -190,7 +192,7 @@ public:
             if (!transform.computeLocalToWorldMatrix(localToWorldMatrix, this))
                 return;
 
-            // evaluate the loca to world matrix here in this group node.
+            // evaluate the local to world matrix here in this group node.
             _NodeVisitor nodeVisitor(_flatten);
             nodeVisitor.traverse(transform);
             _nodeBin.addNode(nodeVisitor.getNode(localToWorldMatrix));
@@ -269,6 +271,21 @@ public:
         apply(static_cast<osg::Group&>(proxyNode));
     }
 
+    virtual void apply(osg::Group& group)
+    {
+        osgTerrain::TerrainTile* tile = dynamic_cast<osgTerrain::TerrainTile*>(&group);
+
+        if (tile) {
+            SGSceneUserData* userData = SGSceneUserData::getOrCreateSceneUserData(tile);
+            if (userData) {
+                BVHTerrainTile* bvhTerrainTile = new BVHTerrainTile(tile);
+                userData->setBVHNode(bvhTerrainTile);
+            }
+        } else {
+            apply(static_cast<osg::Node&>(group));
+        }
+    }
+
     static osg::ref_ptr<const osgDB::Options>
     getOptions(const osg::Referenced* referenced, const std::string& databasePath)
     {
@@ -288,7 +305,7 @@ public:
 
     SGSharedPtr<BVHNode> getNode(const osg::Matrix& matrix = osg::Matrix())
     {
-        // Flush any pendig leaf nodes
+        // Flush any pending leaf nodes
         if (_geometryBuilder.valid()) {
             _nodeBin.addNode(_geometryBuilder->buildTree());
             _geometryBuilder.clear();
