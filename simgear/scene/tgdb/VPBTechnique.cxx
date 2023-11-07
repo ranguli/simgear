@@ -1541,8 +1541,8 @@ void VPBTechnique::applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCac
     }
 
     // At the detailed tile level we are handling various materials, and
-    // as we walk across the tile in a scanline, the landclass doesn't
-    // change regularly from point to point.  Cache the required
+    // as we walk across the tile, the landclass doesn't change regularly 
+    // from point to point within a given triangle.  Cache the required
     // material information for the current landclass to reduce the
     // number of lookups into the material cache.
     int current_land_class = -1;
@@ -1582,13 +1582,8 @@ void VPBTechnique::applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCac
 
         // Each handler may have a different delta/granularity in the scanline.
         // To take advantage of the material caching, we first collect all the
-        // scan points from all the handlers for the current tile, and then scan
-        // them in spatial order, calling the appropriate handler for each
-        // point.
-        //
-        // We will insert <lon, lat, handler*> elements in a vector, and sort
-        // all elements in increasing lon followed by increase lat, mimicking a
-        // scanline reading approach for efficient landclass caching
+        // scan points from all the handlers for the current triangle, and then 
+        // call the appropriate handler for each point.
         std::vector<std::tuple<double, double, VPBMaterialHandler *>>
             scan_points;
 
@@ -1612,8 +1607,6 @@ void VPBTechnique::applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCac
                 }
             }
         }
-
-        std::sort(scan_points.begin(), scan_points.end());
 
         const osg::Vec2 t0 = texPtr[i0];
         const osg::Vec2 t1 = texPtr[i1];
