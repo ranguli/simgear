@@ -515,7 +515,7 @@ class VertexNormalGenerator
 
         osg::ref_ptr<osg::Vec3Array>    _vertices;
         osg::ref_ptr<osg::Vec3Array>    _normals;
-        osg::ref_ptr<osg::FloatArray>   _elevations;
+        std::vector<float>                _elevationContraints;
 
         osg::ref_ptr<osg::Vec3Array>    _boundaryVertices;
 
@@ -541,8 +541,9 @@ VertexNormalGenerator::VertexNormalGenerator(Locator* masterLocator, const osg::
     _normals = new osg::Vec3Array;
     _normals->reserve(numVertices);
 
-    _elevations = new osg::FloatArray;
-    _elevations->reserve(numVertices);
+    // Initialize the elevation constraints to a suitably high number such
+    // that any vertex or valid constraint will always fall below it
+    _elevationContraints.assign(numVertices, 9999.0f);
 
     _boundaryVertices = new osg::Vec3Array;
     _boundaryVertices->reserve(_numRows*2 + _numColumns*2 + 4);
@@ -557,55 +558,76 @@ void VertexNormalGenerator::populateCenter(osgTerrain::Layer* elevationLayer, os
                      (elevationLayer->getNumColumns()!=static_cast<unsigned int>(_numColumns)) );
 
     osg::Image* landclassImage = colorLayer->getImage();
-    
-    for(int j=0; j<_numRows; ++j)
-    {
-        for(int i=0; i<_numColumns; ++i)
-        {
+
+    // We do two passes to calculate the model coordinates.
+    // In the first pass we calculate the x/y location and if there are any elevation constraints at that point.
+    // In the second pass we determine the elevation of the mesh as the lowest of
+    //   - the elevation of the location base on the elevation layer
+    //   - 0.0 (in the case of sea level)
+    //   - any constraints for this point and the surrounding 8 points
+
+    for(int j=0; j<_numRows; ++j) {
+        for(int i=0; i<_numColumns; ++i) {
+            osg::Vec3d ndc( ((double)i)/(double)(_numColumns-1), ((double)j)/(double)(_numRows-1), (double) 10000.0);
+            double elev = VPBTechnique::getConstrainedElevation(ndc, _masterLocator, _constraint_vtx_gap);
+            if (elev < 10000.0) {
+                _elevationContraints[j * _numColumns + i] =  elev;
+            }
+        }
+    }
+
+    for(int j=0; j<_numRows; ++j) {
+        for(int i=0; i<_numColumns; ++i) {
             osg::Vec3d ndc( ((double)i)/(double)(_numColumns-1), ((double)j)/(double)(_numRows-1), 0.0);
 
             bool validValue = true;
-            if (elevationLayer)
-            {
+
+            if (elevationLayer) {
                 float value = 0.0f;
                 if (sampled) validValue = elevationLayer->getInterpolatedValidValue(ndc.x(), ndc.y(), value);
                 else validValue = elevationLayer->getValidValue(i,j,value);
-                ndc.z() = value*_scaleHeight;
+
+                if (validValue) {
+                    ndc.z() = value*_scaleHeight;
+                } else {
+                    SG_LOG(SG_TERRAIN, SG_ALERT, "Invalid elevation value found " << elevationLayer->getName());
+                }
             }
 
-            if (landclassImage)
-            {
+            // Check against the sea
+            if (landclassImage) {
                 osg::Vec4d c = landclassImage->getColor(osg::Vec2d(ndc.x(), ndc.y()));
                 unsigned int lc = (unsigned int) std::abs(std::round(c.x() * 255.0));
                 if (atlas->isSea(lc)) {
-                    ndc.set(ndc.x(), ndc.y(), 0.0f);
+                    ndc.z() = 0.0;
                 }
             }
 
-            if (validValue)
-            {
-                osg::Vec3d model;
-
-                model = VPBTechnique::checkAndDisplaceAgainstElevationConstraints(ndc, _numColumns, _numRows, _constraint_vtx_gap, _masterLocator);
-
-                texcoords->push_back(osg::Vec2(ndc.x(), ndc.y()));
-
-                if (_elevations.valid())
-                {
-                    (*_elevations).push_back(ndc.z());
+            // Check against the constraints of this and surrounding points.  This avoids problems where
+            // there is a big elevation difference between two adjacent points, only one of which is covered
+            // by the AirportKeep
+            for (int jj = -1; jj < 2; ++jj) {
+                for (int ii = -1; ii < 2; ++ii) {
+                    int row = j + jj;
+                    int col = i + ii;
+                    if ((row > -1) && (row < _numRows) &&
+                        (col > -1) && (col < _numColumns) &&
+                        (ndc.z() > _elevationContraints[row * _numColumns + col])) {
+                            ndc.z() = _elevationContraints[row * _numColumns + col];
+                    }
                 }
-
-                // compute the local normal
-                osg::Vec3d ndc_one = ndc; ndc_one.z() += 1.0;
-                osg::Vec3d model_one;
-                _masterLocator->convertLocalToModel(ndc_one, model_one);
-                model_one = model_one - model;
-                model_one.normalize();
-
-                setVertex(i, j, osg::Vec3(model-_centerModel), model_one);
-            } else {
-                SG_LOG(SG_TERRAIN, SG_ALERT, "Invalid elevation value found");
             }
+
+            // compute the model coordinates and the local normal
+            osg::Vec3d ndc_up = ndc; ndc_up.z() += 1.0;
+            osg::Vec3d model, model_up;
+            _masterLocator->convertLocalToModel(ndc, model);
+            _masterLocator->convertLocalToModel(ndc_up, model_up);
+            model_up = model_up - model;
+            model_up.normalize();
+
+            setVertex(i, j, osg::Vec3(model-_centerModel), model_up);
+            texcoords->push_back(osg::Vec2(ndc.x(), ndc.y()));
         }
     }
 }
@@ -636,8 +658,6 @@ void VertexNormalGenerator::populateLeftBoundary(osgTerrain::Layer* elevationLay
                 if (sampled) validValue = elevationLayer->getInterpolatedValidValue(left_ndc.x(), left_ndc.y(), value);
                 else validValue = elevationLayer->getValidValue((_numColumns-1)+i,j,value);
                 ndc.z() = value*_scaleHeight;
-
-                ndc.z() += 0.f;
             }
 
             if (landclassImage)
@@ -2470,46 +2490,35 @@ void VPBTechnique::removeElevationConstraint(osg::ref_ptr<osg::Node> constraint)
 }
 
 // Check a given vertex against any elevation constraints  E.g. to ensure the terrain mesh doesn't
-// poke through any airport meshes.  If such a constraint exists, the function will return a replacement
-// vertex displaces such that it below the contraint relative to the passed in origin by vtx_gap meters.  
-osg::Vec3d VPBTechnique::checkAndDisplaceAgainstElevationConstraints(osg::Vec3d ndc, int cols, int rows, float vtx_gap, Locator* masterLocator)
+// poke through any airport meshes.  If such a constraint exists, the function will return the elevation
+// in local coordinates.
+double VPBTechnique::getConstrainedElevation(osg::Vec3d ndc, Locator* masterLocator, double vtx_gap)
 {
     const std::lock_guard<std::mutex> lock(VPBTechnique::_elevationConstraintMutex); // Lock the _elevationConstraintGroup for this scope
 
-    osg::Vec3d origin, vertex, deltaX, deltaY;
+    osg::Vec3d origin, vertex;
     masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), -1000), origin);
     masterLocator->convertLocalToModel(ndc, vertex);
-    masterLocator->convertLocalToModel(ndc + osg::Vec3d(1.0 / (double) cols, 0.0,0.0), deltaX);
-    masterLocator->convertLocalToModel(ndc + osg::Vec3d(0.0, 1.0 / (double) rows, 0.0), deltaY);
-
+    
     double elev = ndc.z();
 
-    for (int i = -1; i < 2; ++i) {
-        for (int j = -1; j < 2; ++j) {
-            osg::Vec3d delta = deltaX * i + deltaY * j;
-            osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
-            intersector = new osgUtil::LineSegmentIntersector(origin + delta, vertex + delta);
-            osgUtil::IntersectionVisitor visitor(intersector.get());
-            _elevationConstraintGroup->accept(visitor);
+    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector;
+    intersector = new osgUtil::LineSegmentIntersector(origin, vertex);
+    osgUtil::IntersectionVisitor visitor(intersector.get());
+    _elevationConstraintGroup->accept(visitor);
 
-            if (intersector->containsIntersections()) {
-                // We have an intersection with our constraints model, so move the terrain vertex to below the intersection point by vtx_gap meters
-                osg::Vec3d ray = intersector->getFirstIntersection().getWorldIntersectPoint() - (origin + delta);
-                ray.normalize();
-                osg::Vec3d local;
-                masterLocator->convertModelToLocal(intersector->getFirstIntersection().getWorldIntersectPoint() - ray*vtx_gap, local);
-                if (elev > local.z()) {
-                    elev = local.z();
-                }
-            }
+    if (intersector->containsIntersections()) {
+        // We have an intersection with our constraints model, so determine the elevation
+        osg::Vec3d intersect;
+        masterLocator->convertModelToLocal(intersector->getFirstIntersection().getWorldIntersectPoint(), intersect);
+        if (elev > intersect.z()) {
+            // intersection is below the terrain mesh, so lower the terrain vertex, with an extra epsilon to avoid
+            // z-buffer fighting and handle oddly shaped meshes.
+            elev = intersect.z() - vtx_gap;
         }
     }
 
-    // elev now contains the local elevation of a point constrained by the elevation constraints of the vertex and the 8 surrounding
-    // vertices.
-    osg::Vec3d constrained;
-    masterLocator->convertLocalToModel(osg::Vec3d(ndc.x(), ndc.y(), elev), constrained);
-    return constrained;    
+    return elev;
 }
 
 bool VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3d vertex)
