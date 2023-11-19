@@ -137,6 +137,11 @@ void VPBTechnique::setOptions(const SGReaderWriterOptions* options)
     _options = simgear::SGReaderWriterOptions::copyOrCreate(options);
     _options->setLoadOriginHint(simgear::SGReaderWriterOptions::LoadOriginHint::ORIGIN_EFFECTS);
     _options->setInstantiateMaterialEffects(true);
+
+    if (! _statsPropertyNode) {
+        const std::lock_guard<std::mutex> lock(VPBTechnique::_stats_mutex); // Lock the _stats_mutex for this scope
+        _statsPropertyNode = _options->getPropertyNode()->getNode("/sim/rendering/statistics/ws30/loading", true);
+    }    
 }
 
 void VPBTechnique::setFilterMatrixAs(FilterType filterType)
@@ -240,7 +245,7 @@ void VPBTechnique::init(int dirtyMask, bool assumeMultiThreaded)
 
     std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
     VPBTechnique::updateStats(tileID.level, elapsed_seconds.count());
-    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << elapsed_seconds.count() << " seconds.  Average " << VPBTechnique::getMeanLoadTime(tileID.level));
+    SG_LOG(SG_TERRAIN, SG_DEBUG, "Init complete of tile " << tileID.x << "," << tileID.y << " level " << tileID.level << " " << elapsed_seconds.count() << " seconds.");
 }
 
 Locator* VPBTechnique::computeMasterLocator()
@@ -2632,13 +2637,11 @@ void VPBTechnique::updateStats(int tileLevel, float loadTime) {
         _loadStats[tileLevel].first++;
         _loadStats[tileLevel].second +=loadTime;
     }
-}
 
-float VPBTechnique::getMeanLoadTime(int tileLevel) {
-    const std::lock_guard<std::mutex> lock(VPBTechnique::_stats_mutex); // Lock the _stats_mutex for this scope
-    if (_loadStats.find(tileLevel) == _loadStats.end()) return 0.0;
-
-    return _loadStats[tileLevel].second / _loadStats[tileLevel].first;
+    if (_statsPropertyNode) {
+        _statsPropertyNode->getNode("level", tileLevel, true)->setIntValue("count", _loadStats[tileLevel].first);
+        _statsPropertyNode->getNode("level", tileLevel, true)->setFloatValue("average-load-time-s", _loadStats[tileLevel].second / _loadStats[tileLevel].first);
+    }
 }
 
 BVHMaterial* VPBTechnique::getMaterial(osg::Vec3d point) {

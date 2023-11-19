@@ -183,7 +183,6 @@ class VPBTechnique : public TerrainTechnique
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up);
 
         static void updateStats(int tileLevel, float loadTime);
-        static float getMeanLoadTime(int tileLevel);
 
         // Check a given vertex against any constraints  E.g. to ensure we
         // don't get objects like trees sprouting from roads or runways.
@@ -223,6 +222,7 @@ class VPBTechnique : public TerrainTechnique
         inline static std::mutex _stats_mutex; // Protects the loading statistics
         typedef std::pair<unsigned int, float> LoadStat;
         inline static std::map<int, LoadStat> _loadStats;
+        inline static SGPropertyNode* _statsPropertyNode;
 
         inline static osg::ref_ptr<osg::Image> _defaultCoastlineTexture;
         inline static std::mutex _defaultCoastlineTexture_mutex;
