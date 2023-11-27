@@ -231,6 +231,11 @@ std::string SGBucket::gen_vpb_base() const {
 }
 
 std::string SGBucket::gen_vpb_subtile(int level, int x, int y) const {
+    return gen_vpb_filename(level, x, y, "subtile");
+}
+
+
+std::string SGBucket::gen_vpb_filename(int level, int x, int y, std::string type) const {
     // long int index;
     int top_lon, top_lat, main_lon, main_lat;
     char hem, pole;
@@ -268,15 +273,16 @@ std::string SGBucket::gen_vpb_subtile(int level, int x, int y) const {
 	main_lat *= -1;
     }
 
-    ::snprintf(raw_path, 256, "%c%03d%c%02d/%c%03d%c%02d/ws_%c%03d%c%02d_root_L0_X0_Y0/ws_%c%03d%c%02d_L%d_X%d_Y%d_subtile",
+    ::snprintf(raw_path, 256, "%c%03d%c%02d/%c%03d%c%02d/ws_%c%03d%c%02d_root_L0_X0_Y0/ws_%c%03d%c%02d_L%d_X%d_Y%d_%s",
 	    hem, top_lon, pole, top_lat, 
 	    hem, main_lon, pole, main_lat,
         hem, main_lon, pole, main_lat,
         hem, main_lon, pole, main_lat,
-        level, x, y);
+        level, x, y, type.c_str());
 
     return raw_path;
 }
+
 // Build the path name for this bucket
 std::string SGBucket::gen_base_path() const {
     // long int index;

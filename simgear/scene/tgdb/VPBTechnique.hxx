@@ -109,7 +109,6 @@ class VPBTechnique : public TerrainTechnique
         // LineFeatures and AreaFeatures are draped over the underlying mesh.
         static void addLineFeatureList(SGBucket bucket, LineFeatureBinList roadList);
         static void addAreaFeatureList(SGBucket bucket, AreaFeatureBinList areaList);
-        static void addCoastlineList(SGBucket bucket, CoastlineBinList areaList);
         static void unloadFeatures(SGBucket bucket);
 
     protected:
@@ -174,11 +173,7 @@ class VPBTechnique : public TerrainTechnique
             unsigned int xsize,
             unsigned int ysize);
 
-        virtual osg::Image* generateCoastTexture(BufferData& buffer);
         virtual osg::Image* generateWaterTexture(Atlas* atlas);
-        virtual void addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
-        virtual void updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y);
-        virtual void writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy);
 
         virtual osg::Vec3d getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up);
 
@@ -208,7 +203,6 @@ class VPBTechnique : public TerrainTechnique
 
         typedef std::pair<SGBucket, LineFeatureBinList> BucketLineFeatureBinList;
         typedef std::pair<SGBucket, AreaFeatureBinList> BucketAreaFeatureBinList;
-        typedef std::pair<SGBucket, CoastlineBinList> BucketCoastlineBinList;
 
         inline static std::list<BucketLineFeatureBinList>  _lineFeatureLists;
         inline static std::mutex _lineFeatureLists_mutex;  // protects the _lineFeatureLists;
@@ -216,16 +210,10 @@ class VPBTechnique : public TerrainTechnique
         inline static std::list<BucketAreaFeatureBinList>  _areaFeatureLists;
         inline static std::mutex _areaFeatureLists_mutex;  // protects the _areaFeatureLists;
 
-        inline static std::list<BucketCoastlineBinList>  _coastFeatureLists;
-        inline static std::mutex _coastFeatureLists_mutex;  // protects the _areaFeatureLists;
-
         inline static std::mutex _stats_mutex; // Protects the loading statistics
         typedef std::pair<unsigned int, float> LoadStat;
         inline static std::map<int, LoadStat> _loadStats;
         inline static SGPropertyNode* _statsPropertyNode;
-
-        inline static osg::ref_ptr<osg::Image> _defaultCoastlineTexture;
-        inline static std::mutex _defaultCoastlineTexture_mutex;
 
         inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
         inline static const char* MODEL_OFFSET   = "fg_modelOffset";

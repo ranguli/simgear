@@ -53,6 +53,7 @@
 
 #include "VPBTechnique.hxx"
 #include "VPBMaterialHandler.hxx"
+#include "VPBRasterRenderer.hxx"
 
 using namespace osgTerrain;
 using namespace simgear;
@@ -63,13 +64,6 @@ VPBTechnique::VPBTechnique()
     setFilterWidth(0.1);
     setFilterMatrixAs(GAUSSIAN);
     _randomObjectsConstraintGroup = new osg::Group();
-
-    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
-    if (VPBTechnique::_defaultCoastlineTexture == 0) {
-        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
-        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
-    }
 }
 
 VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string fileName):
@@ -80,13 +74,6 @@ VPBTechnique::VPBTechnique(const SGReaderWriterOptions* options, const string fi
     setFilterMatrixAs(GAUSSIAN);
     setOptions(options);
     _randomObjectsConstraintGroup = new osg::Group();
-
-    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
-    if (VPBTechnique::_defaultCoastlineTexture == 0) {
-        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
-        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
-    }
 }
 
 VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
@@ -98,13 +85,6 @@ VPBTechnique::VPBTechnique(const VPBTechnique& gt,const osg::CopyOp& copyop):
     setFilterMatrix(gt._filterMatrix);
     setOptions(gt._options);
     _randomObjectsConstraintGroup = new osg::Group();
-
-    const std::lock_guard<std::mutex> lock(VPBTechnique::_defaultCoastlineTexture_mutex); 
-    if (VPBTechnique::_defaultCoastlineTexture == 0) {
-        VPBTechnique::_defaultCoastlineTexture = new osg::Image();
-        VPBTechnique::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        VPBTechnique::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
-    }
 }
 
 VPBTechnique::~VPBTechnique()
@@ -1331,6 +1311,9 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
     buffer._BVHMaterialMap = atlas->getBVHMaterialMap();
 
     auto tileID = _terrainTile->getTileID();
+    const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
+    const SGGeod loc = SGGeod::fromCart(toSG(world));
+    const SGBucket bucket = SGBucket(loc);
 
     bool photoScenery = false;
 
@@ -1345,9 +1328,6 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
         // naming convention as the VPB scenery itself.
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Using Photoscenery for " << _fileName << " " << tileID.level << " X" << tileID.x << " Y" << tileID.y);
 
-        const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
-        const SGGeod loc = SGGeod::fromCart(toSG(world));
-        const SGBucket bucket = SGBucket(loc);
         SGPath orthotexture;
 
         osgDB::FilePathList& pathList = _options->getDatabasePathList();
@@ -1452,8 +1432,36 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
         texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
         texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
-        osg::ref_ptr<osg::Texture2D> coastTexture  = new osg::Texture2D;
-        coastTexture->setImage(generateCoastTexture(buffer));
+        osg::ref_ptr<osg::Texture2D> coastTexture;
+
+        // Look for a pre-generated coastline texture.
+        osgDB::FilePathList& pathList = _options->getDatabasePathList();
+        bool found = false;
+        SGPath coastTexturePath;
+        osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
+        std::string filename = bucket.gen_vpb_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
+
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Looking for coastline texture " << filename);
+
+        for (auto iter = pathList.begin(); !found && iter != pathList.end(); ++iter) {
+            coastTexturePath = SGPath(*iter);
+            coastTexturePath.append("vpb");
+            coastTexturePath.append(filename);
+            if (coastTexturePath.exists()) {
+                found = true;
+                coastTexture = SGLoadTexture2D(SGPath(coastTexturePath), _options, false, false);
+                coastTexture->getImage()->flipVertical();
+                SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture " << coastTexture->getName());
+                break;
+            }
+        }
+
+        if (! found) {
+            VPBRasterRenderer* renderer = new VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
+            osg::ref_ptr<osg::Image> raster = renderer->generateCoastTexture();
+            coastTexture = new osg::Texture2D(raster);
+        }
+
         coastTexture->setMaxAnisotropy(16.0f);
         coastTexture->setResizeNonPowerOfTwoHint(false);
         coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
@@ -1461,7 +1469,6 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
         coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
         coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
-        osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(7, coastTexture, osg::StateAttribute::ON);
@@ -2190,212 +2197,6 @@ osg::Image* VPBTechnique::generateWaterTexture(Atlas* atlas) {
 }
 
 
-osg::Image* VPBTechnique::generateCoastTexture(BufferData& buffer) {
-
-    unsigned int coast_features_lod_range = 4;
-    unsigned int waterTextureSize = 2048;
-    float coastWidth = 150.0;
-
-    const unsigned int tileLevel = _terrainTile->getTileID().level;
-    const SGPropertyNode* propertyNode = _options->getPropertyNode().get();
-
-    if (propertyNode) {
-        const SGPropertyNode* static_lod = propertyNode->getNode("/sim/rendering/static-lod");
-        waterTextureSize =         static_lod->getIntValue("water-texture-size", coast_features_lod_range);
-        coast_features_lod_range = static_lod->getIntValue("coastline-lod-level", coast_features_lod_range);
-        coastWidth =               static_lod->getFloatValue("coastline-width", coastWidth);
-    }
-
-    if ((_coastFeatureLists.size() == 0 ) || (tileLevel < coast_features_lod_range)) {
-        return VPBTechnique::_defaultCoastlineTexture;
-    }
-
-    // Get all appropriate coasts.  We assume that the VPB terrain tile is smaller than a Bucket size.
-    const osg::Vec3d world = buffer._transform->getMatrix().getTrans();
-    float tileSize = sqrt(buffer._width * buffer._width + buffer._height * buffer._height);
-    const SGGeod loc = SGGeod::fromCart(toSG(world));
-    const SGBucket bucket = SGBucket(loc);
-    // We're in Earth-centered coordinates, so "up" is simply directly away from (0,0,0)
-    osg::Vec3d up = world;
-    up.normalize();
-
-    TileBounds tileBounds(buffer._masterLocator, up);
-
-    bool coastsFound = false;
-
-    // Do a quick pass to check that there is some coastline to generate here. This is worth doing
-    // because the LoD scheme results in many tiles with no coastlines.
-    for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
-        if (coasts->first != bucket) continue;
-        const CoastlineBinList coastBins = coasts->second;
-
-        for (auto rb = coastBins.begin(); !coastsFound && (rb != coastBins.end()); ++rb)
-        {
-            auto coastFeatures = (*rb)->getCoastlines();
-            for (auto r = coastFeatures.begin(); !coastsFound && (r != coastFeatures.end()); ++r) {
-                for (auto p = r->_nodes.begin(); !coastsFound && (p != r->_nodes.end()); ++p) {
-                    if (tileBounds.insideTile(*p)) {
-                        coastsFound = true;
-                    }
-                }
-            }
-        }
-    }
-
-    if (coastsFound) {
-        // We have at least one coast here, so generate a coastline texture for the tile and
-        // render to it.
-        osg::Image* coastTexture = new osg::Image();
-        coastTexture->allocateImage(waterTextureSize, waterTextureSize, 1, GL_RGBA, GL_FLOAT);
-        for (unsigned int y = 0; y < waterTextureSize; ++y) {
-            for (unsigned int x = 0; x < waterTextureSize; ++x) {
-                coastTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), x, y);
-            }
-        }
-
-        for (auto coasts = _coastFeatureLists.begin(); coasts != _coastFeatureLists.end(); ++coasts) {
-            if (coasts->first != bucket) continue;
-            const CoastlineBinList coastBins = coasts->second;
-
-            for (auto rb = coastBins.begin(); rb != coastBins.end(); ++rb)
-            {
-                auto coastFeatures = (*rb)->getCoastlines();
-
-                for (auto r = coastFeatures.begin(); r != coastFeatures.end(); ++r) {
-                    auto clipped = tileBounds.clipToTile(r->_nodes);
-                    if (clipped.size() > 1) {                    
-                        // We need at least two points to render a line.
-                        LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, coastWidth);
-                        addCoastline(buffer._masterLocator, coastTexture, line, waterTextureSize, tileSize, coastWidth);
-                    }
-                }
-            }
-        }
-
-        return coastTexture;
-    }
-
-    return VPBTechnique::_defaultCoastlineTexture;
-}
-
-// Update the color of a particular texture pixel, clipping to the texture and not over-writing a larger value.
-void VPBTechnique::updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y) {
-    if (floor(x) < 0.0) return;
-    if (floor(x) > (waterTextureSize -1)) return;
-    if (floor(y) < 0.0) return;
-    if (floor(y) > (waterTextureSize -1)) return;
-    auto clamp = [waterTextureSize](float l) { return (unsigned int) fmaxf(0, fminf(floor(l), waterTextureSize - 1)); };
-    unsigned int clamped_x = clamp(x);
-    unsigned int clamped_y = clamp(y);    
-    osg::Vec4 new_color = max(waterTexture->getColor(clamped_x, clamped_y), color);
-    waterTexture->setColor(new_color, clamped_x, clamped_y);
-}
-
-
-void VPBTechnique::writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy) {
-
-    // We need to create a shoreline of width coastWidth to define it better and to hide any discrepancy in the underlying terrain mesh
-    // which may be either mis-aligned or simply of insufficient resolution.
-    float waterTextureResolution = tileSize / waterTextureSize;
-    int width = (int) coastWidth / waterTextureResolution;
-    int aboveHWLtxUnits = 0.3*width;
-    int belowHWLtxUnits = width - aboveHWLtxUnits;
-
-    // Above the high water mark we just want sand.  However there can be interpolation artifacts right at the edge causing a border or water. To avoid
-    // this we create an extra texel where the G channel is used to ensure we get a hard fall-off to the underlying texture
-    // on the adjacent sand texture unit.
-    updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 1.0f, 0.0f, 0.0), x - dx*(aboveHWLtxUnits + 1), y -dy*(aboveHWLtxUnits + 1));
-    
-    // Create the sand above the high water mark
-    for (int d = 0; d < aboveHWLtxUnits; d++) {
-        updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 1.0f, 0.0f, 0.0), x - dx*d, y -dy*d);
-    }
-
-    // Create the shoreline below the high water level which will gradually merge into the underlying terrain mesh
-    for (int d = 0; d < belowHWLtxUnits; d++) {
-        updateWaterTexture(waterTexture, waterTextureSize, osg::Vec4(0.0f, 0.0f, 1.0f, 0.0)*(belowHWLtxUnits -d)/belowHWLtxUnits, x + dx*d, y + dy*d);
-    }
-}
-
-void VPBTechnique::addCoastline(Locator* masterLocator, osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth) {
-    
-
-    if (line._nodes.size() < 2) { 
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Coding error - LineFeatureBin::LineFeature with fewer than two nodes"); 
-        return; 
-    }
-
-    auto iter = line._nodes.begin();
-
-    // LineFeature is in Model coordinates, but for the rasterization we will use local coordinates.
-    osg::Vec3d start;
-    bool success = masterLocator->convertModelToLocal(*iter, start);
-    if (!success) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to convert from model coordinates to local: " << *iter); 
-        return; 
-    }
-
-    iter++;
-    for (; iter != line._nodes.end(); iter++) {
-        osg::Vec3d end;
-        success = masterLocator->convertModelToLocal(*iter, end);
-        if (!success) {
-            SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to convert from model coordinates to local: " << *iter); 
-            continue; 
-        }
-
-        // We now have two points in local (2d) space, so rasterize the line between them onto the water texture.
-        // We use a simple version of a DDA to render the lines.  We should replace this with a scanline algorithm to handle coastlines
-        // and waterbodies efficiently.
-        // Do everything in the texture coordinates.
-        float dx = (end.x() - start.x()) * waterTextureSize;
-        float dy = (end.y() - start.y()) * waterTextureSize;
-        float step = abs(dy);
-        bool steep = true;
-        if (abs(dx) >= abs(dy)) {
-            step = abs(dx);
-            steep = false;
-        }
-        dx = dx / step;
-        dy = dy / step;
-        float x = start.x() * waterTextureSize;
-        float y = start.y() * waterTextureSize;
-        int i = 0;
-        while (i <= step) {
-            if ((x >= 0.0f) && (y >= 0.0f) && (x < waterTextureSize) && (y < waterTextureSize)) {
-                // The line defines the Mean High Water Level.  By definition, the sea is always to
-                // the right of the line.  We want to fill in a section of sea and shore to cover up any issues 
-                // between the OSM data and the landclass texture.
-
-                if (steep) {
-                    // A steep line, so we are should add width in the x-axis
-                    if (dy < 0) {
-                        // We are travelling downwards, so the seaward side is -x
-                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, -1, 0);
-                    } else {
-                        // We are travelling upwards, so the seaward side is +x
-                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 1, 0);
-                    }
-                } else {
-                    // Not a steep line, so we should add width in the y axis
-                    if (dx < 0) {
-                        // We are travelling right to left, so the seaward side is +y
-                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 0, 1);
-                    } else {
-                        // We are travelling left to right, so the seaward side is -y
-                        writeShoreStripe(waterTexture, waterTextureSize, tileSize, coastWidth, x , y, 0, -1);
-                    }
-                }
-            } 
-
-            x = x + dx;
-            y = y + dy;
-            i = i + 1;
-        }
-
-        start = end;
-    }
-}
 
 // Find the intersection of a given SGGeod with the terrain mesh
 osg::Vec3d VPBTechnique::getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up) 
@@ -2579,18 +2380,6 @@ void VPBTechnique::addAreaFeatureList(SGBucket bucket, AreaFeatureBinList areaLi
     }
 }
 
-void VPBTechnique::addCoastlineList(SGBucket bucket, CoastlineBinList coastline)
-{
-    if (coastline.empty()) return;
-
-    // Block to mutex the List alone
-    {
-        const std::lock_guard<std::mutex> lock(VPBTechnique::_coastFeatureLists_mutex); // Lock the _lineFeatureLists for this scope
-        _coastFeatureLists.push_back(std::pair(bucket, coastline));
-    }
-
-}
-
 void VPBTechnique::unloadFeatures(SGBucket bucket)
 {
     SG_LOG(SG_TERRAIN, SG_DEBUG, "Erasing all features with entry " << bucket);
@@ -2613,17 +2402,6 @@ void VPBTechnique::unloadFeatures(SGBucket bucket)
                 SG_LOG(SG_TERRAIN, SG_DEBUG, "Unloading  area feature for " << bucket);
                 auto areafeatureBinList = lf->second;
                 areafeatureBinList.clear();
-            }
-        }
-    }
-
-    {
-        const std::lock_guard<std::mutex> lockcoasts(VPBTechnique::_coastFeatureLists_mutex); // Lock the _coastFeatureLists for this scope
-        for (auto lf = _coastFeatureLists.begin(); lf != _coastFeatureLists.end(); ++lf) {
-            if (lf->first == bucket) {
-                SG_LOG(SG_TERRAIN, SG_DEBUG, "Unloading  area feature for " << bucket);
-                auto coastfeatureBinList = lf->second;
-                coastfeatureBinList.clear();
             }
         }
     }

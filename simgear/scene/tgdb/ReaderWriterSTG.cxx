@@ -55,6 +55,7 @@
 #include <simgear/scene/material/matlib.hxx>
 #include <simgear/scene/tgdb/SGBuildingBin.hxx>
 #include <simgear/scene/tgdb/TreeBin.hxx>
+#include <simgear/scene/tgdb/VPBRasterRenderer.hxx>
 #include <simgear/scene/tgdb/VPBTechnique.hxx>
 #include <simgear/scene/tgdb/LightBin.hxx>
 
@@ -815,7 +816,7 @@ struct ReaderWriterSTG::_ModelBin {
                     coastFeatures.push_back(new CoastlineBin(path));
                 }
 
-                VPBTechnique::addCoastlineList(bucket, coastFeatures);
+                VPBRasterRenderer::addCoastlineList(bucket, coastFeatures);
             }
 
             // OBJECTs include airports

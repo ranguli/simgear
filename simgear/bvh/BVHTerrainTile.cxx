@@ -39,7 +39,7 @@ BVHTerrainTile::~BVHTerrainTile()
 }
 
 BVHMaterial* BVHTerrainTile::getMaterial(simgear::BVHLineSegmentVisitor* lsv) {
-    BVHMaterial* material;
+    BVHMaterial* material = 0;
     if (! lsv->empty()) {
         // LSV contains the uv coordinates of the intersection u*(v1-v0) + v*(v2-v0) and the origin indices on the drawable they refer to.
         // However it does not have any information on the actual material as this is part of the TerrainTile texture.

@@ -25,6 +25,7 @@ set(HEADERS
     TreeBin.hxx
     VPBElevationSlice.hxx
     VPBMaterialHandler.hxx
+    VPBRasterRenderer.hxx
     VPBTileBounds.hxx
     VPBTechnique.hxx
     apt_signs.hxx
@@ -49,6 +50,7 @@ set(SOURCES
     TreeBin.cxx
     VPBElevationSlice.cxx
     VPBMaterialHandler.cxx
+    VPBRasterRenderer.cxx
     VPBTileBounds.cxx
     VPBTechnique.cxx
     apt_signs.cxx
