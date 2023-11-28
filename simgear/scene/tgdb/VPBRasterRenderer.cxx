@@ -62,9 +62,17 @@ _tile(tile),_world(world),_tile_width(tile_width),_tile_height(tile_height)
 {
     const std::lock_guard<std::mutex> lock(VPBRasterRenderer::_defaultCoastlineTexture_mutex); 
     if (VPBRasterRenderer::_defaultCoastlineTexture == 0) {
-        VPBRasterRenderer::_defaultCoastlineTexture = new osg::Image();
-        VPBRasterRenderer::_defaultCoastlineTexture->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-        VPBRasterRenderer::_defaultCoastlineTexture->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+        osg::ref_ptr<osg::Image> defaultCoastImage = new osg::Image();
+        defaultCoastImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        defaultCoastImage->setColor(osg::Vec4f(0.0f,0.0f,0.0f,0.0f), 0,0);
+
+        VPBRasterRenderer::_defaultCoastlineTexture = new osg::Texture2D(defaultCoastImage);
+        VPBRasterRenderer::_defaultCoastlineTexture->setMaxAnisotropy(16.0f);
+        VPBRasterRenderer::_defaultCoastlineTexture->setResizeNonPowerOfTwoHint(false);
+        VPBRasterRenderer::_defaultCoastlineTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        VPBRasterRenderer::_defaultCoastlineTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        VPBRasterRenderer::_defaultCoastlineTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        VPBRasterRenderer::_defaultCoastlineTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
     }
 
     if (propertyNode) {
@@ -78,7 +86,7 @@ _tile(tile),_world(world),_tile_width(tile_width),_tile_height(tile_height)
 
 }
 
-osg::Image* VPBRasterRenderer::generateCoastTexture() {
+osg::ref_ptr<osg::Texture2D> VPBRasterRenderer::generateCoastTexture() {
 
     if ((_coastFeatureLists.size() == 0 ) || (_tile->getTileID().level < _coast_features_lod_range)) {
         return _defaultCoastlineTexture;
@@ -118,11 +126,11 @@ osg::Image* VPBRasterRenderer::generateCoastTexture() {
     if (coastsFound) {
         // We have at least one coast here, so generate a coastline texture for the tile and
         // render to it.
-        osg::Image* coastTexture = new osg::Image();
-        coastTexture->allocateImage(_waterTextureSize, _waterTextureSize, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        osg::ref_ptr<osg::Image> coastImage = new osg::Image();
+        coastImage->allocateImage(_waterTextureSize, _waterTextureSize, 1, GL_RGBA, GL_UNSIGNED_BYTE);
         for (unsigned int y = 0; y < _waterTextureSize; ++y) {
             for (unsigned int x = 0; x < _waterTextureSize; ++x) {
-                coastTexture->setColor(osg::Vec4(0u,0u,0u,0u), x, y);
+                coastImage->setColor(osg::Vec4(0u,0u,0u,0u), x, y);
             }
         }
 
@@ -139,12 +147,19 @@ osg::Image* VPBRasterRenderer::generateCoastTexture() {
                     if (clipped.size() > 1) {                    
                         // We need at least two points to render a line.
                         LineFeatureBin::LineFeature line = LineFeatureBin::LineFeature(clipped, _coastWidth);
-                        addCoastline(coastTexture, line, _waterTextureSize, tileSize, _coastWidth);
+                        addCoastline(coastImage, line, _waterTextureSize, tileSize, _coastWidth);
                     }
                 }
             }
         }
 
+        osg::ref_ptr<osg::Texture2D> coastTexture = new osg::Texture2D(coastImage);
+        coastTexture->setMaxAnisotropy(16.0f);
+        coastTexture->setResizeNonPowerOfTwoHint(false);
+        coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
         return coastTexture;
     }
 

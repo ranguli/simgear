@@ -1451,6 +1451,12 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
                 found = true;
                 coastTexture = SGLoadTexture2D(SGPath(coastTexturePath), _options, false, false);
                 coastTexture->getImage()->flipVertical();
+                coastTexture->setMaxAnisotropy(16.0f);
+                coastTexture->setResizeNonPowerOfTwoHint(false);
+                coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+                coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+                coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+                coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
                 SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture " << coastTexture->getName());
                 break;
             }
@@ -1458,16 +1464,9 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
 
         if (! found) {
             VPBRasterRenderer* renderer = new VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
-            osg::ref_ptr<osg::Image> raster = renderer->generateCoastTexture();
-            coastTexture = new osg::Texture2D(raster);
+            coastTexture = renderer->generateCoastTexture();
         }
 
-        coastTexture->setMaxAnisotropy(16.0f);
-        coastTexture->setResizeNonPowerOfTwoHint(false);
-        coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-        coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);

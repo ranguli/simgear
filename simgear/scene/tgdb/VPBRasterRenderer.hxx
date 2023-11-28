@@ -47,12 +47,12 @@ class VPBRasterRenderer
     public:
         VPBRasterRenderer(const SGPropertyNode* propertyNode, osg::ref_ptr<TerrainTile> tile, const osg::Vec3d world, unsigned int tile_width, unsigned int tile_height);
 
-        virtual osg::Image* generateCoastTexture();
+        virtual osg::ref_ptr<osg::Texture2D> generateCoastTexture();
         virtual void addCoastline(osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
 
         static void addCoastlineList(SGBucket bucket, CoastlineBinList areaList);
         static void unloadFeatures(SGBucket bucket);
-        static osg::ref_ptr<osg::Image> getDefaultCoastlineTexture() { return _defaultCoastlineTexture; }
+        static osg::ref_ptr<osg::Texture2D> getDefaultCoastlineTexture() { return _defaultCoastlineTexture; }
 
     protected:
 
@@ -69,7 +69,7 @@ class VPBRasterRenderer
         inline static std::list<BucketCoastlineBinList>  _coastFeatureLists;
         inline static std::mutex _coastFeatureLists_mutex;  // protects the _areaFeatureLists;
 
-        inline static osg::ref_ptr<osg::Image> _defaultCoastlineTexture;
+        inline static osg::ref_ptr<osg::Texture2D> _defaultCoastlineTexture;
         inline static std::mutex _defaultCoastlineTexture_mutex;
 
         inline static int _coast_features_lod_range = 4;
