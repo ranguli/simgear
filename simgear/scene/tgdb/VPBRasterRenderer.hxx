@@ -48,7 +48,7 @@ class VPBRasterRenderer
         VPBRasterRenderer(const SGPropertyNode* propertyNode, osg::ref_ptr<TerrainTile> tile, const osg::Vec3d world, unsigned int tile_width, unsigned int tile_height);
 
         virtual osg::ref_ptr<osg::Texture2D> generateCoastTexture();
-        virtual void addCoastline(osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);        
+        virtual osg::ref_ptr<osg::Image> generateCoastImage();
 
         static void addCoastlineList(SGBucket bucket, CoastlineBinList areaList);
         static void unloadFeatures(SGBucket bucket);
@@ -56,6 +56,7 @@ class VPBRasterRenderer
 
     protected:
 
+        virtual void addCoastline(osg::Image* waterTexture, LineFeatureBin::LineFeature line, unsigned int waterTextureSize, float tileSize, float coastWidth);
         virtual void updateWaterTexture(osg::Image* waterTexture, unsigned int waterTextureSize, osg::Vec4 color, float x, float y);
         virtual void writeShoreStripe(osg::Image* waterTexture, unsigned int waterTextureSize, float tileSize, float coastWidth, float x, float y, int dx, int dy);
 

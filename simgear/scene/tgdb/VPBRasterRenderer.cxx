@@ -92,6 +92,24 @@ osg::ref_ptr<osg::Texture2D> VPBRasterRenderer::generateCoastTexture() {
         return _defaultCoastlineTexture;
     }
 
+    osg::ref_ptr<osg::Image> coastImage = generateCoastImage();
+
+    if (coastImage) {
+        osg::ref_ptr<osg::Texture2D> coastTexture = new osg::Texture2D();
+        coastTexture->setImage(coastImage);
+        coastTexture->setMaxAnisotropy(16.0f);
+        coastTexture->setResizeNonPowerOfTwoHint(false);
+        coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+        coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+        coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+        return coastTexture;
+    } else {
+        return VPBRasterRenderer::_defaultCoastlineTexture;
+    }
+}
+
+osg::ref_ptr<osg::Image> VPBRasterRenderer::generateCoastImage() {
     // Get all appropriate coasts.  We assume that the VPB terrain tile is smaller than a Bucket size.
     float tileSize = sqrt(_tile_width * _tile_width + _tile_height * _tile_height);
     const SGGeod loc = SGGeod::fromCart(toSG(_world));
@@ -126,7 +144,7 @@ osg::ref_ptr<osg::Texture2D> VPBRasterRenderer::generateCoastTexture() {
     if (coastsFound) {
         // We have at least one coast here, so generate a coastline texture for the tile and
         // render to it.
-        osg::ref_ptr<osg::Image> coastImage = new osg::Image();
+        osg::Image* coastImage = new osg::Image();
         coastImage->allocateImage(_waterTextureSize, _waterTextureSize, 1, GL_RGBA, GL_UNSIGNED_BYTE);
         for (unsigned int y = 0; y < _waterTextureSize; ++y) {
             for (unsigned int x = 0; x < _waterTextureSize; ++x) {
@@ -153,17 +171,10 @@ osg::ref_ptr<osg::Texture2D> VPBRasterRenderer::generateCoastTexture() {
             }
         }
 
-        osg::ref_ptr<osg::Texture2D> coastTexture = new osg::Texture2D(coastImage);
-        coastTexture->setMaxAnisotropy(16.0f);
-        coastTexture->setResizeNonPowerOfTwoHint(false);
-        coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-        coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-        coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
-        return coastTexture;
+        return coastImage;
     }
 
-    return VPBRasterRenderer::_defaultCoastlineTexture;
+    return NULL;
 }
 
 
@@ -242,7 +253,6 @@ void VPBRasterRenderer::addCoastline(osg::Image* waterTexture, LineFeatureBin::L
                 // The line defines the Mean High Water Level.  By definition, the sea is always to
                 // the right of the line.  We want to fill in a section of sea and shore to cover up any issues 
                 // between the OSM data and the landclass texture.
-
                 if (steep) {
                     // A steep line, so we are should add width in the x-axis
                     if (dy < 0) {
