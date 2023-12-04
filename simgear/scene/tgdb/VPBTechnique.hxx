@@ -24,6 +24,8 @@
 #include <osg/MatrixTransform>
 #include <osg/Geode>
 #include <osg/Geometry>
+#include <osgTerrain/TerrainTile>
+#include <osgTerrain/Terrain>
 
 #include <osgTerrain/TerrainTechnique>
 #include <osgTerrain/Locator>
@@ -133,6 +135,179 @@ class VPBTechnique : public TerrainTechnique
         protected:
             ~BufferData() {}
         };
+
+        class VertexNormalGenerator
+        {
+        public:
+
+            typedef std::vector<int> Indices;
+            typedef std::pair< osg::ref_ptr<osg::Vec2Array>, Locator* > TexCoordLocatorPair;
+            typedef std::map< Layer*, TexCoordLocatorPair > LayerToTexCoordMap;
+
+            VertexNormalGenerator(Locator* masterLocator, const osg::Vec3d& centerModel, int numRows, int numColmns, float scaleHeight, float vtx_gap, bool createSkirt);
+
+            void populateCenter(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas, osg::Vec2Array* texcoords);
+            void populateLeftBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+            void populateRightBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+            void populateAboveBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+            void populateBelowBoundary(osgTerrain::Layer* elevationLayer, osgTerrain::Layer* colorLayer, osg::ref_ptr<Atlas> atlas);
+
+            void computeNormals();
+
+            unsigned int capacity() const { return _vertices->capacity(); }
+
+            inline void setVertex(int c, int r, const osg::Vec3& v, const osg::Vec3& n)
+            {
+                int& i = index(c,r);
+                if (i==0) {
+                    if (r<0 || r>=_numRows || c<0 || c>=_numColumns) {
+                        i = -(1+static_cast<int>(_boundaryVertices->size()));
+                        _boundaryVertices->push_back(v);
+                    } else {
+                        i = _vertices->size() + 1;
+                        _vertices->push_back(v);
+                        _normals->push_back(n);
+                    }
+                } else if (i<0) {
+                    (*_boundaryVertices)[-i-1] = v;
+                } else {
+                    // average the vertex positions
+                    (*_vertices)[i-1] = ((*_vertices)[i-1] + v)*0.5f;
+                    (*_normals)[i-1] = n;
+                }
+            }
+
+            inline int& index(int c, int r) { return _indices[(r+1)*(_numColumns+2)+c+1]; }
+
+            inline int index(int c, int r) const { return _indices[(r+1)*(_numColumns+2)+c+1]; }
+
+            inline int vertex_index(int c, int r) const { int i = _indices[(r+1)*(_numColumns+2)+c+1]; return i-1; }
+
+            inline bool vertex(int c, int r, osg::Vec3& v) const
+            {
+                int i = index(c,r);
+                if (i==0) return false;
+                if (i<0) v = (*_boundaryVertices)[-i-1];
+                else v = (*_vertices)[i-1];
+                return true;
+            }
+
+            inline bool computeNormal(int c, int r, osg::Vec3& n) const
+            {
+#if 1
+                return computeNormalWithNoDiagonals(c,r,n);
+#else
+                return computeNormalWithDiagonals(c,r,n);
+#endif
+            }
+
+            inline bool computeNormalWithNoDiagonals(int c, int r, osg::Vec3& n) const
+            {
+                osg::Vec3 center;
+                bool center_valid  = vertex(c, r,  center);
+                if (!center_valid) return false;
+
+                osg::Vec3 left, right, top,  bottom;
+                bool left_valid  = vertex(c-1, r,  left);
+                bool right_valid = vertex(c+1, r,   right);
+                bool bottom_valid = vertex(c,   r-1, bottom);
+                bool top_valid = vertex(c,   r+1, top);
+
+                osg::Vec3 dx(0.0f,0.0f,0.0f);
+                osg::Vec3 dy(0.0f,0.0f,0.0f);
+                osg::Vec3 zero(0.0f,0.0f,0.0f);
+                if (left_valid)
+                {
+                    dx += center-left;
+                }
+                if (right_valid)
+                {
+                    dx += right-center;
+                }
+                if (bottom_valid)
+                {
+                    dy += center-bottom;
+                }
+                if (top_valid)
+                {
+                    dy += top-center;
+                }
+
+                if (dx==zero || dy==zero) return false;
+
+                n = dx ^ dy;
+                return n.normalize() != 0.0f;
+            }
+
+            inline bool computeNormalWithDiagonals(int c, int r, osg::Vec3& n) const
+            {
+                osg::Vec3 center;
+                bool center_valid  = vertex(c, r,  center);
+                if (!center_valid) return false;
+
+                osg::Vec3 top_left, top_right, bottom_left, bottom_right;
+                bool top_left_valid  = vertex(c-1, r+1,  top_left);
+                bool top_right_valid  = vertex(c+1, r+1,  top_right);
+                bool bottom_left_valid  = vertex(c-1, r-1,  bottom_left);
+                bool bottom_right_valid  = vertex(c+1, r-1,  bottom_right);
+
+                osg::Vec3 left, right, top,  bottom;
+                bool left_valid  = vertex(c-1, r,  left);
+                bool right_valid = vertex(c+1, r,   right);
+                bool bottom_valid = vertex(c,   r-1, bottom);
+                bool top_valid = vertex(c,   r+1, top);
+
+                osg::Vec3 dx(0.0f,0.0f,0.0f);
+                osg::Vec3 dy(0.0f,0.0f,0.0f);
+                osg::Vec3 zero(0.0f,0.0f,0.0f);
+                const float ratio = 0.5f;
+                if (left_valid)
+                {
+                    dx = center-left;
+                    if (top_left_valid) dy += (top_left-left)*ratio;
+                    if (bottom_left_valid) dy += (left-bottom_left)*ratio;
+                }
+                if (right_valid)
+                {
+                    dx = right-center;
+                    if (top_right_valid) dy += (top_right-right)*ratio;
+                    if (bottom_right_valid) dy += (right-bottom_right)*ratio;
+                }
+                if (bottom_valid)
+                {
+                    dy += center-bottom;
+                    if (bottom_left_valid) dx += (bottom-bottom_left)*ratio;
+                    if (bottom_right_valid) dx += (bottom_right-bottom)*ratio;
+                }
+                if (top_valid)
+                {
+                    dy += top-center;
+                    if (top_left_valid) dx += (top-top_left)*ratio;
+                    if (top_right_valid) dx += (top_right-top)*ratio;
+                }
+
+                if (dx==zero || dy==zero) return false;
+
+                n = dx ^ dy;
+                return n.normalize() != 0.0f;
+            }
+
+            Locator*                        _masterLocator;
+            const osg::Vec3d                _centerModel;
+            int                             _numRows;
+            int                             _numColumns;
+            float                           _scaleHeight;
+            float                           _constraint_vtx_gap;
+
+            Indices                         _indices;
+
+            osg::ref_ptr<osg::Vec3Array>    _vertices;
+            osg::ref_ptr<osg::Vec3Array>    _normals;
+            std::vector<float>                _elevationConstraints;
+
+            osg::ref_ptr<osg::Vec3Array>    _boundaryVertices;
+        };
+
 
         virtual osg::Vec3d computeCenter(BufferData& buffer);
         virtual osg::Vec3d computeCenterModel(BufferData& buffer);
