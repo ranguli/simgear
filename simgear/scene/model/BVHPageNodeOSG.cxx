@@ -40,7 +40,6 @@
 #include <simgear/scene/material/matlib.hxx>
 #include <simgear/scene/util/SGNodeMasks.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
-#include <simgear/scene/util/SGSceneUserData.hxx>
 #include <simgear/math/SGGeometry.hxx>
 
 #include <simgear/bvh/BVHStaticGeometryBuilder.hxx>
@@ -276,11 +275,11 @@ public:
         osgTerrain::TerrainTile* tile = dynamic_cast<osgTerrain::TerrainTile*>(&group);
 
         if (tile) {
-            SGSceneUserData* userData = SGSceneUserData::getOrCreateSceneUserData(tile);
-            if (userData) {
-                BVHTerrainTile* bvhTerrainTile = new BVHTerrainTile(tile);
-                userData->setBVHNode(bvhTerrainTile);
-            }
+            BVHTerrainTile* bvhTerrainTile = new BVHTerrainTile(tile);
+            _NodeVisitor nodeVisitor(_flatten, _localToWorldMatrix);
+            nodeVisitor.traverse(*tile);
+            bvhTerrainTile->addChild(nodeVisitor.getNode(osg::Matrix::identity()));
+            _nodeBin.addNode(bvhTerrainTile);
         } else {
             apply(static_cast<osg::Node&>(group));
         }

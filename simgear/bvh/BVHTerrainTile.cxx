@@ -47,7 +47,8 @@ BVHMaterial* BVHTerrainTile::getMaterial(simgear::BVHLineSegmentVisitor* lsv) {
         if (technique) {
             material = technique->getMaterial(toOsg(lsv->getPoint()));
         } else {
-            SG_LOG(SG_TERRAIN, SG_ALERT, "BVHTerrainTile::getMaterial unable to get technique");
+            //  This is possible when the BVH has been created outside of a full FG run, e.g. from fgelev
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "BVHTerrainTile::getMaterial unable to get technique");
         }
     } else {
         SG_LOG(SG_TERRAIN, SG_ALERT, "BVHTerrainTile::getMaterial but no LSV hit");
@@ -63,7 +64,11 @@ void BVHTerrainTile::accept(BVHVisitor& visitor)
 
 SGSphered BVHTerrainTile::computeBoundingSphere() const {
     simgear::VPBTechnique* technique = dynamic_cast<simgear::VPBTechnique*>(_tile->getTerrainTechnique());
-    return technique->computeBoundingSphere();
+    if (technique) {
+        return technique->computeBoundingSphere();
+    } else {
+        return BVHGroup::computeBoundingSphere();
+    }
 }
 
 
