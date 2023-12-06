@@ -273,11 +273,22 @@ void SGLight::configure(const SGPropertyNode* configNode)
     _intensity_value = buildValue(configNode->getNode("intensity"), 1.0f);
 
     osg::Matrix t;
-    osg::Vec3 pos(configNode->getFloatValue("position/x-m"),
-                  configNode->getFloatValue("position/y-m"),
-                  configNode->getFloatValue("position/z-m"));
-    t.makeTranslate(pos);
-
+    osg::Vec3 pos;
+    if (const SGPropertyNode* posNode = configNode->getNode("position")) {
+        // use the legacy node names for x,y,z when in legacy mode and at least one is specified as this is the most compatible
+        // because sometimes modellers omit any node that has a zero value as a shortcut.
+        if (_legacyPropertyNames && (posNode->hasValue("x") || posNode->hasValue("y") || posNode->hasValue("z")) ) {
+            pos = osg::Vec3(posNode->getFloatValue("x"),
+                          posNode->getFloatValue("y"),
+                          posNode->getFloatValue("z"));
+            t.makeTranslate(pos);
+        } else {
+            pos = osg::Vec3(posNode->getFloatValue("x-m"),
+                          posNode->getFloatValue("y-m"),
+                          posNode->getFloatValue("z-m"));
+            t.makeTranslate(pos);
+        }
+    }
     osg::Matrix r;
     if (const SGPropertyNode *dirNode = configNode->getNode("direction")) {
         if (dirNode->hasValue("pitch-deg")) {
