@@ -158,7 +158,15 @@ if(NOT SIMGEAR_HEADLESS)
 
     target_link_libraries(SimGearScene PUBLIC         
         SimGearCore
-        ${OPENSCENEGRAPH_LIBRARIES}
+        OSG::OSG 
+        OSG::osgText 
+        OSG::osgDB 
+        OSG::osgSim 
+        OSG::osgGA 
+        OSG::osgUtil 
+        OSG::osgTerrain 
+        OSG::osgParticle
+        OSG::osgViewer
     )
 
     if(HAVE_INTTYPES_H)
@@ -204,7 +212,7 @@ if(NOT SIMGEAR_HEADLESS)
 
     # for simgear_config.h
     target_include_directories(SimGearScene PRIVATE ${PROJECT_BINARY_DIR}/simgear)
-    target_include_directories(SimGearScene SYSTEM PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})
+    #target_include_directories(SimGearScene SYSTEM PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})
 
     if (USE_AEONWAVE)
         target_include_directories(SimGearScene PRIVATE ${AAX_INCLUDE_DIR} )
