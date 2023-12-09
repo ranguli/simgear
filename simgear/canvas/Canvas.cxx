@@ -635,10 +635,16 @@ namespace canvas
     if( parent != _node )
       return;
 
-    if( child->getNameString() == "placement" )
-      _placements[ child->getIndex() ].clear();
-    else if( _root_group.get() )
-      static_cast<Element*>(_root_group.get())->childRemoved(parent, child);
+    if (child->getNameString() == "placement") {
+        const size_t index = child->getIndex();
+        if (index < _placements.size()) {
+            _placements[child->getIndex()].clear();
+        } else {
+            SG_LOG(SG_GENERAL, SG_DEV_ALERT, "Cavas::childRemoved: no placement at index:" << child->getPath());
+        }
+    } else if (_root_group.get()) {
+        static_cast<Element*>(_root_group.get())->childRemoved(parent, child);
+    }
   }
 
   //----------------------------------------------------------------------------
