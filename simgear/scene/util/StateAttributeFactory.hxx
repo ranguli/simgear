@@ -26,6 +26,7 @@
 #include <osg/ref_ptr>
 #include <osg/Array>
 #include <map>
+#include <mutex>
 
 namespace osg
 {
@@ -90,6 +91,7 @@ protected:
     osg::ref_ptr<osg::Depth> _depthWritesDisabled;
     typedef std::map<int, osg::ref_ptr<osg::Texture3D> > NoiseMap;
     NoiseMap _noises;
+    inline static std::mutex _noise_mutex; // Protects the NoiseMap _noises for mult-threaded access
 };
 }
 #endif

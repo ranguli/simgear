@@ -58,11 +58,9 @@ using namespace osg;
 namespace simgear
 {
 
-typedef std::map<std::string, osg::observer_ptr<osg::StateSet> > BuildingStateSetMap;
-static BuildingStateSetMap statesetmap;
-
 typedef std::map<std::string, osg::observer_ptr<Effect> > EffectMap;
 static EffectMap buildingEffectMap;
+inline static std::mutex _buildingEffectMap_mutex; // Protects the buildingEffectMap for multi-threaded access
 
 // Helper classes for creating the quad tree
 struct MakeBuildingLeaf
@@ -763,25 +761,29 @@ typedef QuadTreeBuilder<LOD*, SGBuildingBin::BuildingInstance, MakeBuildingLeaf,
   ref_ptr<Group> SGBuildingBin::createBuildingsGroup(Matrix transInv, const SGReaderWriterOptions* options)
   {
     ref_ptr<Effect> effect;
-    auto iter = buildingEffectMap.find(_textureName);
 
-    if ((iter == buildingEffectMap.end())||
-        (!iter->second.lock(effect)))
     {
-      SGPropertyNode_ptr effectProp = new SGPropertyNode;
-      makeChild(effectProp, "inherits-from")->setStringValue("Effects/building");
-      SGPropertyNode* params = makeChild(effectProp, "parameters");
-      // Main texture - n=0
-      params->getChild("texture", 0, true)->getChild("image", 0, true)->setStringValue(_textureName);
+      const std::lock_guard<std::mutex> lock(_buildingEffectMap_mutex); // Lock the buildingEffectMap for this scope
+      auto iter = buildingEffectMap.find(_textureName);
 
-      // Light map - n=3
-      params->getChild("texture", 3, true)->getChild("image", 0, true)->setStringValue(_lightMapName);
+      if ((iter == buildingEffectMap.end())||
+          (!iter->second.lock(effect)))
+      {
+        SGPropertyNode_ptr effectProp = new SGPropertyNode;
+        makeChild(effectProp, "inherits-from")->setStringValue("Effects/building");
+        SGPropertyNode* params = makeChild(effectProp, "parameters");
+        // Main texture - n=0
+        params->getChild("texture", 0, true)->getChild("image", 0, true)->setStringValue(_textureName);
 
-      effect = makeEffect(effectProp, true, options);
-      if (iter == buildingEffectMap.end())
-          buildingEffectMap.insert(EffectMap::value_type(_textureName, effect));
-      else
-          iter->second = effect; // update existing, but empty observer
+        // Light map - n=3
+        params->getChild("texture", 3, true)->getChild("image", 0, true)->setStringValue(_lightMapName);
+
+        effect = makeEffect(effectProp, true, options);
+        if (iter == buildingEffectMap.end())
+            buildingEffectMap.insert(EffectMap::value_type(_textureName, effect));
+        else
+            iter->second = effect; // update existing, but empty observer
+      }
     }
 
     // Transform building positions from the "geocentric" positions we

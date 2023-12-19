@@ -841,6 +841,7 @@ typedef std::unordered_map<ProgramKey, ref_ptr<Program>,
 ProgramMap;
 ProgramMap programMap;
 ProgramMap resolvedProgramMap;  // map with resolved shader file names
+inline static std::mutex _programMap_mutex; // Protects the programMap and resolvedProgramMap for multi-threaded access
 
 typedef std::unordered_map<ShaderKey, ref_ptr<Shader>, boost::hash<ShaderKey> >
 ShaderMap;
@@ -930,6 +931,8 @@ void ShaderProgramBuilder::buildAttribute(Effect* effect, Pass* pass,
     if (options)
         prgKey.paths = options->getDatabasePathList();
     Program* program = 0;
+
+    std::lock_guard<std::mutex> lock(_programMap_mutex); // Lock the programMap and resolvedProgramMap for this scope
     ProgramMap::iterator pitr = programMap.find(prgKey);
     if (pitr != programMap.end()) {
         program = pitr->second.get();

@@ -27,6 +27,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <thread>
 
 #include <osg/Geode>
 #include <osg/Geometry>
@@ -152,22 +153,33 @@ Geometry* makeSharedTreeGeometry(int numQuads)
 }
 
 static std::mutex static_sharedGeometryMutex;
-static ref_ptr<Geometry> sharedTreeGeometry;
+static std::map<std::thread::id, ref_ptr<Geometry>  > sharedTreeGeometryMap;
 
 void clearSharedTreeGeometry()
 {
     std::lock_guard<std::mutex> g(static_sharedGeometryMutex);
-    sharedTreeGeometry = {};
+    sharedTreeGeometryMap.clear();
 }
 
 Geometry* createTreeGeometry(float width, float height, int varieties)
 {
     Geometry* quadGeom = nullptr;
+
     {
+        // Get the shared Geometry.  This is only shared within the thread as
+        // the cloned Geometries all end up with the same VertexBufferObject.
+        // This is OK (just about) within a thread, as the VBO will simply be
+        // updated with data for each Geometry sequentially and passed to
+        // the underlying graphics driver.  However in a multithreaded case,
+        // this can result in multiple threads updating the VBO in parallel
+        // and segmentation faults.
         std::lock_guard<std::mutex> g(static_sharedGeometryMutex);
-        if (!sharedTreeGeometry)
-            sharedTreeGeometry = makeSharedTreeGeometry(1600);
-        quadGeom = simgear::clone(sharedTreeGeometry.get(),
+        std::thread::id this_id = std::this_thread::get_id();
+        if (!sharedTreeGeometryMap[this_id]) {
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Creating new shared geometry for thread " << this_id);
+            sharedTreeGeometryMap[this_id] = makeSharedTreeGeometry(1600);
+        }
+        quadGeom = simgear::clone(sharedTreeGeometryMap[this_id].get(),
                                   CopyOp::SHALLOW_COPY);
     }
 

@@ -152,6 +152,7 @@ osg::Image* make3DNoiseImage(int texSize)
 
 osg::Texture3D* StateAttributeFactory::getNoiseTexture(int size)
 {
+    std::lock_guard<std::mutex> lock(StateAttributeFactory::_noise_mutex); // Lock the _noises for this scope
     NoiseMap::iterator itr = _noises.find(size);
     if (itr != _noises.end())
         return itr->second.get();
