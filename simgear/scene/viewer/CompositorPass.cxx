@@ -820,6 +820,7 @@ public:
 
         osg::StateSet *ss = camera->getOrCreateStateSet();
         auto &uniforms = compositor->getBuiltinUniforms();
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_TEXTURE_MATRIX]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_VIEWPORT]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_CAMERA_POSITION_CART]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_CAMERA_POSITION_GEOD]);

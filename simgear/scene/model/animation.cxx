@@ -2413,8 +2413,8 @@ protected:
 class SGTexTransformAnimation::UpdateCallback :
   public osg::StateAttribute::Callback {
 public:
-  UpdateCallback(const SGCondition* condition) :
-    _condition(condition)
+  UpdateCallback(const SGCondition* condition, osg::Uniform* uniform) :
+    _condition(condition), _uniform(uniform)
   {
       setName("SGTexTransformAnimation::UpdateCallback");
   }
@@ -2431,6 +2431,11 @@ public:
     TransformList::const_iterator i;
     for (i = _transforms.begin(); i != _transforms.end(); ++i)
       i->transform->transform(texMat->getMatrix());
+
+    // Update the core profile uniform as well
+    if (_uniform) {
+      _uniform->set(texMat->getMatrix());
+    }
   }
   void appendTransform(Transform* transform, SGExpressiond* value)
   {
@@ -2448,6 +2453,7 @@ private:
   TransformList _transforms;
   SGSharedPtr<const SGCondition> _condition;
   osg::Matrix _matrix;
+  osg::ref_ptr<osg::Uniform> _uniform;
 };
 
 SGTexTransformAnimation::SGTexTransformAnimation(simgear::SGTransientModelData &modelData) :
@@ -2461,9 +2467,24 @@ SGTexTransformAnimation::createAnimationGroup(osg::Group& parent)
   osg::Group* group = new osg::Group;
   group->setName("texture transform group");
   osg::StateSet* stateSet = group->getOrCreateStateSet();
-  stateSet->setDataVariance(osg::Object::STATIC/*osg::Object::DYNAMIC*/);  
+  stateSet->setDataVariance(osg::Object::STATIC);
+
+  // Core profile alternative to osg::TexMat. There is no fixed-function
+  // texture matrix available, so use an uniform instead.
+  //
+  // NOTE: Uniforms are not positional like StateAttributes. The top-level
+  // osg::StateSet (usually the one from an osg::Camera) must set this uniform
+  // to the identity matrix. Otherwise, the texture matrix will "leak" into
+  // other nodes that do not belong to this animation. This issue is caused by
+  // the matrix not being set to identity after the objects in the animation
+  // group are done being rendered.
+  osg::Uniform* texmat_uniform = stateSet->getOrCreateUniform(
+    "fg_TextureMatrix", osg::Uniform::FLOAT_MAT4);
+  // Initialize to identity
+  texmat_uniform->set(osg::Matrix());
+
   osg::TexMat* texMat = new osg::TexMat;
-  UpdateCallback* updateCallback = new UpdateCallback(getCondition());
+  UpdateCallback* updateCallback = new UpdateCallback(getCondition(), texmat_uniform);
   // interpret the configs ...
   std::string type = getType();
 

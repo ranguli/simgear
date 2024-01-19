@@ -132,6 +132,7 @@ Compositor::Compositor(osg::View *view,
     _gc(gc),
     _viewport(viewport),
     _uniforms{
+    new osg::Uniform("fg_TextureMatrix", osg::Matrixf()),
     new osg::Uniform("fg_Viewport", osg::Vec4f()),
     new osg::Uniform("fg_PixelSize", osg::Vec2f()),
     new osg::Uniform("fg_ViewMatrix", osg::Matrixf()),
