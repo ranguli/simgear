@@ -67,17 +67,19 @@ SGMoon::~SGMoon( void ) {
 
 // build the moon object
 osg::Node*
-SGMoon::build( SGPath path, double moon_size ) {
+SGMoon::build( SGPath path, double moon_size, SGReaderWriterOptions* options ) {
 
-    osg::Node* orb = SGMakeSphere(moon_size, 40, 20);
+    EffectGeode* orb = SGMakeSphere(moon_size, 40, 20);
+
+    Effect* effect = makeEffect("Effects/moon", true, options);
+    if (effect) {
+        orb->setEffect(effect);
+    }
+
     osg::StateSet* stateSet = orb->getOrCreateStateSet();
     stateSet->setRenderBinDetails(-5, "RenderBin");
 
-    // set up the orb state
-    osg::ref_ptr<SGReaderWriterOptions> options;
-    options = SGReaderWriterOptions::fromPath(path);
-
-    osg::Texture2D* texture = SGLoadTexture2D("moon.png", options.get());
+    osg::Texture2D* texture = SGLoadTexture2D("moon.png", SGReaderWriterOptions::fromPath(path));
     stateSet->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
     osg::TexEnv* texEnv = new osg::TexEnv;
     texEnv->setMode(osg::TexEnv::MODULATE);

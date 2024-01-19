@@ -105,7 +105,7 @@ void SGSky::build( double h_radius_m,
     _ephTransform->addChild( galaxy->build(tex_path, h_radius_m, options) );
     
     moon = new SGMoon;
-    _ephTransform->addChild( moon->build(tex_path, moon_size) );
+    _ephTransform->addChild( moon->build(tex_path, moon_size, options) );
 
     oursun = new SGSun;
     _ephTransform->addChild( oursun->build(tex_path, sun_size, property_tree_node ) );

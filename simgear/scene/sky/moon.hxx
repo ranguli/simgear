@@ -38,6 +38,9 @@
 
 #include <simgear/misc/sg_path.hxx>
 
+namespace simgear {
+class SGReaderWriterOptions;
+}
 
 class SGMoon : public SGReferenced {
 
@@ -55,7 +58,8 @@ public:
     ~SGMoon( void );
 
     // build the moon object
-    osg::Node *build( SGPath path, double moon_size );
+    osg::Node *build( SGPath path, double moon_size,
+                      simgear::SGReaderWriterOptions* options );
 
     // repaint the moon colors based on current value of moon_anglein
     // degrees relative to verticle
