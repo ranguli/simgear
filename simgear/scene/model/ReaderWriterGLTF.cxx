@@ -1,4 +1,4 @@
-// Copyright (C) 2021 - 2023 Fernando García Liñán
+// Copyright (C) 2021 - 2024 Fernando García Liñán
 // SPDX-License-Identifier: LGPL-2.0-or-later
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +27,6 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #define TINYGLTF_NOEXCEPTION
 #define TINYGLTF_USE_CPP14
-
 #include "tiny_gltf.h"
 
 namespace simgear {
@@ -46,11 +45,14 @@ struct GLTFBuilder {
 
     osg::Node *makeModel() const {
         osg::Group *group = new osg::Group;
+        // Load all glTF nodes contained in every glTF scene and add them to the
+        // same osg::Group.
         for (const auto &scene : model.scenes) {
             for (const int nodeIndex : scene.nodes) {
                 osg::Node *node = makeNode(model.nodes[nodeIndex]);
-                if (node)
+                if (node) {
                     group->addChild(node);
+                }
             }
         }
         return group;
@@ -62,16 +64,17 @@ struct GLTFBuilder {
         osg::Group *group = new osg::Group;
         group->setName(node.name);
 
+        // Assume that the glTF node has a single mesh
         if (node.mesh >= 0) {
-            osg::Group *mesh = makeMesh(model.meshes[node.mesh]);
-            if (mesh)
-                group->addChild(mesh);
+            makeMesh(group, model.meshes[node.mesh]);
         }
 
+        // Add all children by recursively reading referenced nodes
         for (const int nodeIndex : node.children) {
             osg::Node *child = makeNode(model.nodes[nodeIndex]);
-            if (child)
+            if (child) {
                 group->addChild(child);
+            }
         }
 
         osg::MatrixTransform* mt = new osg::MatrixTransform;
@@ -81,7 +84,8 @@ struct GLTFBuilder {
             osg::Matrixd mat;
             mat.set(node.matrix.data());
             mt->setMatrix(mat);
-        } else {
+        }
+        if (mt->getMatrix().isIdentity()) {
             osg::Matrixd scale, translation, rotation;
             if (node.scale.size() == 3) {
                 scale = osg::Matrixd::scale(node.scale[0],
@@ -106,20 +110,13 @@ struct GLTFBuilder {
         return mt;
     }
 
-    osg::Group *makeMesh(const tinygltf::Mesh &mesh) const {
-        osg::Group *group = new osg::Group;
-
+    void makeMesh(osg::Group *parent, const tinygltf::Mesh &mesh) const {
+        // A glTF mesh can contain several primitives
         for (const auto &primitive : mesh.primitives) {
-            if (primitive.indices < 0) {
-                // Currently we don't support primitives without index data.
-                // The glTF spec says that we should be using drawArrays to
-                // render geometry without index data.
-                continue;
-            }
+            // A glTF primitive corresponds to a single EffectGeode
+            EffectGeode *eg = new EffectGeode;
 
-            EffectGeode *geode = new EffectGeode;
-            group->addChild(geode);
-
+            // Read the material information from the glTF by creating an Effect
             SGPropertyNode_ptr effectRoot = new SGPropertyNode;
             // Material is OPAQUE by default, so inherit from model-pbr
             makeChild(effectRoot, "inherits-from")->setStringValue("Effects/model-pbr");
@@ -129,15 +126,17 @@ struct GLTFBuilder {
                 makeMaterialParameters(effectRoot, model.materials[primitive.material]);
             }
             Effect *effect = makeEffect(effectRoot, true, opts);
-            if (effect)
-                geode->setEffect(effect);
+            if (effect) {
+                eg->setEffect(effect);
+            }
 
             osg::Geometry *geom = new osg::Geometry;
-            geode->addDrawable(geom);
+            eg->addDrawable(geom);
             geom->setDataVariance(osg::Object::STATIC);
             geom->setUseDisplayList(false);
             geom->setUseVertexBufferObjects(true);
 
+            // Set vertex attributes
             for (const auto &attr : primitive.attributes) {
                 if (attr.first == "POSITION") {
                     geom->setVertexArray(arrays[attr.second].get());
@@ -152,6 +151,7 @@ struct GLTFBuilder {
                 }
             }
 
+            // Get the kind of primitives to render
             int mode = -1;
             switch (primitive.mode) {
             case TINYGLTF_MODE_TRIANGLES:      mode = GL_TRIANGLES;      break;
@@ -163,39 +163,45 @@ struct GLTFBuilder {
             default: break;
             }
 
-            const tinygltf::Accessor &indexAccessor = model.accessors[primitive.indices];
-            if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                auto *indices = static_cast<osg::UShortArray *>(
-                    arrays[primitive.indices].get());
-                auto *drawElements = new osg::DrawElementsUShort(
-                    mode, indices->begin(), indices->end());
-                geom->addPrimitiveSet(drawElements);
-            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-                auto *indices = static_cast<osg::UIntArray *>(
-                    arrays[primitive.indices].get());
-                auto *drawElements = new osg::DrawElementsUInt(
-                    mode, indices->begin(), indices->end());
-                geom->addPrimitiveSet(drawElements);
-            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-                auto *indices = static_cast<osg::UByteArray *>(
-                    arrays[primitive.indices].get());
-                auto *drawElements = new osg::DrawElementsUByte(
-                    mode, indexAccessor.count);
-                std::copy(indices->begin(), indices->end(), drawElements->begin());
-                geom->addPrimitiveSet(drawElements);
+            if (primitive.indices < 0) {
+                // This primitive does not contain index data, use drawArrays
+                osg::Array *vertices = geom->getVertexArray();
+                if (vertices) {
+                    auto *drawArrays = new osg::DrawArrays(mode, 0, vertices->getNumElements());
+                    geom->addPrimitiveSet(drawArrays);
+                }
+            } else {
+                // This primitive contains index data, use drawElements
+                const tinygltf::Accessor &indexAccessor = model.accessors[primitive.indices];
+                if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+                    auto *indices = static_cast<osg::UShortArray *>(arrays[primitive.indices].get());
+                    auto *drawElements = new osg::DrawElementsUShort(mode, indices->begin(), indices->end());
+                    geom->addPrimitiveSet(drawElements);
+                } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+                    auto *indices = static_cast<osg::UIntArray *>(arrays[primitive.indices].get());
+                    auto *drawElements = new osg::DrawElementsUInt(mode, indices->begin(), indices->end());
+                    geom->addPrimitiveSet(drawElements);
+                } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                    auto *indices = static_cast<osg::UByteArray *>(arrays[primitive.indices].get());
+                    auto *drawElements = new osg::DrawElementsUByte(mode, indexAccessor.count);
+                    std::copy(indices->begin(), indices->end(), drawElements->begin());
+                    geom->addPrimitiveSet(drawElements);
+                } else {
+                    SG_LOG(SG_INPUT, SG_ALERT, "glTF loader: primitive indices are not unsigned");
+                }
             }
 
-            // Compute the normals if the file doesn't already contain them
+            // Compute the normals if the glTF file doesn't already contain them
             if (!geom->getNormalArray()) {
                 osgUtil::SmoothingVisitor sv;
-                geode->accept(sv);
+                eg->accept(sv);
             }
 
             // Generate tangent vectors etc if needed
-            geode->runGenerators(geom);
-        }
+            eg->runGenerators(geom);
 
-        return group;
+            parent->addChild(eg);
+        }
     }
 
     bool makeMaterialParameters(SGPropertyNode *effectRoot,
@@ -271,7 +277,7 @@ struct GLTFBuilder {
             return false;
         }
 
-        // This is an URI to a external image
+        // This is an URI to an external image
         std::string absFileName = osgDB::findDataFile(image.uri, opts);
         if (absFileName.empty()) {
             SG_LOG(SG_INPUT, SG_ALERT, "glTF loader: could not find external texture '"

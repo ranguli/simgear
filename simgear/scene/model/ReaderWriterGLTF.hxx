@@ -1,4 +1,4 @@
-// Copyright (C) 2021 - 2023 Fernando García Liñán
+// Copyright (C) 2021 - 2024 Fernando García Liñán
 // SPDX-License-Identifier: LGPL-2.0-or-later
 
 #pragma once
