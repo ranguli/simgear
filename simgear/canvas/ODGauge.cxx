@@ -132,10 +132,21 @@ namespace canvas
     _size_x = size_x;
     _size_y = size_y < 0 ? size_x : size_y;
 
-    if( serviceable() )
-      reinit();
-    else if( texture )
+    if (texture) {
       texture->setTextureSize(_size_x, _size_y);
+      texture->dirtyTextureObject();
+      osg::Image *image = texture->getImage();
+      if (image) {
+        image->allocateImage(_size_x, _size_y, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+      }
+    }
+    if (camera) {
+      camera->setViewport(0, 0, _size_x, _size_y);
+      camera->dirtyAttachmentMap();
+      // We used to recreate the texture and camera when resizing, indirectly
+      // enabling rendering. Emulate that behaviour for backwards compatibility.
+      setRender(true);
+    }
   }
 
   //----------------------------------------------------------------------------
@@ -144,7 +155,7 @@ namespace canvas
     _view_width = width;
     _view_height = height < 0 ? width : height;
 
-    if( camera )
+    if (camera)
       updateCoordinateFrame();
   }
 
@@ -157,14 +168,14 @@ namespace canvas
   //----------------------------------------------------------------------------
   void ODGauge::useImageCoords(bool use)
   {
-    if( updateFlag(USE_IMAGE_COORDS, use) && texture )
+    if( updateFlag(USE_IMAGE_COORDS, use) && camera )
       updateCoordinateFrame();
   }
 
   //----------------------------------------------------------------------------
   void ODGauge::useStencil(bool use)
   {
-    if( updateFlag(USE_STENCIL, use) && texture )
+    if( updateFlag(USE_STENCIL, use) && camera )
       updateStencil();
   }
 
@@ -199,7 +210,8 @@ namespace canvas
     _coverage_samples = coverage_samples;
     _color_samples = color_samples;
 
-    updateSampling();
+    if (camera && texture)
+      updateSampling();
   }
 
   //----------------------------------------------------------------------------
@@ -223,54 +235,60 @@ namespace canvas
   //----------------------------------------------------------------------------
   void ODGauge::allocRT(osg::NodeCallback* camera_cull_callback)
   {
-    // REVIEW: Memory Leak - 2,712 bytes in 3 blocks are indirectly lost
+    // Make sure everything is initialized from scratch
+    clear();
+
     camera = new osg::Camera;
     camera->setDataVariance(osg::Object::DYNAMIC);
     camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    // Do not resize the projection matrix automatically. We do this manually in
+    // updateCoordinateFrame().
+    camera->setProjectionResizePolicy(osg::Camera::FIXED);
     camera->setRenderOrder(osg::Camera::PRE_RENDER);
-    camera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f , 0.0f));
+    camera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 0.0f));
     camera->setClearStencil(0);
-    camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER_OBJECT,
-                                               osg::Camera::FRAME_BUFFER );
+    camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+    camera->setViewport(0, 0, _size_x, _size_y);
 
-    if( camera_cull_callback )
-      camera->setCullCallback(camera_cull_callback);
-
-    setRender(true);
     updateCoordinateFrame();
     updateStencil();
 
+    if (camera_cull_callback) {
+      camera->setCullCallback(camera_cull_callback);
+    }
+
     osg::StateSet* stateSet = camera->getOrCreateStateSet();
-    stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
-    stateSet->setMode(GL_FOG, osg::StateAttribute::OFF);
     stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
-    // REVIEW: Memory Leak - 168 bytes in 3 blocks are indirectly lost
+    stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
     stateSet->setAttributeAndModes(
-      new osg::PolygonMode( osg::PolygonMode::FRONT_AND_BACK,
-                            osg::PolygonMode::FILL ),
-      osg::StateAttribute::ON );
-    // REVIEW: Memory Leak - 3,572 (8 direct, 3,564 indirect) bytes in 1 blocks are definitely lost
+      new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK,
+                           osg::PolygonMode::FILL),
+      osg::StateAttribute::ON);
+
+    //--------------------------------------------------------------------------
+    // XXX: Fixed-function pipeline stuff. Should go away when we go
+    // core-profile only.
+    stateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    stateSet->setMode(GL_FOG, osg::StateAttribute::OFF);
     stateSet->setAttributeAndModes(
       new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.001f),
-      osg::StateAttribute::ON );
-    // REVIEW: Memory Leak - 384 bytes in 3 blocks are indirectly lost
+      osg::StateAttribute::ON);
     stateSet->setAttribute(new osg::ShadeModel(osg::ShadeModel::FLAT));
+    //--------------------------------------------------------------------------
 
-    if( !texture )
-    {
-      // It shouldn't be necessary to allocate an image for the
-      // texture that is the target of dynamic rendering, but
-      // otherwise OSG won't construct all the mipmaps for the texture
-      // and dynamic mipmap generation doesn't work.
-      osg::Image* image = new osg::Image;
-      image->allocateImage(_size_x, _size_y, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-      // REVIEW: Memory Leak - 1,176 bytes in 3 blocks are indirectly lost
-      texture = new osg::Texture2D;
-      texture->setResizeNonPowerOfTwoHint(false);
-      texture->setImage(image);
-      texture->setUnRefImageDataAfterApply(true);
-    }
+    texture = new osg::Texture2D;
+    texture->setResizeNonPowerOfTwoHint(false);
+    texture->setTextureSize(_size_x, _size_y);
+
+    // It shouldn't be necessary to allocate an image for the
+    // texture that is the target of dynamic rendering, but
+    // otherwise OSG won't construct all the mipmaps for the texture
+    // and dynamic mipmap generation doesn't work.
+    osg::Image* image = new osg::Image;
+    image->allocateImage(_size_x, _size_y, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+
+    texture->setImage(image);
+    texture->setUnRefImageDataAfterApply(true);
 
     updateSampling();
     updateBlendMode();
@@ -279,18 +297,6 @@ namespace canvas
       Canvas::getSystemAdapter()->addCamera(camera.get());
 
     _flags |= AVAILABLE;
-  }
-
-  //----------------------------------------------------------------------------
-  void ODGauge::reinit()
-  {
-    osg::NodeCallback* cull_callback =
-      camera
-      ? dynamic_cast<osg::NodeCallback*>(camera->getCullCallback())
-      : 0;
-
-    clear();
-    allocRT(cull_callback);
   }
 
   //----------------------------------------------------------------------------
@@ -326,8 +332,6 @@ namespace canvas
 
 //  if ( vgHasContextSH() )
 //    vgResizeSurfaceSH(_size_x, _size_y);
-
-    camera->setViewport(0, 0, _size_x, _size_y);
 
     if( _flags & USE_IMAGE_COORDS ) {
       camera->setProjectionMatrix(
@@ -383,7 +387,7 @@ namespace canvas
                                 : osg::Texture2D::LINEAR
     );
     camera->attach(
-      osg::Camera::COLOR_BUFFER,
+      osg::Camera::COLOR_BUFFER0,
       texture.get(),
       0, 0,
       _flags & USE_MIPMAPPING,
@@ -397,7 +401,6 @@ namespace canvas
   {
     assert( camera );
 
-    // REVIEW: Memory Leak - 3,572 (136 direct, 3,436 indirect) bytes in 1 blocks are definitely lost
     camera->getOrCreateStateSet()
       ->setAttributeAndModes
       (
