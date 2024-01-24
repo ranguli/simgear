@@ -34,8 +34,10 @@ void simgearShaderClose(void*);
 
 static const char* vgShaderVertexPipeline = "canvas_pipeline.vert";
 static const char* vgShaderFragmentPipeline = "canvas_pipeline.frag";
+#if 0
 static const char* vgShaderVertexUserDefault = "canvas_user_default.vert";
 static const char* vgShaderFragmentUserDefault = "canvas_user_default.frag";
+#endif
 static const char* vgShaderVertexColorRamp = "canvas_color_ramp.vert";
 static const char* vgShaderFragmentColorRamp = "canvas_color_ramp.frag";
 
@@ -262,16 +264,18 @@ static const char* vgShaderFragmentColorRamp = R"glsl(
 void shInitPiplelineShaders(void)
 {
     VG_GETCONTEXT(VG_NO_RETVAL);
-    const char* extendedStage;
+//  const char* extendedStage;
     const char* buf[2];
     GLint size[2];
 
     context->vs = glCreateShader(GL_VERTEX_SHADER);
+#if 0
     if (context->userShaderVertex) {
         extendedStage = (const char*)context->userShaderVertex;
     } else {
         extendedStage = vgShaderVertexUserDefault;
     }
+#endif
 
     {
         int len;
@@ -280,24 +284,28 @@ void shInitPiplelineShaders(void)
         buf[0] = shader;
         size[0] = len;
 
+#if 0
         void* sh2 = simgearShaderOpen(extendedStage, &shader, &len);
         buf[1] = shader;
         size[1] = len;
+#endif
 
         glShaderSource(context->vs, 1, buf, size);
         glCompileShader(context->vs);
         GL_CHECK_SHADER(context->vs, vgShaderVertexPipeline);
 
-        simgearShaderClose(sh2);
+//      simgearShaderClose(sh2);
         simgearShaderClose(sh1);
     }
 
     context->fs = glCreateShader(GL_FRAGMENT_SHADER);
+#if 0
     if (context->userShaderFragment) {
         extendedStage = (const char*)context->userShaderFragment;
     } else {
         extendedStage = vgShaderFragmentUserDefault;
     }
+#endif
 
     {
         int len;
@@ -306,15 +314,17 @@ void shInitPiplelineShaders(void)
         buf[0] = shader;
         size[0] = len;
 
+#if 0
         void* sh2 = simgearShaderOpen(extendedStage, &shader, &len);
         buf[1] = shader;
         size[1] = len;
+#endif
 
         glShaderSource(context->fs, 1, buf, size);
         glCompileShader(context->fs);
         GL_CHECK_SHADER(context->fs, vgShaderFragmentPipeline);
 
-        simgearShaderClose(sh2);
+//      simgearShaderClose(sh2);
         simgearShaderClose(sh1);
     }
 
