@@ -132,20 +132,18 @@ namespace canvas
     _size_x = size_x;
     _size_y = size_y < 0 ? size_x : size_y;
 
-    if (texture) {
+    if (serviceable()) {
       texture->setTextureSize(_size_x, _size_y);
       texture->dirtyTextureObject();
-      osg::Image *image = texture->getImage();
-      if (image) {
-        image->allocateImage(_size_x, _size_y, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-      }
-    }
-    if (camera) {
+
       camera->setViewport(0, 0, _size_x, _size_y);
       camera->dirtyAttachmentMap();
       // We used to recreate the texture and camera when resizing, indirectly
       // enabling rendering. Emulate that behaviour for backwards compatibility.
       setRender(true);
+
+      // The new size might require a different number of mipmaps
+      updateSampling();
     }
   }
 
@@ -277,18 +275,12 @@ namespace canvas
     //--------------------------------------------------------------------------
 
     texture = new osg::Texture2D;
+    texture->setUseHardwareMipMapGeneration(true);
     texture->setResizeNonPowerOfTwoHint(false);
     texture->setTextureSize(_size_x, _size_y);
-
-    // It shouldn't be necessary to allocate an image for the
-    // texture that is the target of dynamic rendering, but
-    // otherwise OSG won't construct all the mipmaps for the texture
-    // and dynamic mipmap generation doesn't work.
-    osg::Image* image = new osg::Image;
-    image->allocateImage(_size_x, _size_y, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-
-    texture->setImage(image);
-    texture->setUnRefImageDataAfterApply(true);
+    texture->setInternalFormat(GL_RGBA8);
+    texture->setSourceFormat(GL_RGBA);
+    texture->setSourceType(GL_UNSIGNED_BYTE);
 
     updateSampling();
     updateBlendMode();
@@ -381,6 +373,9 @@ namespace canvas
     assert( camera );
     assert( texture );
 
+    int mipmap_levels = (_flags & USE_MIPMAPPING) ?
+      osg::Image::computeNumberOfMipmapLevels(_size_x, _size_y, 1) : 0;
+    texture->setNumMipmapLevels(mipmap_levels);
     texture->setFilter(
       osg::Texture2D::MIN_FILTER,
       (_flags & USE_MIPMAPPING) ? osg::Texture2D::LINEAR_MIPMAP_LINEAR

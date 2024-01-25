@@ -177,8 +177,7 @@ namespace canvas
 
       osg::Camera* getCamera();
       int subscribe(CanvasImageReadyListener * subscriber);
-      int unsubscribe(CanvasImageReadyListener * subscriber);
-      int getSubscriberCount();
+      void unsubscribe(CanvasImageReadyListener * subscriber);
 
       bool addEventListener(const std::string& type, const EventListener& cb);
       bool dispatchEvent(const EventPtr& event);
