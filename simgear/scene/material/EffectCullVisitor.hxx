@@ -48,5 +48,15 @@ private:
     bool _collectLights;
     std::string _effScheme;
 };
+
+/*
+ * Install an EffectCullVisitor on a given osg::Camera.
+ * NOTE: This function must be called AFTER the camera has been added as an
+ *       slave to the viewer. Otherwise the camera won't have a Renderer
+ *       assigned to it.
+ */
+void installEffectCullVisitor(osg::Camera *camera,
+                              bool collect_lights = false,
+                              const std::string &effect_scheme = "");
 }
 #endif

@@ -19,6 +19,8 @@
 #endif
 
 #include <osg/StateSet>
+#include <osg/Camera>
+#include <osgViewer/Renderer>
 
 #include "EffectCullVisitor.hxx"
 
@@ -97,6 +99,35 @@ void EffectCullVisitor::reset()
     _lightList.clear();
 
     osgUtil::CullVisitor::reset();
+}
+
+void
+installEffectCullVisitor(osg::Camera *camera,
+                         bool collect_lights,
+                         const std::string &effect_scheme)
+{
+    auto renderer = static_cast<osgViewer::Renderer *>(camera->getRenderer());
+    if (!renderer) {
+        SG_LOG(SG_GENERAL, SG_ALERT, "Could not install the Effect cull visitor."
+               "Camera does not have a renderer assigned");
+        return;
+    }
+    for (int i = 0; i < 2; ++i) {
+        osgUtil::SceneView *sceneView = renderer->getSceneView(i);
+        osg::ref_ptr<osgUtil::CullVisitor::Identifier> identifier
+            = sceneView->getCullVisitor()->getIdentifier();
+        sceneView->setCullVisitor(new EffectCullVisitor(collect_lights, effect_scheme));
+        sceneView->getCullVisitor()->setIdentifier(identifier.get());
+
+        // Also set the left and right cull visitors for stereo rendering
+        identifier = sceneView->getCullVisitorLeft()->getIdentifier();
+        sceneView->setCullVisitorLeft(sceneView->getCullVisitor()->clone());
+        sceneView->getCullVisitorLeft()->setIdentifier(identifier.get());
+
+        identifier = sceneView->getCullVisitorRight()->getIdentifier();
+        sceneView->setCullVisitorRight(sceneView->getCullVisitor()->clone());
+        sceneView->getCullVisitorRight()->setIdentifier(identifier.get());
+    }
 }
 
 }

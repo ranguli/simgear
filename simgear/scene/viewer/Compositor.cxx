@@ -13,8 +13,6 @@
 #include <osg/TextureRectangle>
 #include <osg/TextureCubeMap>
 #include <osgUtil/IntersectionVisitor>
-#include <osgViewer/Renderer>
-#include <osgViewer/Viewer>
 
 #include <simgear/math/SGRect.hxx>
 #include <simgear/props/props_io.hxx>
@@ -25,7 +23,6 @@
 #include <simgear/structure/exception.hxx>
 
 #include "CompositorUtil.hxx"
-
 
 class SunDirectionWorldCallback : public osg::Uniform::Callback {
 public:
@@ -468,31 +465,8 @@ Compositor::addPass(Pass *pass)
                "as a slave to the view. View doesn't exist!");
         return;
     }
-
     _view->addSlave(pass->camera, pass->useMastersSceneData);
-
-    // Install the Effect cull visitor
-    osgViewer::Renderer* renderer
-        = static_cast<osgViewer::Renderer*>(pass->camera->getRenderer());
-    for (int i = 0; i < 2; ++i) {
-        osgUtil::SceneView* sceneView = renderer->getSceneView(i);
-
-        osg::ref_ptr<osgUtil::CullVisitor::Identifier> identifier;
-        identifier = sceneView->getCullVisitor()->getIdentifier();
-
-        sceneView->setCullVisitor(
-            new EffectCullVisitor(pass->collect_lights, pass->effect_scheme));
-        sceneView->getCullVisitor()->setIdentifier(identifier.get());
-
-        identifier = sceneView->getCullVisitorLeft()->getIdentifier();
-        sceneView->setCullVisitorLeft(sceneView->getCullVisitor()->clone());
-        sceneView->getCullVisitorLeft()->setIdentifier(identifier.get());
-
-        identifier = sceneView->getCullVisitorRight()->getIdentifier();
-        sceneView->setCullVisitorRight(sceneView->getCullVisitor()->clone());
-        sceneView->getCullVisitorRight()->setIdentifier(identifier.get());
-    }
-
+    installEffectCullVisitor(pass->camera, pass->collect_lights, pass->effect_scheme);
     _passes.push_back(pass);
 }
 
