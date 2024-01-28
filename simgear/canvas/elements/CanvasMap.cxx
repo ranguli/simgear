@@ -310,9 +310,9 @@ namespace canvas
     char* end;
     coord.value = strtod(&val[1], &end);
 
-    if( end != &val[val.length()] )
+    if( end != &val[val.length()] )       // intentional use of... out-of-bounds of array
     {
-      coord.type = GeoCoord::INVALID;
+      coord.type = GeoCoord::INVALID;     // the whole 'val' string was not converted; treat this as an error
       return coord;
     }
 
