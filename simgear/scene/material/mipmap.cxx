@@ -150,7 +150,11 @@ osg::Vec4::value_type computeAverage( int c, osg::Vec4 colors[2][2][2], bool col
             nb += 1;
         }
     }
-    return r / nb;
+
+    if (nb != 0)
+        return r / nb;
+    
+    return nb;
 }
 
 osg::Vec4::value_type computeSum( int c, osg::Vec4 colors[2][2][2], bool colorValid[2][2][2] )

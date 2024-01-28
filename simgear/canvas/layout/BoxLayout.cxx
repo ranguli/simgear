@@ -701,7 +701,7 @@ int BoxLayout::ItemData::mhfw(int w) const
 
               int space_add = 0;
 
-              if (d.has_align) {
+              if (d.has_align && num_align > 0) {
                   // Equally distribute superfluous space and let each child items
                   // alignment handle the exact usage.
                   space_add = _space_left / num_align;

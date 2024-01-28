@@ -630,7 +630,8 @@ void GridLayout::doLayout(const SGRecti& geom)
     for (auto col = 0; col < static_cast<int>(_columns.size()); ++col) {
         auto& c = _columns[col];
         c.calcSize = havePreferredWidth ? c.hintSize : c.minSize;
-        c.calcSize += (toDistribute.x() * c.calcStretch) / columnStretchTotal;
+        if (columnStretchTotal > 0)
+            c.calcSize += (toDistribute.x() * c.calcStretch) / columnStretchTotal;
 
         // compute running total of size to give us the actual start coordinate
         if (col > 0) {
@@ -640,12 +641,13 @@ void GridLayout::doLayout(const SGRecti& geom)
 
     // TODO: apply height-for-width to all items, to calculate real heights now
 
-    // re-calcualate row min/preferred now? Or is it not dependant?
+    // re-calculate row min/preferred now? Or is it not dependant?
 
     for (auto row = 0; row < static_cast<int>(_rows.size()); ++row) {
         auto& r = _rows[row];
         r.calcSize = havePreferredHeight ? r.hintSize : r.minSize;
-        r.calcSize += (toDistribute.y() * r.calcStretch) / rowStretchTotal;
+        if (rowStretchTotal > 0)
+            r.calcSize += (toDistribute.y() * r.calcStretch) / rowStretchTotal;
 
         if (row > 0) {
             r.calcStart = _rows.at(row - 1).calcStart + _rows.at(row - 1).calcSize + r.padding;
