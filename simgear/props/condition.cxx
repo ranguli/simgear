@@ -1,4 +1,4 @@
-// SPDX-FileName: condtion.cxx
+// SPDX-FileName: condition.cxx
 // SPDX-License-Identifier: LGPL-2.1-only
 // SPDX-FileComment: Declarations and inline methods for property conditions
 

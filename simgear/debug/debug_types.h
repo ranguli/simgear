@@ -1,4 +1,10 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-FileComment: Enums used in debug macros
+// SPDX-FileCopyrightText: Copyright (C) 2001  Curtis L. Olson - http://www.flightgear.org/~curt
+
 #pragma once
+
+#include <string>
 
 /** \file debug_types.h
  *  Define the various logging classes and priorities
@@ -68,3 +74,8 @@ typedef enum {
 
     SG_MANDATORY_INFO // information, but should always be shown
 } sgDebugPriority;
+
+// implemented in logstream.cxx
+
+const std::string& debugClassToString(sgDebugClass c);
+const std::string& debugPriorityToString(sgDebugPriority p);

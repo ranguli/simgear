@@ -1,29 +1,10 @@
-/** \file logstream.hxx
- * Stream based logging mechanism.
- */
+// SPDX-FileName: logstream.hxx
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-FileComment: Stream based logging mechanism.
+// SPDX-FileCopyrightText: Copyright (C) 1998  Bernie Bright - bbright@c031.aone.net.au
+// SPDX-FileContributor: James Turner
 
-// Written by Bernie Bright, 1998
-//
-// Copyright (C) 1998  Bernie Bright - bbright@c031.aone.net.au
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// $Id$
-
-#ifndef _LOGSTREAM_H
-#define _LOGSTREAM_H
+#pragma once
 
 #include <simgear/compiler.h>
 #include <simgear/debug/debug_types.h>
@@ -74,6 +55,17 @@ public:
      */
     void setLogLevels( sgDebugClass c, sgDebugPriority p );
 
+    /**
+     * @brief parse a string of the style given to --log-class= argument of
+     * FlightGear, i.e with potentially several classes seperated by vertical
+     * bars eg 'input|io|aircraft'
+     * 
+     * Parsing is case- and white-space insensitive.
+     * 
+     * @param logClassesSpecification 
+     */
+    void parseLogClasses(const std::string& logClassesSpecification);
+
     bool would_log(  sgDebugClass c, sgDebugPriority p,
             const char* file, int line, const char* function,
             bool freeFilename=false ) const;
@@ -83,9 +75,18 @@ public:
     void set_log_priority( sgDebugPriority p);
     
     void set_log_classes( sgDebugClass c);
-    
+
+    void addLogClass(const std::string& c);
+
     sgDebugClass get_log_classes() const;
-    
+
+    /**
+     * @brief Get the Log Classes as a string, in the format which could be passed
+     * tp parseLogClasses
+     * 
+     */
+    std::string getLogClassesAsString() const;
+
     sgDebugPriority get_log_priority() const;
 
     /**
@@ -223,6 +224,3 @@ logstream& sglog();
 #endif
 
 #define SG_ORIGIN __FILE__ ":" SG_STRINGIZE(__LINE__)
-
-#endif // _LOGSTREAM_H
-

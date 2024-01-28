@@ -1,24 +1,8 @@
-// Stream based logging mechanism.
-//
-// Written by Bernie Bright, 1998
-//
-// Copyright (C) 1998  Bernie Bright - bbright@c031.aone.net.au
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// $Id$
+// SPDX-FileName: logstream.cxx
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-FileComment: Stream based logging mechanism.
+// SPDX-FileCopyrightText: Copyright (C) 1998  Bernie Bright - bbright@c031.aone.net.au
+// SPDX-FileContributor: James Turner
 
 #include <simgear_config.h>
 
@@ -33,8 +17,9 @@
 #include <mutex>
 
 #include <simgear/sg_inlines.h>
-#include <simgear/threads/SGThread.hxx>
+#include <simgear/structure/exception.hxx>
 #include <simgear/threads/SGQueue.hxx>
+#include <simgear/threads/SGThread.hxx>
 
 #include "LogCallback.hxx"
 #include <simgear/io/iostreams/sgstream.hxx>
@@ -44,14 +29,114 @@
 
 #if defined (SG_WINDOWS)
 // for AllocConsole, OutputDebugString
-    #include <windows.h>
-    #include <fcntl.h>
-    #include <io.h>
+#include <windows.h>
+#include <fcntl.h>
+#include <io.h>
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 
+namespace {
+struct LogClassMapping {
+    const sgDebugClass c;
+    const std::string name;
+    const std::vector<std::string> aliases;
 
+    LogClassMapping(sgDebugClass cc, const std::string& n, const std::vector<std::string>& al = {}) : c(cc),
+                                                                                                      name(n),
+                                                                                                      aliases(al){};
+};
+
+const std::initializer_list<LogClassMapping> log_class_mappings = {
+    LogClassMapping(SG_NONE, "none"),
+    LogClassMapping(SG_TERRAIN, "terrain"),
+    LogClassMapping(SG_ASTRO, "astro"),
+    LogClassMapping(SG_FLIGHT, "flight"),
+    LogClassMapping(SG_INPUT, "input"),
+    LogClassMapping(SG_GL, "gl", {"opengl"}),
+    LogClassMapping(SG_VIEW, "view"),
+    LogClassMapping(SG_COCKPIT, "cockpit"),
+    LogClassMapping(SG_GENERAL, "general"),
+    LogClassMapping(SG_MATH, "math"),
+    LogClassMapping(SG_EVENT, "event"),
+    LogClassMapping(SG_AIRCRAFT, "aircraft"),
+    LogClassMapping(SG_AUTOPILOT, "autopilot"),
+    LogClassMapping(SG_IO, "io"),
+    LogClassMapping(SG_CLIPPER, "clipper"),
+    LogClassMapping(SG_NETWORK, "network"),
+    LogClassMapping(SG_INSTR, "instrumentation", {"instruments"}),
+    LogClassMapping(SG_ATC, "atc"),
+    LogClassMapping(SG_NASAL, "nasal"),
+    LogClassMapping(SG_SYSTEMS, "systems"),
+    LogClassMapping(SG_AI, "ai"),
+    LogClassMapping(SG_ENVIRONMENT, "environment"),
+    LogClassMapping(SG_SOUND, "sound"),
+    LogClassMapping(SG_NAVAID, "navaid"),
+    LogClassMapping(SG_GUI, "gui"),
+    LogClassMapping(SG_TERRASYNC, "terrasync"),
+    LogClassMapping(SG_PARTICLES, "particles"),
+    LogClassMapping(SG_HEADLESS, "headless"),
+    LogClassMapping(SG_OSG, "osg", {"openscenegraph"}),
+    LogClassMapping(SG_UNDEFD, "")};
+
+} // namespace
+
+
+const std::string& debugClassToString(sgDebugClass c)
+{
+    auto it = std::find_if(log_class_mappings.begin(), log_class_mappings.end(), [c](const LogClassMapping& lm) {
+        return lm.c == c;
+    });
+
+    // return 'none'
+    if (it == log_class_mappings.end()) {
+        return log_class_mappings.begin()->name;
+    }
+
+    return it->name;
+}
+
+const std::string& debugPriorityToString(sgDebugPriority p)
+{
+    static const std::vector<std::string> priorityNames = {
+        "UNKN",
+        "BULK",
+        "DBUG",
+        "INFO",
+        "WARN",
+        "ALRT",
+        "POPU",
+        "WARN",
+        "ALRT",
+        "INFO"};
+
+    return priorityNames.at(static_cast<int>(p));
+}
+
+const sgDebugClass debugClassFromString(const std::string& s)
+{
+    using namespace simgear::strutils;
+
+    auto cleaned = lowercase(strip(s));
+    auto it = std::find_if(log_class_mappings.begin(), log_class_mappings.end(), [cleaned](const LogClassMapping& lm) {
+        if (lm.name == cleaned)
+            return true;
+
+        // check alises as well
+        auto it2 = std::find(lm.aliases.begin(), lm.aliases.end(), cleaned);
+        if (it2 != lm.aliases.end()) {
+            return true;
+        }
+
+        return false;
+    });
+
+    if (it == log_class_mappings.end()) {
+        throw sg_format_exception("Couldn't parse '" + s + "' as debug-class", s, "debugClassFromString", false);
+    }
+
+    return it->c;
+}
 
 class FileLogCallback : public simgear::LogCallback
 {
@@ -79,11 +164,10 @@ public:
             << (logTimer.elapsedMSec() / 1000.0)
             << std::setw(8)
             << std::left
-            << " ["+std::string(debugPriorityToString(p))+"]:"
+            << " [" + debugPriorityToString(p) + "]:"
             << std::setw(10)
             << std::left
-            << debugClassToString(c)
-            ;
+            << debugClassToString(c);
         if (file) {
             /* <line> can be -ve to indicate that m_fileLine was false, but we
             want to show file:line information regardless of m_fileLine. */
@@ -128,10 +212,10 @@ public:
         //fprintf(stderr, "%s\n", aMessage.c_str());
 
         if (file && line > 0) {
-            fprintf(stderr, "%8.2f %s:%i: [%.8s]:%-10s %s\n", logTimer.elapsedMSec()/1000.0, file, line, debugPriorityToString(p), debugClassToString(c), aMessage.c_str());
+            fprintf(stderr, "%8.2f %s:%i: [%.8s]:%-10s %s\n", logTimer.elapsedMSec() / 1000.0, file, line, debugPriorityToString(p).c_str(), debugClassToString(c).c_str(), aMessage.c_str());
         }
         else {
-            fprintf(stderr, "%8.2f [%.8s]:%-10s %s\n", logTimer.elapsedMSec()/1000.0, debugPriorityToString(p), debugClassToString(c), aMessage.c_str());
+            fprintf(stderr, "%8.2f [%.8s]:%-10s %s\n", logTimer.elapsedMSec() / 1000.0, debugPriorityToString(p).c_str(), debugClassToString(c).c_str(), aMessage.c_str());
         }
         //    file, line, aMessage.c_str());
         //fprintf(stderr, "%s:%d:%s:%d:%s\n", debugClassToString(c), p,
@@ -694,6 +778,67 @@ sgDebugPriority logstream::priorityFromString(const std::string& s)
 
     throw std::invalid_argument("Couldn't parse log priority:" + s);
 }
+
+void logstream::parseLogClasses(const std::string& logClassesSpecification)
+{
+    using namespace simgear::strutils;
+    int classes = SG_NONE;
+    const auto lowerCaseSpec = lowercase(logClassesSpecification);
+
+    try {
+        if (logClassesSpecification.empty() || (lowerCaseSpec) == "all") {
+            classes = SG_ALL;
+        } else if (lowerCaseSpec == "none") {
+            classes = SG_NONE;
+        } else {
+            const auto pieces = split_on_any_of(lowerCaseSpec, "|,");
+            for (auto p : pieces) {
+                classes |= debugClassFromString(p);
+            }
+        }
+
+        d->setLogLevels(static_cast<sgDebugClass>(classes), d->m_logPriority);
+    } catch (std::exception& e) {
+        SG_LOG(SG_GENERAL, SG_WARN, "error parsing log classes '" << logClassesSpecification << "':" << e.what());
+    }
+}
+
+void logstream::addLogClass(const std::string& s)
+{
+    try {
+        const auto c = debugClassFromString(s);
+        d->setLogLevels(static_cast<sgDebugClass>(d->m_logClass | c), d->m_logPriority);
+    } catch (std::exception& e) {
+        SG_LOG(SG_GENERAL, SG_WARN, "error adding log class '" << s + "':" << e.what());
+    }
+}
+
+std::string logstream::getLogClassesAsString() const
+{
+    const auto classes = get_log_classes();
+    if (classes == SG_ALL) {
+        return "all";
+    }
+
+    if (classes == SG_NONE) {
+        return "none";
+    }
+    
+    std::string result;
+    for (auto mapping : log_class_mappings) {
+        if ((classes & mapping.c) == 0) {
+            continue;
+        }
+
+        if (!result.empty()) {
+            result.append(",");
+        }
+
+        result.append(mapping.name);
+    }
+    return result;
+}
+
 
 logstream&
 sglog()
