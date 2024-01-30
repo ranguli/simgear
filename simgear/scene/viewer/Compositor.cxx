@@ -146,7 +146,8 @@ Compositor::Compositor(osg::View *view,
     new osg::Uniform("fg_CameraWorldUp", osg::Vec3f()),
     new osg::Uniform("fg_CameraViewUp", osg::Vec3f()),
     new osg::Uniform("fg_NearFar", osg::Vec2f()),
-    new osg::Uniform("fg_Planes", osg::Vec3f()),
+    new osg::Uniform("fg_Fcoef", 0.0f),
+    new osg::Uniform("fg_FOVScale", osg::Vec2f()),
     new osg::Uniform("fg_SunDirection", osg::Vec3f()),
     new osg::Uniform("fg_SunDirectionWorld", osg::Vec3f()),
     new osg::Uniform("fg_SunZenithCosTheta", 0.0f),
@@ -219,6 +220,10 @@ Compositor::update(const osg::Matrix &view_matrix,
     _uniforms[SG_UNIFORM_MOON_DIRECTION_WORLD]->get(moon_dir_world);
     osg::Vec4f moon_dir_view = osg::Vec4f(
         moon_dir_world.x(), moon_dir_world.y(), moon_dir_world.z(), 0.0f) * view_matrix;
+
+    float aspect_ratio = proj_matrix(1,1) / proj_matrix(0,0);
+    float tan_fov_y = 1.0f / proj_matrix(1,1);
+    float tan_fov_x = tan_fov_y * aspect_ratio;
     
     for (int i = 0; i < SG_TOTAL_BUILTIN_UNIFORMS; ++i) {
         osg::ref_ptr<osg::Uniform> u = _uniforms[i];
@@ -255,8 +260,11 @@ Compositor::update(const osg::Matrix &view_matrix,
         case SG_UNIFORM_NEAR_FAR:
             u->set(osg::Vec2f(zNear, zFar));
             break;
-        case SG_UNIFORM_PLANES:
-            u->set(osg::Vec3f(-zFar, -zFar * zNear, zFar - zNear));
+        case SG_UNIFORM_FCOEF:
+            u->set(float(2.0 / log2(zFar + 1.0)));
+            break;
+        case SG_UNIFORM_FOV_SCALE:
+            u->set(osg::Vec2f(tan_fov_x, tan_fov_y) * 2.0f);
             break;
         case SG_UNIFORM_SUN_DIRECTION:
             u->set(osg::Vec3f(sun_dir_view.x(), sun_dir_view.y(), sun_dir_view.z()));

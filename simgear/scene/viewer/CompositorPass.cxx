@@ -566,14 +566,6 @@ protected:
             (*tcoords)[2].set(2.0f, 0.0f);
             geom->setTexCoordArray(0, tcoords);
 
-            osg::Vec4Array *colours = new osg::Vec4Array(1);
-            (*colours)[0].set(1.0f, 1.0f, 1.0, 1.0f);
-            geom->setColorArray(colours, osg::Array::BIND_OVERALL);
-
-            osg::Vec3Array *normals = new osg::Vec3Array(1);
-            (*normals)[0].set(0.0f, 0.0f, 1.0f);
-            geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
-
             geom->addPrimitiveSet(new osg::DrawArrays(
                                       osg::PrimitiveSet::TRIANGLES, 0, 3));
         }
@@ -827,6 +819,8 @@ public:
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_CAMERA_DISTANCE_TO_EARTH_CENTER]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_CAMERA_WORLD_UP]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_CAMERA_VIEW_UP]);
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_FCOEF]);
+        ss->addUniform(uniforms[Compositor::SG_UNIFORM_FOV_SCALE]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_DIRECTION]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_DIRECTION_WORLD]);
         ss->addUniform(uniforms[Compositor::SG_UNIFORM_SUN_ZENITH_COSTHETA]);
