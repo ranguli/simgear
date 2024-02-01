@@ -110,6 +110,10 @@ const std::string& debugPriorityToString(sgDebugPriority p)
         "ALRT",
         "INFO"};
 
+    if (static_cast<int>(p) >= priorityNames.size()) {
+        return priorityNames.at(0);
+    }
+
     return priorityNames.at(static_cast<int>(p));
 }
 
@@ -823,7 +827,7 @@ std::string logstream::getLogClassesAsString() const
     if (classes == SG_NONE) {
         return "none";
     }
-    
+
     std::string result;
     for (auto mapping : log_class_mappings) {
         if ((classes & mapping.c) == 0) {
