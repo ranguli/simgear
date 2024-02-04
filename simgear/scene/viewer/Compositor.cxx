@@ -167,7 +167,12 @@ Compositor::~Compositor()
 {
     // Remove slave cameras from the viewer
     for (const auto &pass : _passes) {
-        unsigned int index = _view->findSlaveIndexForCamera(pass->camera);
+        osg::Camera *camera = pass->camera;
+        // Remove all children before removing the slave to prevent the graphics
+        // window from automatically cleaning up all associated OpenGL objects.
+        camera->removeChildren(0, camera->getNumChildren());
+
+        unsigned int index = _view->findSlaveIndexForCamera(camera);
         _view->removeSlave(index);
     }
 }
