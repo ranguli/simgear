@@ -40,6 +40,7 @@ Atlas::Atlas(osg::ref_ptr<const SGReaderWriterOptions> options) {
     _materialParams1 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams1", Atlas::MAX_MATERIALS);
     _materialParams2 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams2", Atlas::MAX_MATERIALS);
     _materialParams3 = new osg::Uniform(osg::Uniform::Type::FLOAT_VEC4, "fg_materialParams3", Atlas::MAX_MATERIALS);
+    _shoreAtlastIndex = new osg::Uniform(osg::Uniform::Type::INT, "fg_shoreAtlasIndex");
 
     _image = new osg::Texture2DArray();
     _image->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
@@ -106,6 +107,11 @@ void Atlas::addMaterial(int landclass, bool isWater, bool isSea, SGSharedPtr<SGM
         // case we need to pass them as an array, indexed against the material.
         _materialParams1->setElement(_materialLookupIndex, osg::Vec4f(mat->get_parameter("transition_model"), mat->get_parameter("hires_overlay_bias"), mat->get_parameter("grain_strength"), mat->get_parameter("intrinsic_wetness")));
         _materialParams2->setElement(_materialLookupIndex, osg::Vec4f(mat->get_parameter("dot_density"), mat->get_parameter("dot_size"), mat->get_parameter("dust_resistance"), mat->get_parameter("rock_strata")));
+
+        if (std::find(mat->get_names().begin(), mat->get_names().end(), "Sand") != mat->get_names().end()) {
+            SG_LOG(SG_GENERAL, SG_DEBUG, "Found Sand material inserted into Atlas. Landclass " << landclass << ", index " << _materialLookupIndex);
+            _shoreAtlastIndex->set((int) _materialLookupIndex);
+        }
         
         float water = 0.0;
         if (_waterAtlas[landclass]) {
@@ -203,5 +209,6 @@ void Atlas::addUniforms(osg::StateSet* stateset) {
     stateset->addUniform(_materialParams1);
     stateset->addUniform(_materialParams2);
     stateset->addUniform(_materialParams3);
+    stateset->addUniform(_shoreAtlastIndex);
 }
 

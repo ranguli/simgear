@@ -84,11 +84,12 @@ private:
     osg::ref_ptr<osg::Uniform> _ambient;
     osg::ref_ptr<osg::Uniform> _diffuse;
     osg::ref_ptr<osg::Uniform> _specular;
+    osg::ref_ptr<osg::Uniform> _shoreAtlastIndex;
 
     osg::ref_ptr<osg::Uniform> _materialParams1;
     osg::ref_ptr<osg::Uniform> _materialParams2;
     osg::ref_ptr<osg::Uniform> _materialParams3;
-    
+
     unsigned int _imageIndex; // Index into the image
     unsigned int _materialLookupIndex; // Index into the material lookup
 
