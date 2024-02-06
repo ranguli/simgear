@@ -77,6 +77,7 @@
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/scene/util/SGSceneFeatures.hxx>
 #include <simgear/scene/util/StateAttributeFactory.hxx>
+#include <simgear/scene/util/load_shader.hxx>
 #include <simgear/structure/OSGUtils.hxx>
 #include <simgear/structure/SGExpression.hxx>
 
@@ -94,19 +95,6 @@ const char* UniformFactoryImpl::vec4Names[] = {"x", "y", "z", "w"};
 void UniformFactoryImpl::reset()
 {
   uniformCache.clear();
-}
-
-// work around the fact osg::Shader::loadShaderFromSourceFile does not
-// respect UTF8 paths, even when OSG_USE_UTF8_FILENAME is set :(
-bool loadShaderFromUTF8File(osg::Shader* shader, const std::string& fileName)
-{
-    sg_ifstream inStream(SGPath::fromUtf8(fileName), std::ios::in | std::ios::binary);
-    if (!inStream.is_open())
-        return false;
-
-    shader->setFileName(fileName);
-    shader->setShaderSource(inStream.read_all());
-    return true;
 }
 
 ref_ptr<Uniform> UniformFactoryImpl::getUniform( Effect * effect,
@@ -854,7 +842,7 @@ void reload_shaders()
         Shader *shader = sitr->second.get();
         string fileName = SGModelLib::findDataFile(sitr->first.first);
         if (!fileName.empty()) {
-            loadShaderFromUTF8File(shader, fileName);
+            simgear::loadShaderFromUTF8File(shader, fileName);
         } else {
             SG_LOG(SG_INPUT, SG_ALERT, "Could not locate shader: " << fileName);
             simgear::reportFailure(simgear::LoadFailure::NotFound,
@@ -982,8 +970,8 @@ void ShaderProgramBuilder::buildAttribute(Effect* effect, Pass* pass,
             program->addShader(sitr->second.get());
         } else {
             ref_ptr<Shader> shader = new Shader(stype);
-			shader->setName(fileName);
-            if (loadShaderFromUTF8File(shader, fileName)) {
+            shader->setName(fileName);
+            if (simgear::loadShaderFromUTF8File(shader, fileName)) {
                 if (!program->addShader(shader.get())) {
                     simgear::reportFailure(simgear::LoadFailure::BadData,
                                            simgear::ErrorCode::LoadEffectsShaders,
