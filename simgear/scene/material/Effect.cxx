@@ -1161,6 +1161,24 @@ struct NameBuilder : public PassAttributeBuilder
 
 InstallAttributeBuilder<NameBuilder> installName("name");
 
+struct DefineBuilder : public PassAttributeBuilder {
+    void buildAttribute(Effect* effect, Pass* pass, const SGPropertyNode* prop,
+                        const SGReaderWriterOptions* options) {
+        const SGPropertyNode* pName = getEffectPropertyChild(effect, prop, "name");
+        if (!pName) {
+            return;
+        }
+        const SGPropertyNode *pValue = getEffectPropertyChild(effect, prop, "value");
+        if (pValue) {
+            pass->setDefine(pName->getStringValue(), pValue->getStringValue());
+        } else {
+            pass->setDefine(pName->getStringValue());
+        }
+    }
+};
+
+InstallAttributeBuilder<DefineBuilder> installDefine("define");
+
 EffectNameValue<PolygonMode::Mode> polygonModeModesInit[] =
 {
     {"fill", PolygonMode::FILL},
