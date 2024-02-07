@@ -143,8 +143,8 @@ namespace canvas
     _colors->setDataVariance(osg::Object::DYNAMIC);
     _geom->setColorArray(_colors, osg::Array::BIND_OVERALL);
 
-    _prim = new osg::DrawArrays(osg::PrimitiveSet::QUADS);
-    _prim->set(osg::PrimitiveSet::QUADS, 0, 4);
+    _prim = new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES);
+    _prim->set(osg::PrimitiveSet::TRIANGLES, 0, 6);
     _prim->setDataVariance(osg::Object::DYNAMIC);
     _geom->addPrimitiveSet(_prim);
 
@@ -377,7 +377,7 @@ namespace canvas
 
     if( _attributes_dirty & DEST_SIZE )
     {
-      size_t num_vertices = (_slice.isValid() ? (fill ? 9 : 8) : 1) * 4;
+      size_t num_vertices = (_slice.isValid() ? (fill ? 9 : 8) : 1) * 6;
 
       if( num_vertices != _prim->getNumPrimitives() )
       {
@@ -756,21 +756,25 @@ namespace canvas
   //----------------------------------------------------------------------------
   void Image::setQuad(size_t index, const SGVec2f& tl, const SGVec2f& br)
   {
-    int i = index * 4;
-    (*_vertices)[i + 0].set(tl.x(), tl.y(), 0);
-    (*_vertices)[i + 1].set(br.x(), tl.y(), 0);
-    (*_vertices)[i + 2].set(br.x(), br.y(), 0);
-    (*_vertices)[i + 3].set(tl.x(), br.y(), 0);
+    int i = index * 6;
+    (*_vertices)[i + 0].set(tl.x(), br.y(), 0.0f);
+    (*_vertices)[i + 1].set(tl.x(), tl.y(), 0.0f);
+    (*_vertices)[i + 2].set(br.x(), tl.y(), 0.0f);
+    (*_vertices)[i + 3].set(tl.x(), br.y(), 0.0f);
+    (*_vertices)[i + 4].set(br.x(), tl.y(), 0.0f);
+    (*_vertices)[i + 5].set(br.x(), br.y(), 0.0f);
   }
 
   //----------------------------------------------------------------------------
   void Image::setQuadUV(size_t index, const SGVec2f& tl, const SGVec2f& br)
   {
-    int i = index * 4;
-    (*_texCoords)[i + 0].set(tl.x(), tl.y());
-    (*_texCoords)[i + 1].set(br.x(), tl.y());
-    (*_texCoords)[i + 2].set(br.x(), br.y());
+    int i = index * 6;
+    (*_texCoords)[i + 0].set(tl.x(), br.y());
+    (*_texCoords)[i + 1].set(tl.x(), tl.y());
+    (*_texCoords)[i + 2].set(br.x(), tl.y());
     (*_texCoords)[i + 3].set(tl.x(), br.y());
+    (*_texCoords)[i + 4].set(br.x(), tl.y());
+    (*_texCoords)[i + 5].set(br.x(), br.y());
   }
 
   //----------------------------------------------------------------------------
