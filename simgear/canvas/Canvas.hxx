@@ -175,7 +175,6 @@ namespace canvas
 
       void update(double delta_time_sec) override;
 
-      osg::Camera* getCamera();
       int subscribe(CanvasImageReadyListener * subscriber);
       void unsubscribe(CanvasImageReadyListener * subscriber);
 
@@ -205,6 +204,7 @@ namespace canvas
       void childRemoved(SGPropertyNode* parent, SGPropertyNode* child) override;
       void valueChanged(SGPropertyNode * node) override;
 
+      osg::Camera* getCamera() const;
       osg::Texture2D* getTexture() const;
 
       CullCallbackPtr getCullCallback() const;

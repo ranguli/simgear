@@ -732,6 +732,12 @@ namespace canvas
   }
 
   //----------------------------------------------------------------------------
+  osg::Camera* Canvas::getCamera() const
+  {
+    return _texture.getCamera();
+  }
+
+  //----------------------------------------------------------------------------
   osg::Texture2D* Canvas::getTexture() const
   {
     return _texture.getTexture();

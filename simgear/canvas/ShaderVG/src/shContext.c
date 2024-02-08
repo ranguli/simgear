@@ -73,27 +73,31 @@ VG_API_CALL void vgResizeSurfaceSH(VGint width, VGint height)
 {
     VG_GETCONTEXT(VG_NO_RETVAL);
 
-    /* update surface (texture) info */
+    /* update surface info */
     context->surfaceWidth = width;
     context->surfaceHeight = height;
+#if 0
+    /* setup GL projection */
+    glViewport(0,0,width,height);
 
+    /* Setup projection matrix */
+    float mat[16];
+    float volume = fmax(width, height) / 2;
+    shCalcOrtho2D(mat, 0, width, 0, height, -volume, volume);
+    glUseProgram(context->progDraw);
+    glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
+#endif
     VG_RETURN(VG_NO_RETVAL);
 }
 
-VG_API_CALL void vgSetOrtho2DSH(VGint left, VGint right, VGint bottom, VGint top)
+VG_API_CALL void vgSetModelViewProjectionMatSH(float *mat)
 {
     VG_GETCONTEXT(VG_NO_RETVAL);
 
-    if (left == 0 && right == context->surfaceWidth &&
-        top == 0 && bottom == context->surfaceHeight) {
-    } else {
-        /* Setup projection matrix */
-        float mat[16];
-        shCalcOrtho2D(mat, left, right, bottom, top, -1, 1);
-        glUseProgram(context->progDraw);
-        glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
-        GL_CHECK_ERROR;
-    }
+    glUseProgram(context->progDraw);
+    glUniformMatrix4fv(context->locationDraw.mvp, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
 
     VG_RETURN(VG_NO_RETVAL);
 }

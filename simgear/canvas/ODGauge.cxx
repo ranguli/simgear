@@ -29,7 +29,6 @@
 #  include <simgear_config.h>
 #endif
 
-#include "vg/openvg.h"
 #include "ODGauge.hxx"
 #include "Canvas.hxx"
 #include "CanvasSystemAdapter.hxx"
@@ -322,27 +321,14 @@ namespace canvas
     if( _view_height < 0 )
       _view_height = _size_y;
 
-//  if ( vgHasContextSH() )
-//    vgResizeSurfaceSH(_size_x, _size_y);
-
     if( _flags & USE_IMAGE_COORDS ) {
       camera->setProjectionMatrix(
-        osg::Matrix::ortho2D(0, _view_width, _view_height, 0)
-      );
-
-      if ( vgHasContextSH() )
-        vgSetOrtho2DSH( 0, _view_width, _view_height, 0);
+        osg::Matrix::ortho2D(0.0, _view_width, _view_height, 0.0));
     } else {
       camera->setProjectionMatrix(
-        osg::Matrix::ortho2D( -_view_width/2.,  _view_width/2.,
-                              -_view_height/2., _view_height/2. )
-      );
-
-      if ( vgHasContextSH() )
-        vgSetOrtho2DSH( -_view_width/2.,  _view_width/2.,
-                         -_view_height/2., _view_height/2. );
+        osg::Matrix::ortho2D(-_view_width *0.5, _view_width *0.5,
+                             -_view_height*0.5, _view_height*0.5));
     }
-
   }
 
   //----------------------------------------------------------------------------

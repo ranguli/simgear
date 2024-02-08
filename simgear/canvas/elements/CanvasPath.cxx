@@ -393,6 +393,8 @@ namespace canvas
 
         osg::State* state = renderInfo.getState();
         assert(state);
+        osg::GLExtensions* extensions = state->get<osg::GLExtensions>();
+        assert(extensions);
 
         state->setActiveTextureUnit(0);
         state->setClientActiveTextureUnit(0);
@@ -400,8 +402,13 @@ namespace canvas
 
         bool was_blend_enabled = state->getLastAppliedMode(GL_BLEND);
         bool was_stencil_enabled = state->getLastAppliedMode(GL_STENCIL_TEST);
+        bool was_scissor_enabled = state->getLastAppliedMode(GL_SCISSOR_TEST);
         osg::StateAttribute const* blend_func =
           state->getLastAppliedAttribute(osg::StateAttribute::BLENDFUNC);
+
+        // Set the model view projection matrix
+        osg::Matrixf mvp = state->getModelViewMatrix() * state->getProjectionMatrix();
+        vgSetModelViewProjectionMatSH(mvp.ptr());
 
         // Setup paint
         if( _mode & VG_STROKE_PATH )
@@ -460,7 +467,9 @@ namespace canvas
         //                            better with OpenSceneGraph)
         if( was_blend_enabled )   glEnable(GL_BLEND);
         if( was_stencil_enabled ) glEnable(GL_STENCIL_TEST);
+        if( was_scissor_enabled ) glEnable(GL_SCISSOR_TEST);
         if( blend_func )          blend_func->apply(*state);
+        extensions->glUseProgram(0);
       }
 
       osg::BoundingBox getTransformedBounds(const osg::Matrix& mat) const

@@ -110,8 +110,9 @@ typedef struct
     struct {
         GLint pos;
         GLint textureUV;
-        GLint model;
-        GLint projection;
+        GLint mvp;
+        // GLint model;
+        // GLint projection;
         GLint paintInverted;
         GLint drawMode;
         GLint imageSampler;

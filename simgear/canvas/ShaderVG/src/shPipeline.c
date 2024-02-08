@@ -28,6 +28,8 @@
 #include "shPaint.h"
 #include "shPath.h"
 
+// In FlightGear we use our own transformation matrices given by OSG, so disable
+// the default model view matrix used by ShaderVG.
 #define USE_MODELVIEW_MATRIX 0
 
 void shPremultiplyFramebuffer()
@@ -187,7 +189,7 @@ static void shDrawPaintMesh(VGContext* c, SHVector2* min, SHVector2* max,
         } /* else behave as a color paint */
 
     case VG_PAINT_TYPE_COLOR:
-        //  shLoadOneColorMesh(p);
+        shLoadOneColorMesh(p);
         break;
     }
 
@@ -292,7 +294,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
                      VG_ILLEGAL_ARGUMENT_ERROR, VG_NO_RETVAL);
 
     /* Check whether scissoring is enabled and scissor
-     rectangle is valid */
+       rectangle is valid */
     if (context->scissoring == VG_TRUE) {
         rect = &context->scissor.items[0];
         if (context->scissor.size == 0) VG_RETURN(VG_NO_RETVAL);
@@ -304,7 +306,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
     p = (SHPath*)path;
 
     /* If user-to-surface matrix invertible tessellate in
-     surface space for better path resolution */
+       surface space for better path resolution */
     if (shIsTessCacheValid(context, p) == VG_FALSE) {
         if (shInvertMatrix(&context->pathTransform, &mi)) {
             shFlattenPath(p, 1);
@@ -319,13 +321,13 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
     stroke = (context->strokePaint ? context->strokePaint : &context->defaultPaint);
 
     /* Apply transformation */
+    glUseProgram(context->progDraw);
 #if USE_MODELVIEW_MATRIX
     shMatrixToGL(&context->pathTransform, mgl);
-    glUseProgram(context->progDraw);
     glUniformMatrix4fv(context->locationDraw.model, 1, GL_FALSE, mgl);
+#endif
     glUniform1i(context->locationDraw.drawMode, 0); /* drawMode: path */
     GL_CHECK_ERROR;
-#endif
 
     if (paintModes & VG_FILL_PATH) {
         /* Tesselate into stencil */
@@ -346,7 +348,7 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
         /* Setup blending */
         updateBlendingStateGL(context,
                               fill->type == VG_PAINT_TYPE_COLOR &&
-                                  fill->color.a == 1.0f);
+                              fill->color.a == 1.0f);
 
         /* Draw paint where stencil odd */
         glStencilFunc(GL_EQUAL, 1, 1);
@@ -357,56 +359,56 @@ VG_API_CALL void vgDrawPath(VGPath path, VGbitfield paintModes)
         /* Reset state */
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDisable(GL_STENCIL_TEST);
-        //  glDisable(GL_BLEND);
+        // glDisable(GL_BLEND);
     }
 
     if ((paintModes & VG_STROKE_PATH) &&
         context->strokeLineWidth > 0.0f) {
+
 #if 0
-    if (1) {/*context->strokeLineWidth > 1.0f) {*/
+        if (1) {/*context->strokeLineWidth > 1.0f) {*/
 #endif
-        if (shIsStrokeCacheValid(context, p) == VG_FALSE) {
-            /* Generate stroke triangles in user space */
-            shVector2ArrayClear(&p->stroke);
-            shStrokePath(context, p);
-        }
+            if (shIsStrokeCacheValid(context, p) == VG_FALSE) {
+                /* Generate stroke triangles in user space */
+                shVector2ArrayClear(&p->stroke);
+                shStrokePath(context, p);
+            }
 
-        /* Stroke into stencil */
-        glEnable(GL_STENCIL_TEST);
-        glStencilFunc(GL_NOTEQUAL, 1, 1);
-        glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        shDrawStroke(p);
+            /* Stroke into stencil */
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(GL_NOTEQUAL, 1, 1);
+            glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            shDrawStroke(p);
 
-        /* Setup blending */
-        updateBlendingStateGL(context,
-                              stroke->type == VG_PAINT_TYPE_COLOR &&
+            /* Setup blending */
+            updateBlendingStateGL(context,
+                                  stroke->type == VG_PAINT_TYPE_COLOR &&
                                   stroke->color.a == 1.0f);
 
-        /* Draw paint where stencil odd */
-        glStencilFunc(GL_EQUAL, 1, 1);
-        glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, GL_TEXTURE0);
+            /* Draw paint where stencil odd */
+            glStencilFunc(GL_EQUAL, 1, 1);
+            glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            shDrawPaintMesh(context, &p->min, &p->max, VG_STROKE_PATH, GL_TEXTURE0);
 
-        /* Reset state */
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDisable(GL_STENCIL_TEST);
-//    glDisable(GL_BLEND);
+            /* Reset state */
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glDisable(GL_STENCIL_TEST);
+            // glDisable(GL_BLEND);
 #if 0
-    }else{
+        } else {
+            /* Simulate thin stroke by alpha */
+            SHColor c = stroke->color;
+            if (context->strokeLineWidth < 1.0f)
+                c.a *= context->strokeLineWidth;
       
-      /* Simulate thin stroke by alpha */
-      SHColor c = stroke->color;
-      if (context->strokeLineWidth < 1.0f)
-        c.a *= context->strokeLineWidth;
-      
-      /* Draw contour as a line */
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      shDrawVertices(p, GL_LINE_STRIP);
-      glDisable(GL_BLEND);
-    }
+            /* Draw contour as a line */
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            shDrawVertices(p, GL_LINE_STRIP);
+            glDisable(GL_BLEND);
+        }
 #endif
     }
 
@@ -445,13 +447,13 @@ VG_API_CALL void vgDrawImage(VGImage image)
 
     /* Apply image-user-to-surface transformation */
     i = (SHImage*)image;
+
+    glUseProgram(context->progDraw);
 #if USE_MODELVIEW_MATRIX
     shMatrixToGL(&context->imageTransform, mgl);
-    glUseProgram(context->progDraw);
     glUniformMatrix4fv(context->locationDraw.model, 1, GL_FALSE, mgl);
     GL_CHECK_ERROR;
 #endif
-
     glUniform1i(context->locationDraw.drawMode, 1); /* drawMode: image */
     GL_CHECK_ERROR;
 
@@ -503,7 +505,7 @@ VG_API_CALL void vgDrawImage(VGImage image)
             break;
         default:
         case VG_PAINT_TYPE_COLOR:
-            // shLoadOneColorMesh(fill);
+            shLoadOneColorMesh(fill);
             break;
         }
     } else {

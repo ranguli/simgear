@@ -70,8 +70,10 @@ void shInitPiplelineShaders(void)
 
     context->locationDraw.pos = glGetAttribLocation(context->progDraw, "pos");
     context->locationDraw.textureUV = glGetAttribLocation(context->progDraw, "textureUV");
-    context->locationDraw.model = glGetUniformLocation(context->progDraw, "sh_Model");
-    context->locationDraw.projection = glGetUniformLocation(context->progDraw, "sh_Ortho");
+    // In FlightGear we use our own transformation matrices given by OSG
+    context->locationDraw.mvp = glGetUniformLocation(context->progDraw, "sh_Mvp");
+    // context->locationDraw.model = glGetUniformLocation(context->progDraw, "sh_Model");
+    // context->locationDraw.projection = glGetUniformLocation(context->progDraw, "sh_Ortho");
     context->locationDraw.paintInverted = glGetUniformLocation(context->progDraw, "paintInverted");
     context->locationDraw.drawMode = glGetUniformLocation(context->progDraw, "drawMode");
     context->locationDraw.imageSampler = glGetUniformLocation(context->progDraw, "imageSampler");
@@ -91,12 +93,12 @@ void shInitPiplelineShaders(void)
     GL_CHECK_ERROR;
 
 #if 0
-  /* Initialize uniform variables */
-  float mat[16];
-  float volume = fmax(context->surfaceWidth, context->surfaceHeight) / 2;
-  shCalcOrtho2D(mat, 0, context->surfaceWidth , context->surfaceHeight, 0, -volume, volume);
-  glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
-  GL_CHECK_ERROR;
+    /* Initialize uniform variables */
+    float mat[16];
+    float volume = fmax(context->surfaceWidth, context->surfaceHeight) / 2;
+    shCalcOrtho2D(mat, 0, context->surfaceWidth , context->surfaceHeight, 0, -volume, volume);
+    glUniformMatrix4fv(context->locationDraw.projection, 1, GL_FALSE, mat);
+    GL_CHECK_ERROR;
 #endif
 }
 
