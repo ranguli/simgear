@@ -537,40 +537,47 @@ protected:
                                             float width,
                                             float height,
                                             float scale) {
-        osg::ref_ptr<osg::Geometry> geom;
+        osg::Geometry *geom = new osg::Geometry;
+        geom->setSupportsDisplayList(false);
 
         // When the quad is fullscreen, it can be optimized by using a
         // a fullscreen triangle instead of a quad to avoid discarding pixels
         // in the diagonal. If the desired geometry does not occupy the entire
         // viewport, this optimization does not occur and a normal quad is drawn
         // instead.
-        if (left != 0.0f || bottom != 0.0f || width != 1.0f || height != 1.0f
-            || scale != 1.0f) {
-            geom = osg::createTexturedQuadGeometry(
-                osg::Vec3(left,  bottom,  0.0f),
-                osg::Vec3(width, 0.0f,    0.0f),
-                osg::Vec3(0.0f,  height,  0.0f),
-                0.0f, 0.0f, scale, scale);
+        if (left != 0.0f || bottom != 0.0f || width != 1.0f || height != 1.0f || scale != 1.0f) {
+            osg::Vec3Array *vertices = new osg::Vec3Array(4);
+            (*vertices)[0].set(left,       bottom+height, 0.0f);
+            (*vertices)[1].set(left,       bottom,        0.0f);
+            (*vertices)[2].set(left+width, bottom+height, 0.0f);
+            (*vertices)[3].set(left+width, bottom,        0.0f);
+            geom->setVertexArray(vertices);
+
+            osg::Vec2Array *texcoords = new osg::Vec2Array(4);
+            (*texcoords)[0].set(0.0f,  scale);
+            (*texcoords)[1].set(0.0f,  0.0f);
+            (*texcoords)[2].set(scale, scale);
+            (*texcoords)[3].set(scale, 0.0f);
+            geom->setTexCoordArray(0, texcoords);
+
+            geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_STRIP, 0, 4));
         } else {
-            geom = new osg::Geometry;
+            osg::Vec3Array *vertices = new osg::Vec3Array(3);
+            (*vertices)[0].set(0.0f, 2.0f, 0.0f);
+            (*vertices)[1].set(0.0f, 0.0f, 0.0f);
+            (*vertices)[2].set(2.0f, 0.0f, 0.0f);
+            geom->setVertexArray(vertices);
 
-            osg::Vec3Array *coords = new osg::Vec3Array(3);
-            (*coords)[0].set(0.0f, 2.0f, 0.0f);
-            (*coords)[1].set(0.0f, 0.0f, 0.0f);
-            (*coords)[2].set(2.0f, 0.0f, 0.0f);
-            geom->setVertexArray(coords);
+            osg::Vec2Array *texcoords = new osg::Vec2Array(3);
+            (*texcoords)[0].set(0.0f, 2.0f);
+            (*texcoords)[1].set(0.0f, 0.0f);
+            (*texcoords)[2].set(2.0f, 0.0f);
+            geom->setTexCoordArray(0, texcoords);
 
-            osg::Vec2Array *tcoords = new osg::Vec2Array(3);
-            (*tcoords)[0].set(0.0f, 2.0f);
-            (*tcoords)[1].set(0.0f, 0.0f);
-            (*tcoords)[2].set(2.0f, 0.0f);
-            geom->setTexCoordArray(0, tcoords);
-
-            geom->addPrimitiveSet(new osg::DrawArrays(
-                                      osg::PrimitiveSet::TRIANGLES, 0, 3));
+            geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES, 0, 3));
         }
 
-        return geom.release();
+        return geom;
     }
 };
 RegisterPassBuilder<QuadPassBuilder> registerQuadPass("quad");
