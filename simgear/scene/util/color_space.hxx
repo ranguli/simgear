@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <simgear/math/SGMath.hxx>
+
 namespace simgear {
 
 /// Transform a linear sRGB color to sRGB (gamma correction)
-void eotf_sRGB(float in[3], float out[3]);
+SGVec3f eotf_sRGB(const SGVec3f &in);
 /// Transform an sRGB color to linear sRGB
-void eotf_inverse_sRGB(float in[3], float out[3]);
+SGVec3f eotf_inverse_sRGB(const SGVec3f &in);
 
 } // namespace simgear

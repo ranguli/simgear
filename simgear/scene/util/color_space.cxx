@@ -4,13 +4,12 @@
 
 #include "color_space.hxx"
 
-#include <cmath>
-
 namespace simgear {
 
-void
-eotf_sRGB(float in[3], float out[3])
+SGVec3f
+eotf_sRGB(const SGVec3f &in)
 {
+    SGVec3f out;
     for (int i = 0; i < 3; ++i) {
         float c = in[i];
         if (c <= 0.0031308f) {
@@ -19,11 +18,13 @@ eotf_sRGB(float in[3], float out[3])
             out[i] = 1.055f * std::pow(c, 1.0f / 2.4f) - 0.055f;
         }
     }
+    return out;
 }
 
-void
-eotf_inverse_sRGB(float in[3], float out[3])
+SGVec3f
+eotf_inverse_sRGB(const SGVec3f &in)
 {
+    SGVec3f out;
     for (int i = 0; i < 3; ++i) {
         float c = in[i];
         if (c <= 0.04045f) {
@@ -32,6 +33,7 @@ eotf_inverse_sRGB(float in[3], float out[3])
             out[i] = powf((c + 0.055f) / 1.055f, 2.4f);
         }
     }
+    return out;
 }
 
 } // namespace simgear
