@@ -1692,6 +1692,7 @@ void VPBTechnique::applyLineFeatures(BufferData& buffer, osg::ref_ptr<SGMaterial
 
     if (buffer._lineFeatures->getNumChildren() > 0) {
         // We have some line features, so add them
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Generated " <<  buffer._lineFeatures->getNumChildren() << " roads of width > " << minWidth << "m for tile LoD level " << tileLevel);
         buffer._transform->addChild(buffer._lineFeatures.get());
     }
 
