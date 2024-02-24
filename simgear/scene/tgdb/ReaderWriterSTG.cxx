@@ -45,19 +45,20 @@
 #include <simgear/math/sg_random.hxx>
 
 #include <simgear/io/iostreams/sgstream.hxx>
+#include <simgear/scene/material/matlib.hxx>
+#include <simgear/scene/tgdb/LightBin.hxx>
+#include <simgear/scene/tgdb/ObjectInstanceBin.hxx>
+#include <simgear/scene/tgdb/SGBuildingBin.hxx>
+#include <simgear/scene/tgdb/TreeBin.hxx>
+#include <simgear/scene/tgdb/VPBRasterRenderer.hxx>
+#include <simgear/scene/tgdb/VPBTechnique.hxx>
+#include <simgear/scene/tgdb/apt_signs.hxx>
+#include <simgear/scene/tgdb/obj.hxx>
 #include <simgear/scene/util/OptionsReadFileCallback.hxx>
 #include <simgear/scene/util/OsgMath.hxx>
 #include <simgear/scene/util/QuadTreeBuilder.hxx>
 #include <simgear/scene/util/RenderConstants.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
-#include <simgear/scene/tgdb/apt_signs.hxx>
-#include <simgear/scene/tgdb/obj.hxx>
-#include <simgear/scene/material/matlib.hxx>
-#include <simgear/scene/tgdb/SGBuildingBin.hxx>
-#include <simgear/scene/tgdb/TreeBin.hxx>
-#include <simgear/scene/tgdb/VPBRasterRenderer.hxx>
-#include <simgear/scene/tgdb/VPBTechnique.hxx>
-#include <simgear/scene/tgdb/LightBin.hxx>
 
 #include <simgear/scene/util/SGSceneFeatures.hxx>
 
@@ -76,6 +77,7 @@
 #define COASTLINE_LIST "COASTLINE_LIST"
 #define OBJECT_LIGHT "OBJECT_LIGHT"
 #define LIGHT_LIST "LIGHT_LIST"
+#define OBJECT_INSTANCED "OBJECT_INSTANCED"
 
 namespace simgear {
 
@@ -171,6 +173,16 @@ struct ReaderWriterSTG::_ModelBin {
       _LightList() : _lon(0), _lat(0), _elev(0) { }
       std::string _filename;
       double _lon, _lat, _elev;
+    };
+
+    struct _InstancedObject {
+        _InstancedObject() : _lon(0), _lat(0), _elev(0) {}
+        SGPath _errorLocation;
+        std::string _modelname;
+        std::string _filename;
+        std::string _effect;
+        double _lon, _lat, _elev;
+        osg::ref_ptr<SGReaderWriterOptions> _options;
     };
 
     struct _LineFeatureList {
@@ -395,6 +407,24 @@ struct ReaderWriterSTG::_ModelBin {
                 }
             }
 
+            if (!_instancedObjectList.empty()) {
+                for (const auto& io : _instancedObjectList) {
+                    osg::MatrixTransform* matrixTransform;
+                    matrixTransform = new osg::MatrixTransform(makeZUpFrame(SGGeod::fromDegM(io._lon, io._lat, io._elev)));
+                    matrixTransform->setName("rotateInstancedObject");
+                    matrixTransform->setDataVariance(osg::Object::STATIC);
+
+                    const auto path = SGPath(io._filename);
+                    ObjectInstanceBin objectInstances(io._modelname, path, io._effect);
+
+                    const auto loadedModelRename = createObjectInstances(objectInstances, osg::Matrix::identity(), io._options);
+                    if (loadedModelRename) {
+                        matrixTransform->addChild(loadedModelRename);
+                        group->addChild(matrixTransform);
+                    }
+                }
+            }
+
             return group.release();
         }
 
@@ -405,6 +435,7 @@ struct ReaderWriterSTG::_ModelBin {
         std::list<_TreeList> _treeList;
         std::list<_Light> _lightList;
         std::list<_LightList> _lightListList;
+        std::list<_InstancedObject> _instancedObjectList;
 
         /// The original options to use for this bunch of models
         osg::ref_ptr<SGReaderWriterOptions> _options;
@@ -733,6 +764,45 @@ struct ReaderWriterSTG::_ModelBin {
                     in >> lightList._lon >> lightList._lat >> lightList._elev;
                     checkInsideBucket(absoluteFileName, lightList._lon, lightList._lat);
                     _lightListList.push_back(lightList);
+                } else if (token == OBJECT_INSTANCED) {
+                    osg::ref_ptr<SGReaderWriterOptions> opt;
+
+                    opt = sharedOptions(filePath, options);
+                    opt->addErrorContext("terrain-stg", absoluteFileName.utf8Str());
+
+                    if (SGPath(name).lower_extension() == "ac")
+                        opt->setInstantiateEffects(true);
+                    else
+                        opt->setInstantiateEffects(false);
+
+                    _InstancedObject instancedObject;
+                    instancedObject._modelname = name;
+
+                    std::string filename;
+                    in >> filename;
+                    SGPath _filepath = filePath;
+                    _filepath.append(filename);
+
+                    instancedObject._errorLocation = absoluteFileName;
+                    instancedObject._filename = _filepath.utf8Str();
+                    instancedObject._options = opt;
+
+                    in >> instancedObject._effect;
+
+                    if (instancedObject._effect == "default") {
+                        instancedObject._effect = "Effects/object-instancing";
+                    }
+
+                    if (!(instancedObject._effect == "Effects/object-instancing" || instancedObject._effect == "Effects/object-instancing-colored")) {
+                        SG_LOG(SG_TERRAIN, SG_ALERT, "Unknown effect for instancing");
+                    } else {
+                        opt->setDefaultEffect(instancedObject._effect);
+
+                        in >> instancedObject._lon >> instancedObject._lat >> instancedObject._elev;
+                        checkInsideBucket(absoluteFileName, instancedObject._lon, instancedObject._lat);
+
+                        _instancedObjectList.push_back(instancedObject);
+                    }
                 } else {
                     // Check registered callback for token. Keep lock until callback completed to make sure it will not be
                     // executed after a thread successfully executed removeSTGObjectHandler()
@@ -874,20 +944,20 @@ struct ReaderWriterSTG::_ModelBin {
             i->_elev += elevation(*terrainGroup, SGGeod::fromDeg(i->_lon, i->_lat));
         }
 
-        if (_objectStaticList.empty() && 
-            _signList.empty() && 
-            _buildingListList.empty() && 
-            _treeListList.empty() && 
-            _lineFeatureListList.empty() && 
-            _areaFeatureListList.empty() && 
+        if (_objectStaticList.empty() &&
+            _signList.empty() &&
+            _buildingListList.empty() &&
+            _treeListList.empty() &&
+            _lineFeatureListList.empty() &&
+            _areaFeatureListList.empty() &&
             _coastFeatureListList.empty() &&
             _lightList.empty() &&
-            _lightListList.empty())
-        {
+            _lightListList.empty() &&
+            _instancedObjectList.empty()) {
             // The simple case, just return the terrain group
             return terrainGroup.release();
         }
-        
+
         osg::PagedLOD* pagedLOD = new osg::PagedLOD;
         std::string name = string("pagedObjectLOD ").append(bucket.gen_index_str());
         pagedLOD->setName(name);
@@ -904,6 +974,7 @@ struct ReaderWriterSTG::_ModelBin {
         readFileCallback->_treeList = _treeListList;
         readFileCallback->_lightList = _lightList;
         readFileCallback->_lightListList = _lightListList;
+        readFileCallback->_instancedObjectList = _instancedObjectList;
         readFileCallback->_signList = _signList;
         readFileCallback->_options = options;
         readFileCallback->_bucket = bucket;
@@ -943,6 +1014,7 @@ struct ReaderWriterSTG::_ModelBin {
     std::list<_CoastlineList> _coastFeatureListList;
     std::list<_Light> _lightList;
     std::list<_LightList> _lightListList;
+    std::list<_InstancedObject> _instancedObjectList;
 };
 
 ReaderWriterSTG::ReaderWriterSTG()

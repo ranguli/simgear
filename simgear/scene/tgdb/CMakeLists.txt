@@ -6,6 +6,7 @@ set(HEADERS
     GroundLightManager.hxx
     LineFeatureBin.hxx
     LightBin.hxx
+    ObjectInstanceBin.hxx
     ReaderWriterSPT.hxx
     ReaderWriterSTG.hxx
     SGBuildingBin.hxx
@@ -40,6 +41,7 @@ set(SOURCES
     GroundLightManager.cxx
     LineFeatureBin.cxx
     LightBin.cxx
+    ObjectInstanceBin.cxx
     ReaderWriterSPT.cxx
     ReaderWriterSTG.cxx
     SGBuildingBin.cxx

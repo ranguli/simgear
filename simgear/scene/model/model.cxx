@@ -305,17 +305,19 @@ void MakeEffectVisitor::apply(osg::Geode& geode)
 
 namespace
 {
-class DefaultEffect : public simgear::Singleton<DefaultEffect>
+
+class DefaultEffect
 {
 public:
-    DefaultEffect()
+    DefaultEffect(const std::string& effectPath = "Effects/model-default")
     {
         _effect = new SGPropertyNode;
         makeChild(_effect.ptr(), "inherits-from")
-            ->setStringValue("Effects/model-default");
+            ->setStringValue(effectPath);
     }
     virtual ~DefaultEffect() {}
     SGPropertyNode* getEffect() { return _effect.ptr(); }
+
 protected:
     SGPropertyNode_ptr _effect;
 };
@@ -346,8 +348,9 @@ ref_ptr<Node> instantiateEffects(osg::Node* modelGroup,
         configNode->removeChild("default");
         configNode->removeChildren("object-name");
     }
-    if (!defaultEffectPropRoot)
-        defaultEffectPropRoot = DefaultEffect::instance()->getEffect();
+    if (!defaultEffectPropRoot) {
+        defaultEffectPropRoot = DefaultEffect(options->getDefaultEffect()).getEffect();
+    }
     visitor.setDefaultEffect(defaultEffectPropRoot.ptr());
     visitor.setModelPath(modelPath);
     modelGroup->accept(visitor);
@@ -372,13 +375,13 @@ ref_ptr<Node> instantiateMaterialEffects(osg::Node* modelGroup,
         effect = new SGPropertyNode();
         makeChild(effect, "inherits-from")->setStringValue(mat->get_effect_name());
       } else {
-        effect = DefaultEffect::instance()->getEffect();
+        effect = DefaultEffect().getEffect();
         SG_LOG( SG_TERRAIN, SG_ALERT, "Unable to get effect for " << options->getMaterialName());
         simgear::reportFailure(simgear::LoadFailure::NotFound, simgear::ErrorCode::LoadEffectsShaders,
                                "Unable to get effect for material:" + options->getMaterialName());
       }
     } else {
-      effect = DefaultEffect::instance()->getEffect();
+      effect = DefaultEffect().getEffect();
     }
 
     effect->addChild("default")->setBoolValue(true);

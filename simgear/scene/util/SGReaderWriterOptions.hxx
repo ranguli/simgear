@@ -52,38 +52,38 @@ public:
 
     //SGReaderWriterOptions* cloneOptions(const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) const { return static_cast<SGReaderWriterOptions*>(clone(copyop)); }
 
-    SGReaderWriterOptions() :
-        _materialLib(0),
-        _load_panel(0),
-        _instantiateEffects(false),
-        _instantiateMaterialEffects(false),
-        _autoTooltipsMaster(false),
-        _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL),
-        _vertexOrderXYZ(false)
+    SGReaderWriterOptions() : _materialLib(0),
+                              _load_panel(0),
+                              _instantiateEffects(false),
+                              _instantiateMaterialEffects(false),
+                              _autoTooltipsMaster(false),
+                              _autoTooltipsMasterMax(0),
+                              _LoadOriginHint(ORIGIN_MODEL),
+                              _vertexOrderXYZ(false),
+                              _defaultEffect("Effects/model-default")
     { }
-    SGReaderWriterOptions(const std::string& str) :
-        osgDB::Options(str),
-        _materialLib(0),
-        _load_panel(0),
-        _instantiateEffects(false),
-        _instantiateMaterialEffects(false),
-        _autoTooltipsMaster(false),
-        _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL),
-        _vertexOrderXYZ(false)
+    SGReaderWriterOptions(const std::string& str) : osgDB::Options(str),
+                                                    _materialLib(0),
+                                                    _load_panel(0),
+                                                    _instantiateEffects(false),
+                                                    _instantiateMaterialEffects(false),
+                                                    _autoTooltipsMaster(false),
+                                                    _autoTooltipsMasterMax(0),
+                                                    _LoadOriginHint(ORIGIN_MODEL),
+                                                    _vertexOrderXYZ(false),
+                                                    _defaultEffect("Effects/model-default")
     { }
     SGReaderWriterOptions(const osgDB::Options& options,
-                          const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) :
-        osgDB::Options(options, copyop),
-        _materialLib(0),
-        _load_panel(0),
-        _instantiateEffects(false),
-        _instantiateMaterialEffects(false),
-        _autoTooltipsMaster(false),
-        _autoTooltipsMasterMax(0),
-        _LoadOriginHint(ORIGIN_MODEL),
-        _vertexOrderXYZ(false)
+                          const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) : osgDB::Options(options, copyop),
+                                                                                   _materialLib(0),
+                                                                                   _load_panel(0),
+                                                                                   _instantiateEffects(false),
+                                                                                   _instantiateMaterialEffects(false),
+                                                                                   _autoTooltipsMaster(false),
+                                                                                   _autoTooltipsMasterMax(0),
+                                                                                   _LoadOriginHint(ORIGIN_MODEL),
+                                                                                   _vertexOrderXYZ(false),
+                                                                                   _defaultEffect("Effects/model-default")
     { }
     SGReaderWriterOptions(const SGReaderWriterOptions& options,
                           const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) : osgDB::Options(options, copyop),
@@ -102,7 +102,8 @@ public:
                                                                                    _autoTooltipsMasterMax(options._autoTooltipsMasterMax),
                                                                                    _LoadOriginHint(options._LoadOriginHint),
                                                                                    _errorContext(options._errorContext),
-                                                                                   _vertexOrderXYZ(options._vertexOrderXYZ)
+                                                                                   _vertexOrderXYZ(options._vertexOrderXYZ),
+                                                                                   _defaultEffect(options._defaultEffect)
     { }
 
     META_Object(simgear, SGReaderWriterOptions);
@@ -172,6 +173,15 @@ public:
     bool getVertexOrderXYZ() const                  { return _vertexOrderXYZ; }
     void setVertexOrderXYZ(bool vertexOrderXYZ)     { _vertexOrderXYZ = vertexOrderXYZ; }
 
+    std::string getDefaultEffect() const
+    {
+        return _defaultEffect;
+    }
+    void setDefaultEffect(std::string defaultEffect)
+    {
+        _defaultEffect = defaultEffect;
+    }
+
     static SGReaderWriterOptions* copyOrCreate(const osgDB::Options* options);
     static SGReaderWriterOptions* fromPath(const SGPath& path);
 
@@ -220,6 +230,7 @@ private:
     mutable LoadOriginHint _LoadOriginHint;
     ErrorContext _errorContext;
     bool _vertexOrderXYZ; // used for axis objects in animations
+    std::string _defaultEffect; // defaults to model-default
 };
 
 }

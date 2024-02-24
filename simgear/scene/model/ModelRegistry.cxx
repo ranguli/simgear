@@ -617,6 +617,11 @@ ModelRegistry::readImage(const string& fileName,
 
 osg::ref_ptr<osg::Node> DefaultCachePolicy::find(const string& fileName, const Options* opt)
 {
+    // If the options explicitly ask for no cache, do not use the cached version, even if it exists
+    if (opt->getObjectCacheHint() == osgDB::Options::CACHE_NONE) {
+        SG_LOG(SG_IO, SG_BULK, "Reading model \"" << fileName << "\"");
+        return NULL;
+    }
     Registry* registry = Registry::instance();
     osg::ref_ptr<osg::Object> cachedObject = registry->getRefFromObjectCache(fileName);
 
