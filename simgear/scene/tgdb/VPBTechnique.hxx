@@ -39,6 +39,7 @@
 #include <simgear/scene/tgdb/LightBin.hxx>
 #include <simgear/scene/tgdb/LineFeatureBin.hxx>
 #include <simgear/scene/tgdb/CoastlineBin.hxx>
+#include <simgear/scene/tgdb/VPBBufferData.hxx>
 
 using namespace osgTerrain;
 
@@ -108,33 +109,13 @@ class VPBTechnique : public TerrainTechnique
 
         static void clearConstraints();
 
-        // LineFeatures and AreaFeatures are draped over the underlying mesh.
-        static void addLineFeatureList(SGBucket bucket, LineFeatureBinList roadList);
-        static void addAreaFeatureList(SGBucket bucket, AreaFeatureBinList areaList);
-        static void unloadFeatures(SGBucket bucket);
+        inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
+        inline static const char* MODEL_OFFSET   = "fg_modelOffset";
+        inline static const char* PHOTO_SCENERY  = "fg_photoScenery";
 
     protected:
 
         virtual ~VPBTechnique();
-
-        class BufferData : public osg::Referenced
-        {
-        public:
-            BufferData() : _transform(0), _landGeode(0), _landGeometry(0), _lineFeatures(0), _width(0.0), _height(0.0)            
-            {}
-
-            osg::ref_ptr<osg::MatrixTransform>  _transform;
-            osg::ref_ptr<EffectGeode>           _landGeode;
-            osg::ref_ptr<osg::Geometry>         _landGeometry;
-            osg::ref_ptr<osg::Group>            _lineFeatures;
-            float                               _width;
-            float                               _height;
-            Atlas::AtlasMap                     _BVHMaterialMap;
-            osg::ref_ptr<Locator>               _masterLocator;
-
-        protected:
-            ~BufferData() {}
-        };
 
         class VertexNormalGenerator
         {
@@ -321,36 +302,7 @@ class VPBTechnique : public TerrainTechnique
 
         virtual void applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
 
-        virtual void applyLineFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
-        virtual void generateLineFeature(BufferData& buffer, 
-            LineFeatureBin::LineFeature road, 
-            osg::Vec3d modelCenter, 
-            osg::Vec3Array* v, 
-            osg::Vec2Array* t, 
-            osg::Vec3Array* n,
-            osg::Vec3Array* lights,
-            double x0,
-            double x1,
-            unsigned int ysize,
-            double light_edge_spacing,
-            double light_edge_height,
-            bool light_edge_offset,
-            double elevation_offset_m);
-
-        virtual void applyAreaFeatures(BufferData& buffer, osg::ref_ptr<SGMaterialCache> matcache);
-        virtual void generateAreaFeature(BufferData& buffer, 
-            AreaFeatureBin::AreaFeature area, 
-            osg::Vec3d modelCenter, 
-            osg::Geometry* geometry,
-            osg::Vec3Array* v, 
-            osg::Vec2Array* t, 
-            osg::Vec3Array* n,
-            unsigned int xsize,
-            unsigned int ysize);
-
         virtual osg::Image* generateWaterTexture(Atlas* atlas);
-
-        virtual osg::Vec3d getMeshIntersection(BufferData& buffer, osg::Vec3d pt, osg::Vec3d up);
 
         static void updateStats(int tileLevel, float loadTime);
 
@@ -376,23 +328,11 @@ class VPBTechnique : public TerrainTechnique
         inline static osg::ref_ptr<osg::Group>  _elevationConstraintGroup = new osg::Group();
         inline static std::mutex _elevationConstraintMutex;  // protects the _elevationConstraintGroup;
 
-        typedef std::pair<SGBucket, LineFeatureBinList> BucketLineFeatureBinList;
-        typedef std::pair<SGBucket, AreaFeatureBinList> BucketAreaFeatureBinList;
-
-        inline static std::list<BucketLineFeatureBinList>  _lineFeatureLists;
-        inline static std::mutex _lineFeatureLists_mutex;  // protects the _lineFeatureLists;
-
-        inline static std::list<BucketAreaFeatureBinList>  _areaFeatureLists;
-        inline static std::mutex _areaFeatureLists_mutex;  // protects the _areaFeatureLists;
-
         inline static std::mutex _stats_mutex; // Protects the loading statistics
         typedef std::pair<unsigned int, float> LoadStat;
         inline static std::map<int, LoadStat> _loadStats;
         inline static SGPropertyNode* _statsPropertyNode;
 
-        inline static const char* Z_UP_TRANSFORM = "fg_zUpTransform";
-        inline static const char* MODEL_OFFSET   = "fg_modelOffset";
-        inline static const char* PHOTO_SCENERY  = "fg_photoScenery";
 };
 
 };

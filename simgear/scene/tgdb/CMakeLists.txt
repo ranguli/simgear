@@ -24,8 +24,10 @@ set(HEADERS
     SGVertexArrayBin.hxx
     ShaderGeometry.hxx
     TreeBin.hxx
+    VPBBufferData.hxx
     VPBElevationSlice.hxx
     VPBMaterialHandler.hxx
+    VPBLineFeatureRenderer.hxx
     VPBRasterRenderer.hxx
     VPBTileBounds.hxx
     VPBTechnique.hxx
@@ -52,6 +54,7 @@ set(SOURCES
     TreeBin.cxx
     VPBElevationSlice.cxx
     VPBMaterialHandler.cxx
+    VPBLineFeatureRenderer.cxx
     VPBRasterRenderer.cxx
     VPBTileBounds.cxx
     VPBTechnique.cxx

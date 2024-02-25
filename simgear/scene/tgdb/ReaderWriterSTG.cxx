@@ -51,6 +51,7 @@
 #include <simgear/scene/tgdb/SGBuildingBin.hxx>
 #include <simgear/scene/tgdb/TreeBin.hxx>
 #include <simgear/scene/tgdb/VPBRasterRenderer.hxx>
+#include <simgear/scene/tgdb/VPBLineFeatureRenderer.hxx>
 #include <simgear/scene/tgdb/VPBTechnique.hxx>
 #include <simgear/scene/tgdb/apt_signs.hxx>
 #include <simgear/scene/tgdb/obj.hxx>
@@ -860,20 +861,7 @@ struct ReaderWriterSTG::_ModelBin {
                     lineFeatures.push_back(new LineFeatureBin(path, b._material));
                 }
 
-                VPBTechnique::addLineFeatureList(bucket, lineFeatures);
-            }
-
-            if (!_areaFeatureListList.empty()) {
-
-                AreaFeatureBinList areaFeatures;
-
-                for (const auto& b : _areaFeatureListList) {
-                    // add the lineFeatures to the list
-                    const auto path = SGPath(b._filename);
-                    areaFeatures.push_back(new AreaFeatureBin(path, b._material));
-                }
-
-                VPBTechnique::addAreaFeatureList(bucket, areaFeatures);
+                VPBLineFeatureRenderer::addLineFeatureList(bucket, lineFeatures);
             }
 
             if (!_coastFeatureListList.empty()) {
