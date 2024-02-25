@@ -74,7 +74,6 @@
 #define BUILDING_LIST "BUILDING_LIST"
 #define TREE_LIST "TREE_LIST"
 #define LINE_FEATURE_LIST "LINE_FEATURE_LIST"
-#define AREA_FEATURE_LIST "AREA_FEATURE_LIST"
 #define COASTLINE_LIST "COASTLINE_LIST"
 #define OBJECT_LIGHT "OBJECT_LIGHT"
 #define LIGHT_LIST "LIGHT_LIST"
@@ -192,13 +191,6 @@ struct ReaderWriterSTG::_ModelBin {
       std::string _material;
       SGBucket _bucket;
     };
-    struct _AreaFeatureList {
-      _AreaFeatureList() { }
-      std::string _filename;
-      std::string _material;
-      SGBucket _bucket;
-    };
-
     struct _CoastlineList {
       _CoastlineList() { }
       std::string _filename;
@@ -737,12 +729,6 @@ struct ReaderWriterSTG::_ModelBin {
                   in >> lineFeaturelist._material;
                   lineFeaturelist._bucket = bucketIndexFromFileName(absoluteFileName.file_base().c_str());
                   _lineFeatureListList.push_back(lineFeaturelist);
-                } else if (token == AREA_FEATURE_LIST) {
-                  _AreaFeatureList areaFeaturelist;
-                  areaFeaturelist._filename = path.utf8Str();
-                  in >> areaFeaturelist._material;
-                  areaFeaturelist._bucket = bucketIndexFromFileName(absoluteFileName.file_base().c_str());
-                  _areaFeatureListList.push_back(areaFeaturelist);
                 } else if (token == COASTLINE_LIST) {
                   _CoastlineList coastFeaturelist;
                   coastFeaturelist._filename = path.utf8Str();
@@ -937,7 +923,6 @@ struct ReaderWriterSTG::_ModelBin {
             _buildingListList.empty() &&
             _treeListList.empty() &&
             _lineFeatureListList.empty() &&
-            _areaFeatureListList.empty() &&
             _coastFeatureListList.empty() &&
             _lightList.empty() &&
             _lightListList.empty() &&
@@ -998,7 +983,6 @@ struct ReaderWriterSTG::_ModelBin {
     std::list<_BuildingList> _buildingListList;
     std::list<_TreeList> _treeListList;
     std::list<_LineFeatureList> _lineFeatureListList;
-    std::list<_AreaFeatureList> _areaFeatureListList;
     std::list<_CoastlineList> _coastFeatureListList;
     std::list<_Light> _lightList;
     std::list<_LightList> _lightListList;
