@@ -329,21 +329,17 @@ SGReaderWriterOptions* sharedOptions(const std::string& filePath, const osgDB::O
         path.append("..");
         path.append("..");
         path.append("..");
-        std::cout << "[FAHIM] Adding path: " << path << std::endl;
         sharedOptions->getDatabasePathList().push_back(path.utf8Str());
     }
 
     // ensure Models directory synced via TerraSync is searched before the copy in
     // FG_ROOT, so that updated models can be used.
     std::string terrasync_root = options->getPluginStringData("SimGear::TERRASYNC_ROOT");
-    if (!terrasync_root.empty()) {
-        std::cout << "[FAHIM] Adding path: " << terrasync_root << std::endl;
+    if (!terrasync_root.empty())
         sharedOptions->getDatabasePathList().push_back(terrasync_root);
-    }
 
     std::string fg_root = options->getPluginStringData("SimGear::FG_ROOT");
     sharedOptions->getDatabasePathList().push_back(fg_root);
-    std::cout << "[FAHIM] Adding path: " << fg_root << std::endl;
 
     // TODO how should we handle this for OBJECT_SHARED?
     sharedOptions->setModelData(
@@ -360,7 +356,6 @@ osg::ref_ptr<osg::Node> createObjectInstances(ObjectInstanceBin& objectInstances
     // Options are shared-objects like
     osg::ref_ptr<SGReaderWriterOptions> opt;
 
-    std::cout << "[FAHIM] Pathname: " << objectInstances.getSTGFilePath() << " " << objectInstances.getSTGFilePath().dir() << std::endl;
 
     opt = sharedOptions(objectInstances.getSTGFilePath().dir(), options);
 
