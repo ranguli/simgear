@@ -198,9 +198,14 @@ const std::string ObjectInstanceBin::getModelFileName() const
     return _modelFileName;
 }
 
-const SGPath ObjectInstanceBin::getSTGFileName() const
+const SGPath ObjectInstanceBin::getSTGFilePath() const
 {
-    return _STGFileName;
+    return _STGFilePath;
+}
+
+const std::string ObjectInstanceBin::getEffect() const
+{
+    return _effect;
 }
 
 const ObjectInstanceBin::ObjectInstance& ObjectInstanceBin::getInstance(unsigned i) const
@@ -208,24 +213,35 @@ const ObjectInstanceBin::ObjectInstance& ObjectInstanceBin::getInstance(unsigned
     return _objectInstances[i];
 }
 
-const bool ObjectInstanceBin::hasCustomAttributes(std::string effectName) const
+const bool ObjectInstanceBin::hasCustomAttributes() const
 {
-    return (customInstancingEffects.find(effectName) != customInstancingEffects.end());
+    return (customInstancingEffects.find(_effect) != customInstancingEffects.end());
 }
 
-ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const SGPath& absoluteFileName, const std::string effectName)
+ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const std::string effect, const SGPath& STGFilePath, const SGPath& instancesFilePath)
 {
-    if (!absoluteFileName.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Object instances list file " << absoluteFileName << " does not exist.");
+    _modelFileName = modelFileName;
+    _STGFilePath = STGFilePath;
+
+    if (effect == "default") {
+        _effect = "Effects/object-instancing";
+    } else {
+        _effect = effect;
+    }
+
+    if (instancesFilePath.isNull()) {
+        // No parsing to be done, just return
         return;
     }
 
-    _modelFileName = modelFileName;
-    _STGFileName = absoluteFileName;
+    if (!instancesFilePath.exists()) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Object instances list file " << instancesFilePath << " does not exist.");
+        return;
+    }
 
-    sg_gzifstream stream(absoluteFileName);
+    sg_gzifstream stream(instancesFilePath);
     if (!stream.is_open()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);
+        SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << instancesFilePath);
         return;
     }
 
@@ -244,7 +260,7 @@ ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const SGPa
     // - 11 (position+rotation+scale+customAttributes)
     float props[11];
 
-    const bool hasCustomAttributes = this->hasCustomAttributes(effectName);
+    const bool hasCustomAttributes = this->hasCustomAttributes();
 
     while (!stream.eof()) {
         // read a line.  Each line defines a single instance and its properties,
@@ -279,7 +295,7 @@ ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const SGPa
             } else if (number_of_props == 7) {
                 insert(SGVec3f(props[0], props[1], props[2]), SGVec3f(props[3], props[4], props[5]), props[6]);
             } else {
-                SG_LOG(SG_TERRAIN, SG_WARN, "Error parsing instanced object entry in: " << absoluteFileName << " line: \"" << line << "\"");
+                SG_LOG(SG_TERRAIN, SG_WARN, "Error parsing instanced object entry in: " << instancesFilePath << " line: \"" << line << "\"");
                 continue;
             }
         } else {
@@ -292,7 +308,7 @@ ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const SGPa
             } else if (number_of_props == 11) {
                 insert(SGVec3f(props[0], props[1], props[2]), SGVec3f(props[3], props[4], props[5]), props[6], SGVec4f(props[number_of_props - 4], props[number_of_props - 3], props[number_of_props - 2], props[number_of_props - 1]));
             } else {
-                SG_LOG(SG_TERRAIN, SG_WARN, "Error parsing instanced object entry in: " << absoluteFileName << " line: \"" << line << "\"");
+                SG_LOG(SG_TERRAIN, SG_WARN, "Error parsing instanced object entry in: " << instancesFilePath << " line: \"" << line << "\"");
                 continue;
             }
         }
@@ -301,28 +317,81 @@ ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const SGPa
     stream.close();
 }
 
-osg::ref_ptr<osg::Node> createObjectInstances(ObjectInstanceBin& objectInstances, const osg::Matrix& transform, const osg::ref_ptr<SGReaderWriterOptions> options)
+// From ReaderWriterSTG.cxx
+SGReaderWriterOptions* sharedOptions(const std::string& filePath, const osgDB::Options* options)
 {
-    const bool hasCustomAttributes = objectInstances.hasCustomAttributes(options->getDefaultEffect());
+    osg::ref_ptr<SGReaderWriterOptions> sharedOptions;
+    sharedOptions = SGReaderWriterOptions::copyOrCreate(options);
+    sharedOptions->getDatabasePathList().clear();
 
-    options->setObjectCacheHint(osgDB::Options::CACHE_NONE);
-    osg::ref_ptr<osg::Node> model = osgDB::readRefNodeFile(objectInstances.getModelFileName(), options.get());
-
-    if (!model.valid()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, objectInstances.getSTGFileName() << ": Failed to load '" << objectInstances.getModelFileName() << "'");
-        return NULL;
+    if (!filePath.empty()) {
+        SGPath path = filePath;
+        path.append("..");
+        path.append("..");
+        path.append("..");
+        std::cout << "[FAHIM] Adding path: " << path << std::endl;
+        sharedOptions->getDatabasePathList().push_back(path.utf8Str());
     }
 
+    // ensure Models directory synced via TerraSync is searched before the copy in
+    // FG_ROOT, so that updated models can be used.
+    std::string terrasync_root = options->getPluginStringData("SimGear::TERRASYNC_ROOT");
+    if (!terrasync_root.empty()) {
+        std::cout << "[FAHIM] Adding path: " << terrasync_root << std::endl;
+        sharedOptions->getDatabasePathList().push_back(terrasync_root);
+    }
+
+    std::string fg_root = options->getPluginStringData("SimGear::FG_ROOT");
+    sharedOptions->getDatabasePathList().push_back(fg_root);
+    std::cout << "[FAHIM] Adding path: " << fg_root << std::endl;
+
+    // TODO how should we handle this for OBJECT_SHARED?
+    sharedOptions->setModelData(
+        sharedOptions->getModelData()
+            ? sharedOptions->getModelData()->clone()
+            : 0);
+
+    return sharedOptions.release();
+}
+
+osg::ref_ptr<osg::Node> createObjectInstances(ObjectInstanceBin& objectInstances, const osg::Matrix& transform, const osg::ref_ptr<SGReaderWriterOptions> options)
+{
+    // Setup options for instancing with the correct effect
+    // Options are shared-objects like
+    osg::ref_ptr<SGReaderWriterOptions> opt;
+
+    std::cout << "[FAHIM] Pathname: " << objectInstances.getSTGFilePath() << " " << objectInstances.getSTGFilePath().dir() << std::endl;
+
+    opt = sharedOptions(objectInstances.getSTGFilePath().dir(), options);
+
+    if (SGPath(objectInstances.getModelFileName()).lower_extension() == "ac")
+        opt->setInstantiateEffects(true);
+    else
+        opt->setInstantiateEffects(false);
+
+    opt->setDefaultEffect(objectInstances.getEffect());
+    opt->setObjectCacheHint(osgDB::Options::CACHE_NONE);
+
+    const bool hasCustomAttributes = objectInstances.hasCustomAttributes();
+
     if (objectInstances.getNumInstances() <= 0) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, objectInstances.getSTGFileName() << " has zero instances.");
+        SG_LOG(SG_TERRAIN, SG_ALERT, objectInstances.getSTGFilePath() << " has zero instances.");
         return 0;
+    }
+
+    // Load the model to be instanced
+    osg::ref_ptr<osg::Node> model = osgDB::readRefNodeFile(objectInstances.getModelFileName(), opt.get());
+
+    if (!model.valid()) {
+        SG_LOG(SG_TERRAIN, SG_ALERT, objectInstances.getSTGFilePath() << ": Failed to load '" << objectInstances.getModelFileName() << "'");
+        return NULL;
     }
 
     if (SGPath(objectInstances.getModelFileName()).lower_extension() == "ac")
         model->setNodeMask(~simgear::MODELLIGHT_BIT);
 
     if (SGPath(objectInstances.getModelFileName()).lower_extension() == "xml") {
-        SG_LOG(SG_TERRAIN, SG_WARN, objectInstances.getSTGFileName() << ": Models "
+        SG_LOG(SG_TERRAIN, SG_WARN, objectInstances.getSTGFilePath() << ": Models "
                                                                      << "defined using XML files ('" << objectInstances.getModelFileName() << "' are not supported for instancing. Instances may not be rendered "
                                                                      << "correctly");
     }
@@ -350,7 +419,7 @@ osg::ref_ptr<osg::Node> createObjectInstances(ObjectInstanceBin& objectInstances
     model->accept(visitor);
 
     if (visitor.getNumDrawables() > 1) {
-        SG_LOG(SG_TERRAIN, SG_WARN, objectInstances.getSTGFileName() << ": Model '" << objectInstances.getModelFileName() << "' has more than one drawable. "
+        SG_LOG(SG_TERRAIN, SG_WARN, objectInstances.getSTGFilePath() << ": Model '" << objectInstances.getModelFileName() << "' has more than one drawable. "
                                                                      << "It is highly recommended that models used for instancing have "
                                                                      << "only one drawable/object.");
     }

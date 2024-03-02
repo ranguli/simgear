@@ -178,6 +178,7 @@ struct ReaderWriterSTG::_ModelBin {
     struct _InstancedObject {
         _InstancedObject() : _lon(0), _lat(0), _elev(0) {}
         SGPath _errorLocation;
+        SGPath _STGFilePath;
         std::string _modelname;
         std::string _filename;
         std::string _effect;
@@ -408,11 +409,11 @@ struct ReaderWriterSTG::_ModelBin {
                     matrixTransform->setDataVariance(osg::Object::STATIC);
 
                     const auto path = SGPath(io._filename);
-                    ObjectInstanceBin objectInstances(io._modelname, path, io._effect);
+                    ObjectInstanceBin objectInstances(io._modelname, io._effect, io._STGFilePath, path);
 
-                    const auto loadedModelRename = createObjectInstances(objectInstances, osg::Matrix::identity(), io._options);
-                    if (loadedModelRename) {
-                        matrixTransform->addChild(loadedModelRename);
+                    const auto instancedNode = createObjectInstances(objectInstances, osg::Matrix::identity(), io._options);
+                    if (instancedNode) {
+                        matrixTransform->addChild(instancedNode);
                         group->addChild(matrixTransform);
                     }
                 }
@@ -752,16 +753,6 @@ struct ReaderWriterSTG::_ModelBin {
                     checkInsideBucket(absoluteFileName, lightList._lon, lightList._lat);
                     _lightListList.push_back(lightList);
                 } else if (token == OBJECT_INSTANCED) {
-                    osg::ref_ptr<SGReaderWriterOptions> opt;
-
-                    opt = sharedOptions(filePath, options);
-                    opt->addErrorContext("terrain-stg", absoluteFileName.utf8Str());
-
-                    if (SGPath(name).lower_extension() == "ac")
-                        opt->setInstantiateEffects(true);
-                    else
-                        opt->setInstantiateEffects(false);
-
                     _InstancedObject instancedObject;
                     instancedObject._modelname = name;
 
@@ -771,25 +762,16 @@ struct ReaderWriterSTG::_ModelBin {
                     _filepath.append(filename);
 
                     instancedObject._errorLocation = absoluteFileName;
+                    instancedObject._STGFilePath = absoluteFileName;
                     instancedObject._filename = _filepath.utf8Str();
-                    instancedObject._options = opt;
+                    instancedObject._options = SGReaderWriterOptions::copyOrCreate(options);
+                    instancedObject._options->addErrorContext("terrain-stg", absoluteFileName.utf8Str());
 
                     in >> instancedObject._effect;
+                    in >> instancedObject._lon >> instancedObject._lat >> instancedObject._elev;
+                    checkInsideBucket(absoluteFileName, instancedObject._lon, instancedObject._lat);
 
-                    if (instancedObject._effect == "default") {
-                        instancedObject._effect = "Effects/object-instancing";
-                    }
-
-                    if (!(instancedObject._effect == "Effects/object-instancing" || instancedObject._effect == "Effects/object-instancing-colored")) {
-                        SG_LOG(SG_TERRAIN, SG_ALERT, "Unknown effect for instancing");
-                    } else {
-                        opt->setDefaultEffect(instancedObject._effect);
-
-                        in >> instancedObject._lon >> instancedObject._lat >> instancedObject._elev;
-                        checkInsideBucket(absoluteFileName, instancedObject._lon, instancedObject._lat);
-
-                        _instancedObjectList.push_back(instancedObject);
-                    }
+                    _instancedObjectList.push_back(instancedObject);
                 } else {
                     // Check registered callback for token. Keep lock until callback completed to make sure it will not be
                     // executed after a thread successfully executed removeSTGObjectHandler()
