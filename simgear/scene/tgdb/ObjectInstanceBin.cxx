@@ -56,7 +56,7 @@ struct ObjectInstanceBoundingBoxCallback : public Drawable::ComputeBoundingBoxCa
         BoundingBox bb;
         const Geometry* geometry = static_cast<const Geometry*>(&drawable);
         const Vec3Array* instancePositions = static_cast<const Vec3Array*>(geometry->getVertexAttribArray(INSTANCE_POSITIONS));
-        const Vec3Array* instanceRotationsAndScales = static_cast<const Vec3Array*>(geometry->getVertexAttribArray(INSTANCE_ROTATIONS_AND_SCALES));
+        const Vec4Array* instanceRotationsAndScales = static_cast<const Vec4Array*>(geometry->getVertexAttribArray(INSTANCE_ROTATIONS_AND_SCALES));
 
         float maxScale = 1.0f;
 
