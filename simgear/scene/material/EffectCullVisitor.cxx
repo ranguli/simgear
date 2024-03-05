@@ -40,7 +40,9 @@ EffectCullVisitor::EffectCullVisitor(bool collectLights, const std::string &effS
 }
 
 EffectCullVisitor::EffectCullVisitor(const EffectCullVisitor& rhs) :
-    osg::Object(), CullVisitor(rhs)
+    osg::Object(), CullVisitor(rhs),
+    _collectLights(rhs._collectLights),
+    _effScheme(rhs._effScheme)
 {
 }
 
