@@ -283,6 +283,52 @@ std::string SGBucket::gen_vpb_filename(int level, int x, int y, std::string type
     return raw_path;
 }
 
+std::string SGBucket::gen_vpb_archive_filename(int level, int x, int y, std::string type) const {
+    // long int index;
+    int top_lon, top_lat, main_lon, main_lat;
+    char hem, pole;
+    char raw_path[256];
+
+    top_lon = lon / 10;
+    main_lon = lon;
+    if ( (lon < 0) && (top_lon * 10 != lon) ) {
+	top_lon -= 1;
+    }
+    top_lon *= 10;
+    if ( top_lon >= 0 ) {
+	hem = 'e';
+    } else {
+	hem = 'w';
+	top_lon *= -1;
+    }
+    if ( main_lon < 0 ) {
+	main_lon *= -1;
+    }
+
+    top_lat = lat / 10;
+    main_lat = lat;
+    if ( (lat < 0) && (top_lat * 10 != lat) ) {
+	top_lat -= 1;
+    }
+    top_lat *= 10;
+    if ( top_lat >= 0 ) {
+	pole = 'n';
+    } else {
+	pole = 's';
+	top_lat *= -1;
+    }
+    if ( main_lat < 0 ) {
+	main_lat *= -1;
+    }
+
+    ::snprintf(raw_path, 256, "%c%03d%c%02d/%c%03d%c%02d.zip/ws_%c%03d%c%02d_L%d_X%d_Y%d_%s",
+	    hem, top_lon, pole, top_lat,
+        hem, main_lon, pole, main_lat,
+        hem, main_lon, pole, main_lat,
+        level, x, y, type.c_str());
+
+    return raw_path;
+}
 // Build the path name for this bucket
 std::string SGBucket::gen_base_path() const {
     // long int index;

@@ -1249,39 +1249,45 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
 
         osg::ref_ptr<osg::Texture2D> coastTexture;
 
-        // Look for a pre-generated coastline texture.
-        osgDB::FilePathList& pathList = _options->getDatabasePathList();
+        // Look for a pre-generated coastline texture.  There are two possible locations
+        //  - Inside the vpb directory adjacent to this tile file.
+        //  - Inside a 1x1 degree zipped file, which we can access using OSGs archive loader.
         bool found = false;
         SGPath coastTexturePath;
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
-        std::string filename = bucket.gen_vpb_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
+        std::string filePath = "vpb/" + bucket.gen_vpb_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
+        std::string archiveFilePath = "vpb/" + bucket.gen_vpb_archive_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
+        SG_LOG(SG_TERRAIN, SG_DEBUG, "Looking for coastline texture in " << filePath << " and " << archiveFilePath);
 
-        SG_LOG(SG_TERRAIN, SG_DEBUG, "Looking for coastline texture " << filename);
+        osgDB::Registry* registry = osgDB::Registry::instance();
+        osgDB::ReaderWriter::ReadResult result;
 
-        for (auto iter = pathList.begin(); !found && iter != pathList.end(); ++iter) {
-            coastTexturePath = SGPath(*iter);
-            coastTexturePath.append("vpb");
-            coastTexturePath.append(filename);
-            if (coastTexturePath.exists()) {
-                found = true;
-                coastTexture = SGLoadTexture2D(SGPath(coastTexturePath), _options, false, false);
-                coastTexture->getImage()->flipVertical();
-                coastTexture->setMaxAnisotropy(16.0f);
-                coastTexture->setResizeNonPowerOfTwoHint(false);
-                coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-                coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-                coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-                coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
-                SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture " << coastTexture->getName());
-                break;
-            }
+        // Check for the normal file first.  We go straight to the implementation here because we're already deep within
+        // the registry code stack.
+        result = registry->readImageImplementation(filePath, _options);
+        if (result.notFound()) {
+            // Check for the archive file next.  Note we only go down this path on a notFound() to avoid
+            // masking errors.
+            result = registry->readImageImplementation(archiveFilePath, _options);
+        }
+
+        if (result.success()) {
+            coastTexture = new osg::Texture2D(result.getImage());
+            coastTexture->getImage()->flipVertical();
+            coastTexture->setMaxAnisotropy(16.0f);
+            coastTexture->setResizeNonPowerOfTwoHint(false);
+            coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+            coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+            coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+            coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
+            found = true;
+            SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture from " << filePath << " or " << archiveFilePath << " " << result.statusMessage());
         }
 
         if (! found) {
             VPBRasterRenderer* renderer = new VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
             coastTexture = renderer->generateCoastTexture();
         }
-
 
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);

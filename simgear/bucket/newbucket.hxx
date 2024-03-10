@@ -185,7 +185,8 @@ public:
     std::string gen_vpb_base_alt() const;
     std::string gen_vpb_subtile(int level, int x, int y) const;
     std::string gen_vpb_filename(int level, int x, int y, std::string type) const;
-
+    std::string gen_vpb_archive_filename(int level, int x, int y, std::string type) const;
+    
     /**
      * @return the center lon of a tile.
      */
