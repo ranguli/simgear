@@ -700,6 +700,32 @@ string OSGSubstitutePolicy::substitute(const string& name,
     return absFileName;
 }
 
+string ArchiveSubstitutePolicy::substitute(const string& name,
+                                          const Options* opt)
+{
+    std::size_t wsPos = name.find(ModelRegistry::WS30_PREFIX);
+    std::size_t zipPos = name.find(ModelRegistry::WS30_ARCHIVE_EXT);
+    std::size_t subdirPos = name.find(ModelRegistry::WS30_SUBDIR_SUFFIX);
+
+    if ((wsPos != string::npos) && (zipPos != string::npos) && (subdirPos != string::npos)) {
+        // .osg files that reference other .osg files have a file path relative to the directory
+        // of the parent .osg file.  However, there is an OSG bug which means this does not work
+        // in the case of archives, where any directory within the archive is lost.
+        // To work around this, WS30 creates archives without any directories within them, but
+        // any filepath reference in a zip file that includes a sub-directory needs to be 
+        // stripped out.
+        //
+        // So we need to change
+        //   vpb/w070n10/w061n14.zip/ws_w061n14_root_L0_X0_Y0/ws_w061n14_L0_X0_Y0_subtile.osgb
+        //   vpb/w070n10/w061n14.zip/ws_w061n14_L0_X0_Y0_subtile.osgb
+        std::string archivePath = name.substr(0 ,zipPos + 4);
+        archivePath.append(name.substr(subdirPos + ModelRegistry::WS30_SUBDIR_SUFFIX.length()));
+        SG_LOG(SG_IO, SG_DEBUG, "Converted path " << name << " to " << archivePath);
+        return archivePath;
+    } else {
+        return std::string();
+    }
+}
 
 void
 BuildLeafBVHPolicy::buildBVH(const std::string& fileName, osg::Node* node)
@@ -892,9 +918,11 @@ struct ACProcessPolicy {
     }
 };
 
-typedef ModelRegistryCallback<ACProcessPolicy, DefaultCachePolicy,
+typedef ModelRegistryCallback<ACProcessPolicy,
+                              DefaultCachePolicy,
                               ACOptimizePolicy,
-                              OSGSubstitutePolicy, BuildLeafBVHPolicy>
+                              OSGSubstitutePolicy,
+                              BuildLeafBVHPolicy>
 ACCallback;
 
 struct OBJProcessPolicy {
@@ -912,7 +940,8 @@ struct OBJProcessPolicy {
 typedef ModelRegistryCallback<OBJProcessPolicy,
                               DefaultCachePolicy,
                               ACOptimizePolicy,
-                              OSGSubstitutePolicy, BuildLeafBVHPolicy>
+                              OSGSubstitutePolicy,
+                              BuildLeafBVHPolicy>
 OBJCallback;
 
 
@@ -1029,7 +1058,7 @@ struct OSGOptimizePolicy : public OptimizeModelPolicy {
 
         osg::ref_ptr<simgear::SGReaderWriterOptions> sgopt = SGReaderWriterOptions::copyOrCreate(opt);
 
-        if (fileName.find("ws_") != string::npos) {
+        if (fileName.find(ModelRegistry::WS30_PREFIX) != string::npos) {
             // Currently the only way we have to identify WS3.0 / VirtualPlanetBuilder files is by the filename
 
             SGSceneFeatures* features = SGSceneFeatures::instance();
@@ -1095,12 +1124,14 @@ struct IVEProcessPolicy {
 
 typedef ModelRegistryCallback<IVEProcessPolicy, DefaultCachePolicy,
     IVEOptimizePolicy,
-    OSGSubstitutePolicy, BuildLeafBVHPolicy>
+    OSGSubstitutePolicy, 
+    BuildLeafBVHPolicy>
     IVECallback;
 
 typedef ModelRegistryCallback<IVEProcessPolicy, NoCachePolicy,
     OSGOptimizePolicy,
-    OSGSubstitutePolicy, BuildLeafBVHPolicy>
+    ArchiveSubstitutePolicy, 
+    BuildLeafBVHPolicy>
     OSGCallback;
 
 namespace

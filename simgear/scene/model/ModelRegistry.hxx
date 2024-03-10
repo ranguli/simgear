@@ -25,8 +25,11 @@
 #include <osgDB/FileNameUtils>
 #include <osgDB/ReaderWriter>
 #include <osgDB/Registry>
+#include <osgDB/Archive>
 
 #include <simgear/compiler.h>
+#include <simgear/misc/sg_path.hxx>
+#include <simgear/debug/logstream.hxx>
 #include <simgear/scene/util/OsgSingleton.hxx>
 
 #include <string>
@@ -65,7 +68,8 @@ public:
     ModelRegistryCallback(const std::string& extension) :
         _processPolicy(extension), _cachePolicy(extension),
         _optimizePolicy(extension),
-        _substitutePolicy(extension), _bvhPolicy(extension)
+        _substitutePolicy(extension),
+        _bvhPolicy(extension)
     {
     }
     virtual osgDB::ReaderWriter::ReadResult
@@ -83,8 +87,12 @@ public:
             ReaderWriter::ReadResult res;
             if (!otherFileName.empty()) {
                 res = loadUsingReaderWriter(otherFileName, opt);
-                if (res.validNode())
-                    optimizedNode = res.getNode();
+                if (res.validNode()) {
+                    ref_ptr<osg::Node> processedNode
+                        = _processPolicy.process(res.getNode(), otherFileName, opt);
+                    optimizedNode = _optimizePolicy.optimize(processedNode.get(),
+                                                            otherFileName, opt);
+                }
             }
             if (!optimizedNode.valid()) {
                 res = loadUsingReaderWriter(fileName, opt);
@@ -107,13 +115,47 @@ protected:
                           const osgDB::Options* opt)
     {
         using namespace osgDB;
-        ReaderWriter* rw = Registry::instance()
-            ->getReaderWriterForExtension(osgDB::getFileExtension(fileName));
+
+        ReaderWriter::ReadResult result;
+
+        ReaderWriter* rw = Registry::instance()->getReaderWriterForExtension(osgDB::getFileExtension(fileName));
+
         if (!rw)
             return ReaderWriter::ReadResult(); // FILE_NOT_HANDLED
-        return rw->readNode(fileName, opt);
+
+        result = rw->readNode(fileName, opt);
+
+        if (result.notFound()) {
+            // Look for an archive up directory path that might contain the required file.  OSG archive references 
+            // are of the form path/to/zipfile.zip/path/to/file. In our case, we assume that for an asset foo/bar/file.osg, 
+            // the compressed file will be foo/bar.zip so the final path we want to create for OSG is foo/bar.zip/file.osg.
+
+            SGPath archivePath = SGPath(fileName);
+
+            // In the case of assets referencing other assets (i.e. .osg files), the path presented to the loader will be 
+            // relative to the parent asset, So if file.osg references file2.osg and both are in bar.zip, then when
+            // the loader receives a request to load file2.osg, it will already have a path foo/bar.zip/file2.osg.
+            if (fileName.find(".zip") == std::string::npos) {
+                SGPath p = SGPath(fileName);
+                std::string file = p.file();
+                std::string zipPath = p.dir();
+                zipPath.append(".zip");
+                archivePath = SGPath(zipPath); // Zipfile, named from the directory.
+                archivePath.append(file);      // The actual file itself
+            }
+
+            SG_LOG(SG_IO, SG_DEBUG, "Looking for file " << fileName << " in archive path " << archivePath);
+
+            // Ensure that we are caching archives.
+            osgDB::Options* archiveOpts = opt->cloneOptions();
+            if (archiveOpts->getObjectCacheHint() != osgDB::Options::CacheHintOptions::CACHE_ALL)
+                archiveOpts->setObjectCacheHint(osgDB::Options::CacheHintOptions::CACHE_ARCHIVES);
+            result = Registry::instance()->readNodeImplementation(archivePath.str(), archiveOpts);
+        }
+
+        return result;
     }
-    
+
     ProcessPolicy _processPolicy;
     CachePolicy _cachePolicy;
     OptimizePolicy _optimizePolicy;
@@ -171,6 +213,12 @@ struct OSGSubstitutePolicy {
                            const osgDB::Options* opt);
 };
 
+struct ArchiveSubstitutePolicy {
+    ArchiveSubstitutePolicy(const std::string& extension) {}
+    std::string substitute(const std::string& name,
+                           const osgDB::Options* opt);
+};
+
 struct NoSubstitutePolicy {
     NoSubstitutePolicy(const std::string& extension) {}
     std::string substitute(const std::string& name,
@@ -195,9 +243,11 @@ struct NoBuildBVHPolicy {
     void buildBVH(const std::string& fileName, osg::Node* node);
 };
 
-typedef ModelRegistryCallback<DefaultProcessPolicy, DefaultCachePolicy,
+typedef ModelRegistryCallback<DefaultProcessPolicy,
+                              DefaultCachePolicy,
                               OptimizeModelPolicy,
-                              OSGSubstitutePolicy, BuildLeafBVHPolicy>
+                              OSGSubstitutePolicy,
+                              BuildLeafBVHPolicy>
 DefaultCallback;
 
 // The manager for the callbacks
@@ -218,6 +268,12 @@ public:
                                      osgDB::Registry::ReadFileCallback*
                                      callback);
     virtual ~ModelRegistry() {}
+
+    // Some magic strings used to identify WS30 data for processing
+    inline static const std::string WS30_PREFIX = std::string("ws_");
+    inline static const std::string WS30_ARCHIVE_EXT = std::string(".zip");
+    inline static const std::string WS30_SUBDIR_SUFFIX = std::string("_root_L0_X0_Y0");
+
 protected:
     typedef std::map<std::string, osg::ref_ptr<osgDB::Registry::ReadFileCallback> >
     CallbackMap;
@@ -230,7 +286,8 @@ protected:
 // postprocessing.
 typedef ModelRegistryCallback<DefaultProcessPolicy, NoCachePolicy,
                               NoOptimizePolicy,
-                              NoSubstitutePolicy, BuildLeafBVHPolicy>
+                              NoSubstitutePolicy,
+                              BuildLeafBVHPolicy>
 LoadOnlyCallback;
 
 // Proxy for registering extension-based callbacks
