@@ -43,6 +43,7 @@ public:
     float                               _height;
     Atlas::AtlasMap                     _BVHMaterialMap;
     osg::ref_ptr<osgTerrain::Locator>   _masterLocator;
+    osg::ref_ptr<osg::Texture2D>        _waterRasterTexture;
 
 protected:
     ~BufferData() {}

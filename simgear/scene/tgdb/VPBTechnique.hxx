@@ -311,6 +311,9 @@ class VPBTechnique : public TerrainTechnique
         bool checkAgainstRandomObjectsConstraints(BufferData& buffer, 
                                                   osg::Vec3d origin, osg::Vec3d vertex);
 
+
+        bool checkAgainstWaterConstraints(BufferData& buffer, osg::Vec2d point);
+
         OpenThreads::Mutex                  _writeBufferMutex;
         osg::ref_ptr<BufferData>            _currentBufferData;
         osg::ref_ptr<BufferData>            _newBufferData;

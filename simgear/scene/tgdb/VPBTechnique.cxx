@@ -1247,24 +1247,18 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
         texture2D->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
         texture2D->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
 
-        osg::ref_ptr<osg::Texture2D> coastTexture;
-
         // Look for a pre-generated coastline texture.  There are two possible locations
         //  - Inside the vpb directory adjacent to this tile file.
         //  - Inside a 1x1 degree zipped file, which we can access using OSGs archive loader.
-        bool found = false;
-        SGPath coastTexturePath;
         osg::StateSet* stateset = buffer._landGeode->getOrCreateStateSet();
         std::string filePath = "vpb/" + bucket.gen_vpb_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
         std::string archiveFilePath = "vpb/" + bucket.gen_vpb_archive_filename(tileID.level, tileID.x, tileID.y, "coastline") + ".png";
         SG_LOG(SG_TERRAIN, SG_DEBUG, "Looking for coastline texture in " << filePath << " and " << archiveFilePath);
 
-        osgDB::Registry* registry = osgDB::Registry::instance();
-        osgDB::ReaderWriter::ReadResult result;
-
         // Check for the normal file first.  We go straight to the implementation here because we're already deep within
         // the registry code stack.
-        result = registry->readImageImplementation(filePath, _options);
+        osgDB::Registry* registry = osgDB::Registry::instance();
+        osgDB::ReaderWriter::ReadResult result = registry->readImageImplementation(filePath, _options);
         if (result.notFound()) {
             // Check for the archive file next.  Note we only go down this path on a notFound() to avoid
             // masking errors.
@@ -1272,26 +1266,23 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
         }
 
         if (result.success()) {
-            coastTexture = new osg::Texture2D(result.getImage());
-            coastTexture->getImage()->flipVertical();
-            coastTexture->setMaxAnisotropy(16.0f);
-            coastTexture->setResizeNonPowerOfTwoHint(false);
-            coastTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-            coastTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
-            coastTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
-            coastTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
-            found = true;
+            buffer._waterRasterTexture = new osg::Texture2D(result.getImage());
+            buffer._waterRasterTexture->getImage()->flipVertical();
+            buffer._waterRasterTexture->setMaxAnisotropy(16.0f);
+            buffer._waterRasterTexture->setResizeNonPowerOfTwoHint(false);
+            buffer._waterRasterTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+            buffer._waterRasterTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST_MIPMAP_NEAREST);
+            buffer._waterRasterTexture->setWrap(osg::Texture::WRAP_S,osg::Texture::CLAMP_TO_EDGE);
+            buffer._waterRasterTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture from " << filePath << " or " << archiveFilePath << " " << result.statusMessage());
-        }
-
-        if (! found) {
+        } else  {
             VPBRasterRenderer* renderer = new VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
-            coastTexture = renderer->generateCoastTexture();
+            buffer._waterRasterTexture = renderer->generateCoastTexture();
         }
 
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
         stateset->setTextureAttributeAndModes(1, atlas->getImage(), osg::StateAttribute::ON);
-        stateset->setTextureAttributeAndModes(7, coastTexture, osg::StateAttribute::ON);
+        stateset->setTextureAttributeAndModes(7, buffer._waterRasterTexture, osg::StateAttribute::ON);
         stateset->addUniform(new osg::Uniform(VPBTechnique::PHOTO_SCENERY, false));
         stateset->addUniform(new osg::Uniform(VPBTechnique::Z_UP_TRANSFORM, osg::Matrixf(osg::Matrix::inverse(makeZUpFrameRelative(computeCenterGeod(buffer))))));
         stateset->addUniform(new osg::Uniform(VPBTechnique::MODEL_OFFSET, (osg::Vec3f) buffer._transform->getMatrix().getTrans()));
@@ -1544,10 +1535,18 @@ void VPBTechnique::applyMaterials(BufferData& buffer, osg::ref_ptr<SGMaterialCac
             if (handler->handleIteration(mat, object_mask_image,
                                          lon, lat, p,
                                          D, ll_O, ll_x, ll_y, t_0, t_x, t_y, x_scale, y_scale, pointInTriangle)) {
-                // Check against constraints to stop lights on roads
+
+                // Check against constraints to stop lights and objects on roads or water.
                 const osg::Vec3 vp = v_x * pointInTriangle.x() + v_y * pointInTriangle.y() + v_0;
+                const osg::Vec2 tp = t_x * pointInTriangle.x() + t_y * pointInTriangle.y() + t_0;
+                
                 const osg::Vec3 upperPoint = vp + up * 100;
                 const osg::Vec3 lowerPoint = vp - up * 100;
+
+                // Check against water
+                if (checkAgainstWaterConstraints(buffer, tp))
+                    continue;
+
                 if (checkAgainstRandomObjectsConstraints(buffer, lowerPoint, upperPoint))
                     continue;
 
@@ -1710,6 +1709,16 @@ bool VPBTechnique::checkAgainstElevationConstraints(osg::Vec3d origin, osg::Vec3
     return intersector->containsIntersections();
 }
 
+bool VPBTechnique::checkAgainstWaterConstraints(BufferData& buffer, osg::Vec2d point)
+{
+    osg::Image* waterRaster = buffer._waterRasterTexture->getImage();
+    if (waterRaster && waterRaster->getColor(point).b() > 0.05f) {
+        // B channel contains water information.
+        return true;
+    } else {
+        return false;
+    }
+}
 
 bool VPBTechnique::checkAgainstRandomObjectsConstraints(BufferData& buffer, osg::Vec3d origin, osg::Vec3d vertex)
 {
