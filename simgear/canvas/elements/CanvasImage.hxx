@@ -60,6 +60,7 @@ namespace canvas
       CanvasWeakPtr getSrcCanvas() const;
 
       void setImage(osg::ref_ptr<osg::Image> img);
+      void setOpacity(float opacity);
       void setFill(const std::string& fill);
       void setFill(const osg::Vec4& color);
 

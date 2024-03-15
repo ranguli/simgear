@@ -106,6 +106,7 @@ namespace canvas
     addStyle("preserveAspectRatio", "", &Image::setPreserveAspectRatio);
     addStyle("slice", "", &Image::setSlice);
     addStyle("slice-width", "", &Image::setSliceWidth);
+    addStyle("opacity", "numeric", &Image::setOpacity);
 
     osgDB::Registry* reg = osgDB::Registry::instance();
     if( !reg->getReaderWriterForExtension("png") )
@@ -249,12 +250,19 @@ namespace canvas
     setFill(color);
   }
 
-    //----------------------------------------------------------------------------
-    void Image::setFill(const osg::Vec4& color)
-    {
-        _colors->front() = color;
-        _colors->dirty();
-    }
+  //----------------------------------------------------------------------------
+  void Image::setFill(const osg::Vec4& color)
+  {
+      _colors->front() = color;
+      _colors->dirty();
+  }
+
+  //----------------------------------------------------------------------------
+  void Image::setOpacity(float opacity)
+  {
+      _colors->front().a() = opacity;
+      _colors->dirty();
+  }
 
 
   //----------------------------------------------------------------------------
