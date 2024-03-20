@@ -278,11 +278,6 @@ void IPAddress::set ( const char* host, int port )
     return;
   }
 
-  if (strcmp(host, "<broadcast>") == 0) {
-    addr->sin_addr.s_addr = INADDR_BROADCAST;
-    return;
-  }
-
 // check the cache
   IPAddress* cached = Resolver::instance()->lookupSync(host);
   if (cached) {
@@ -383,16 +378,6 @@ const char* IPAddress::getLocalHost ()
   }
 
   return "127.0.0.1" ;
-}
-
-
-bool IPAddress::getBroadcast () const
-{
-    if (!addr) {
-        return false;
-    }
-    
-    return (addr->sin_addr.s_addr == INADDR_BROADCAST);
 }
 
 unsigned int IPAddress::getAddrLen() const
@@ -602,9 +587,6 @@ int Socket::connect ( const char* host, int port )
 int Socket::connect ( IPAddress* addr )
 {
   assert ( handle != -1 ) ;
-  if ( addr->getBroadcast() ) {
-      setBroadcast( true );
-  }
   return ::connect(handle, addr->getAddr(), addr->getAddrLen() );
 }
 

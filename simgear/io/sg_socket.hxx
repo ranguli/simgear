@@ -123,6 +123,10 @@ public:
     /** Destructor */
     ~SGSocket();
 
+    // private accessors for derived classes
+    simgear::Socket* getSock ();
+    simgear::Socket* getClient ();
+
     // If specified as a server (in direction for now) open the master
     // listening socket.  If specified as a client (out direction),
     // open a connection to a server.
@@ -158,6 +162,20 @@ public:
     /** @return the port number (in string form) */
     inline std::string get_port_str() const { return port_str; }
 };
+
+class SGBroadcastSocket : public SGSocket {
+ public:
+ private:
+     //Save our IP address for the sendto() call.
+     simgear::IPAddress sendto_ip;
+     bool make_client_socket();
+ public:
+     SGBroadcastSocket (const std::string& host, const std::string& port );
+     ~SGBroadcastSocket();
+     bool open( const SGProtocolDir d );
+     int write (const char *buf, const int length );
+};
+
 
 
 #endif // _SG_SOCKET_HXX

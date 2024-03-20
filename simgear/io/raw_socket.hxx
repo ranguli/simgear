@@ -60,8 +60,6 @@ public:
   unsigned int getIP () const ;
   unsigned int getFamily () const ;
   static const char* getLocalHost () ;
-
-  bool getBroadcast () const ;
   
   unsigned int getAddrLen() const;
   sockaddr* getAddr() const;

@@ -68,12 +68,32 @@ SGSocket::SGSocket( const string& host, const string& port_,
     set_type( sgSocketType );
 }
 
+SGBroadcastSocket::SGBroadcastSocket( const std::string& host, const std::string& port_ ) :
+    SGSocket (host, port_, "udp")
+{
+    sendto_ip.set (host.c_str(), stoi(port_) );
+}
 
 SGSocket::~SGSocket()
 {
     this->close();
 }
 
+SGBroadcastSocket::~SGBroadcastSocket()
+{
+    this->close();
+}
+
+
+simgear::Socket* SGSocket::getSock ()
+{
+    return (&sock);
+}
+
+simgear::Socket* SGSocket::getClient ()
+{
+    return (client);
+}
 
 bool
 SGSocket::make_server_socket()
@@ -115,6 +135,21 @@ SGSocket::make_client_socket()
         return false;
     }
 
+    return true;
+}
+
+bool
+SGBroadcastSocket::make_client_socket()
+{
+    simgear::Socket* s = SGSocket::getSock();
+    if (!s->open( false ))
+    {
+        SG_LOG( SG_IO, SG_ALERT,
+                "Error: socket() failed in make_client_socket()" );
+        return false;
+    }
+
+    s->setBroadcast( true );
     return true;
 }
 
@@ -190,6 +225,18 @@ SGSocket::open( SGProtocolDir direction )
   return true;
 }
 
+bool
+SGBroadcastSocket::open( SGProtocolDir direction )
+{
+    set_dir( direction );
+
+    if (!make_client_socket())
+    {
+        SG_LOG( SG_IO, SG_ALERT, "SG_IO_OUT socket creation failed" );
+        return false;
+    }
+    return true;
+}
 
 // read data from socket (server)
 // read a block of data of specified size
@@ -337,6 +384,33 @@ SGSocket::write( const char *buf, const int length )
 
     return length;
 }
+
+// Broadcast data to socket (client)
+int 
+SGBroadcastSocket::write( const char *buf, const int length )
+{   
+    simgear::Socket* s_ = SGSocket::getSock();
+    simgear::Socket* c_ = SGSocket::getClient();
+    simgear::Socket* s = c_ == 0 ? s_ : c_;
+    if (s->getHandle() == -1)
+    {
+        return 0;
+    }
+
+    bool error_condition = false;
+
+    if ( s->sendto( buf, length, 0, &sendto_ip) < 0 )
+    {
+        SG_LOG( SG_IO, SG_WARN, "Error broadcasting to socket: " << sendto_ip.getHost() << ":" << sendto_ip.getPort() );
+        error_condition = true;
+    }
+
+    if ( error_condition ) {
+        return 0;
+    }
+
+    return length; 
+}   
 
 
 // write null terminated string to socket (server)
