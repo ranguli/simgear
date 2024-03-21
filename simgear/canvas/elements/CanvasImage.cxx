@@ -132,11 +132,11 @@ namespace canvas
     stateSet->setDataVariance(osg::Object::STATIC);
 
     // allocate arrays for the image
-    _vertices = new osg::Vec3Array(4);
+    _vertices = new osg::Vec3Array(6);
     _vertices->setDataVariance(osg::Object::DYNAMIC);
     _geom->setVertexArray(_vertices);
 
-    _texCoords = new osg::Vec2Array(4);
+    _texCoords = new osg::Vec2Array(6);
     _texCoords->setDataVariance(osg::Object::DYNAMIC);
     _geom->setTexCoordArray(0, _texCoords, osg::Array::BIND_PER_VERTEX);
 
