@@ -82,10 +82,10 @@ struct MakeBuildingLeaf
         // vertex shader for texture mapping:
         // (front, roof, roof top vertex, side)
 
-        v->reserve(52);
-        t->reserve(52);
-        n->reserve(52);
-        c->reserve(52);
+        v->reserve(78);
+        t->reserve(78);
+        n->reserve(78);
+        c->reserve(78);
 
         // Now create an OSG Geometry based on the Building
         // 0,0,0 is the bottom center of the front
@@ -97,9 +97,12 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( 0.0, -0.5, -1.0) ); // bottom right
         v->push_back( osg::Vec3( 0.0,  0.5, -1.0) ); // bottom left
         v->push_back( osg::Vec3( 0.0,  0.5,  0.0) ); // top left
-        v->push_back( osg::Vec3( 0.0, -0.5,  0.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        v->push_back( osg::Vec3( 0.0,  0.5,  0.0) ); // top left
+        v->push_back( osg::Vec3( 0.0, -0.5,  0.0) ); // top right
+        v->push_back( osg::Vec3( 0.0, -0.5, -1.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(1, 0, 0) );    // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
           t->push_back( osg::Vec2( 0.0, 0.0) );
@@ -109,9 +112,12 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0, -0.5, -1.0) ); // bottom right
         v->push_back( osg::Vec3(  0.0, -0.5, -1.0) ); // bottom left
         v->push_back( osg::Vec3(  0.0, -0.5,  0.0) ); // top left
-        v->push_back( osg::Vec3( -1.0, -0.5,  0.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        v->push_back( osg::Vec3(  0.0, -0.5,  0.0) ); // top left
+        v->push_back( osg::Vec3( -1.0, -0.5,  0.0) ); // top right
+        v->push_back( osg::Vec3( -1.0, -0.5, -1.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, -1, 0) );   // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
           t->push_back( osg::Vec2( 0.0, 0.0) );
@@ -121,9 +127,12 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0,  0.5, -1.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, -0.5, -1.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, -0.5,  0.0) ); // top left
-        v->push_back( osg::Vec3( -1.0,  0.5,  0.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        v->push_back( osg::Vec3( -1.0, -0.5,  0.0) ); // top left
+        v->push_back( osg::Vec3( -1.0,  0.5,  0.0) ); // top right
+        v->push_back( osg::Vec3( -1.0,  0.5, -1.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(-1, 0, 0) );   // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
           t->push_back( osg::Vec2( 0.0, 0.0) );
@@ -133,9 +142,12 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3(  0.0, 0.5, -1.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, 0.5, -1.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, 0.5,  0.0) ); // top left
-        v->push_back( osg::Vec3(  0.0, 0.5,  0.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        v->push_back( osg::Vec3( -1.0, 0.5,  0.0) ); // top left
+        v->push_back( osg::Vec3(  0.0, 0.5,  0.0) ); // top right
+        v->push_back( osg::Vec3(  0.0, 0.5, -1.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, 1, 0) );    // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
           t->push_back( osg::Vec2( 0.0, 0.0) );
@@ -146,14 +158,20 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( 0.0, -0.5, 0.0) ); // bottom right
         v->push_back( osg::Vec3( 0.0,  0.5, 0.0) ); // bottom left
         v->push_back( osg::Vec3( 0.0,  0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( 0.0,  0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( 0.0, -0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( 0.0, -0.5, 0.0) ); // bottom right
 
         t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( 0.0, 1.0) ); // top left
-        t->push_back( osg::Vec2( 1.0, 1.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        t->push_back( osg::Vec2( 0.0, 1.0) ); // top left
+        t->push_back( osg::Vec2( 1.0, 1.0) ); // top right
+        t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(1, 0, 0) );    // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
         }
@@ -162,14 +180,20 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0, -0.5, 0.0) ); // bottom right
         v->push_back( osg::Vec3(  0.0, -0.5, 0.0) ); // bottom left
         v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( -1.0, -0.5, 0.0) ); // bottom right
 
         t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( 1.0, 1.0) ); // top left
-        t->push_back( osg::Vec2( 0.0, 1.0) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        t->push_back( osg::Vec2( 1.0, 1.0) ); // top left
+        t->push_back( osg::Vec2( 0.0, 1.0) ); // top right
+        t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, -1, 0) );    // normal
           c->push_back( osg::Vec4(0, 0, 0, 1) ); // color - used to differentiate wall from roof
         }
@@ -178,14 +202,20 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0,  0.5, 0.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, -0.5, 0.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( -1.0,  0.5, 0.0) ); // bottom right
 
         t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( 0.0, 1.0 ) ); // top left
-        t->push_back( osg::Vec2( 1.0, 1.0 ) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        t->push_back( osg::Vec2( 0.0, 1.0 ) ); // top left
+        t->push_back( osg::Vec2( 1.0, 1.0 ) ); // top right
+        t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(-1, 0, 0) );    // normal
           c->push_back( osg::Vec4(1, 0, 0, 0) ); // color - used to differentiate wall from roof
         }
@@ -194,14 +224,20 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3(  0.0, 0.5, 0.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, 0.5, 0.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, 0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( -1.0, 0.5, 1.0) ); // top left
         v->push_back( osg::Vec3(  0.0, 0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3(  0.0, 0.5, 0.0) ); // bottom right
 
         t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( 1.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( 1.0, 1.0 ) ); // top left
-        t->push_back( osg::Vec2( 0.0, 1.0 ) ); // top right
 
-        for (int i=0; i<4; ++i) {
+        t->push_back( osg::Vec2( 1.0, 1.0 ) ); // top left
+        t->push_back( osg::Vec2( 0.0, 1.0 ) ); // top right
+        t->push_back( osg::Vec2( 0.0, 0.0) ); // bottom right
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, 1, 0) );    // normal
           c->push_back( osg::Vec4(0, 0, 0, 1) ); // color - used to differentiate wall from roof
         }
@@ -211,19 +247,28 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( 0.0, -0.5, 1.0) ); // bottom right
         v->push_back( osg::Vec3( 0.0,  0.5, 1.0) ); // bottom left
         v->push_back( osg::Vec3( 0.0,  0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( 0.0,  0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( 0.0, -0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( 0.0, -0.5, 1.0) ); // bottom right
 
         t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2(  0.0, 1.0) ); // top left
+
+        t->push_back( osg::Vec2(  0.0, 1.0) ); // top left
         t->push_back( osg::Vec2( -1.0, 1.0) ); // top right
+        t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
 
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
-        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
 
-        for (int i=0; i<4; ++i) {
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0.707, 0, 0.707) );    // normal
         }
 
@@ -231,19 +276,28 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // bottom right
         v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // bottom left
         v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // bottom right
 
         t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( -1.0, 1.0) ); // top left
+
+        t->push_back( osg::Vec2( -1.0, 1.0) ); // top left
         t->push_back( osg::Vec2(  0.0, 1.0) ); // top right
+        t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom right
 
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
-        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
 
-        for (int i=0; i<4; ++i) {
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, -0.707, 0.707) );    // normal
         }
 
@@ -251,19 +305,28 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // bottom right
 
         t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2(  0.0, 1.0 ) ); // top left
+
+        t->push_back( osg::Vec2(  0.0, 1.0 ) ); // top left
         t->push_back( osg::Vec2( -1.0, 1.0 ) ); // top right
+        t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
 
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
-        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
 
-        for (int i=0; i<4; ++i) {
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(-0.707, 0, 0.707) );    // normal
         }
 
@@ -271,19 +334,28 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3(  0.0, 0.5, 1.0) ); // bottom right
         v->push_back( osg::Vec3( -1.0, 0.5, 1.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0, 0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( -1.0, 0.5, 1.0) ); // top left
         v->push_back( osg::Vec3(  0.0, 0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3(  0.0, 0.5, 1.0) ); // bottom right
 
         t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2( -1.0, 1.0 ) ); // top left
+
+        t->push_back( osg::Vec2( -1.0, 1.0 ) ); // top left
         t->push_back( osg::Vec2(  0.0, 1.0 ) ); // top right
+        t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom right
 
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
-        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
 
-        for (int i=0; i<4; ++i) {
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 0, 0) ); // color - used to differentiate wall from roof
+
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, 0.707, 0.707) );    // normal
         }
 
@@ -291,26 +363,35 @@ struct MakeBuildingLeaf
         v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // bottom right
         v->push_back( osg::Vec3(  0.0,  0.5, 1.0) ); // bottom left
         v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // top left
+
+        v->push_back( osg::Vec3( -1.0,  0.5, 1.0) ); // top left
         v->push_back( osg::Vec3( -1.0, -0.5, 1.0) ); // top right
+        v->push_back( osg::Vec3(  0.0, -0.5, 1.0) ); // bottom right
 
         t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
         t->push_back( osg::Vec2(  0.0, 0.0) ); // bottom left
         t->push_back( osg::Vec2(  0.0, 1.0) ); // top left
+
+        t->push_back( osg::Vec2(  0.0, 1.0) ); // top left
         t->push_back( osg::Vec2( -1.0, 1.0) ); // top right
+        t->push_back( osg::Vec2( -1.0, 0.0) ); // bottom right
 
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
+        c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
         c->push_back( osg::Vec4(0, 1, 1, 0) ); // color - used to differentiate wall from roof
 
-        for (int i=0; i<4; ++i) {
+        for (int i = 0; i < 6; ++i) {
           n->push_back( osg::Vec3(0, 0, -1.0) );    // normal
         }
 
-        assert(v->size() == 52);
-        assert(t->size() == 52);
-        assert(c->size() == 52);
-        assert(n->size() == 52);
+        assert(v->size() == 78);
+        assert(t->size() == 78);
+        assert(c->size() == 78);
+        assert(n->size() == 78);
 
         Geometry* geom = new Geometry;
         static int buildingCounter = 0;
@@ -328,8 +409,7 @@ struct MakeBuildingLeaf
         geom->setVertexAttribArray(BUILDING_ATTR1, new osg::Vec3Array, Array::BIND_PER_VERTEX);
         geom->setVertexAttribArray(BUILDING_ATTR2, new osg::Vec3Array, Array::BIND_PER_VERTEX);
 
-        //geom->addPrimitiveSet( new osg::DrawArrays( GL_QUADS, 0, 48, 0) );
-        geom->addPrimitiveSet( new osg::DrawArrays( GL_QUADS, 0, 52, 0) );
+        geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLES, 0, 78, 0));
 
         EffectGeode* geode = new EffectGeode;
         geode->addDrawable(geom);
