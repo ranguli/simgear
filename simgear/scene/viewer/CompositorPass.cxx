@@ -153,6 +153,7 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
     }
     pass->type = root->getStringValue("type");
     pass->effect_scheme = root->getStringValue("effect-scheme");
+    pass->render_once = root->getBoolValue("render-once", false);
 
     const SGPropertyNode *p_render_condition = root->getChild("render-condition");
     if (p_render_condition)

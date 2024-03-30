@@ -39,6 +39,7 @@ struct Pass : public osg::Referenced {
         useMastersSceneData(true),
         cull_mask(0xffffff),
         inherit_cull_mask(false),
+        render_once(false),
         viewport_x_scale(0.0f),
         viewport_y_scale(0.0f),
         viewport_width_scale(0.0f),
@@ -54,6 +55,7 @@ struct Pass : public osg::Referenced {
     osg::Node::NodeMask              cull_mask;
     /** Whether the cull mask is ANDed with the view master camera cull mask. */
     bool                             inherit_cull_mask;
+    bool                             render_once;
     float                            viewport_x_scale;
     float                            viewport_y_scale;
     float                            viewport_width_scale;

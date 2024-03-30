@@ -444,9 +444,18 @@ Compositor::resized()
 void
 Compositor::setCullMask(osg::Node::NodeMask cull_mask)
 {
+    int frame_number = 0;
+    const osg::FrameStamp *frame_stamp = _view->getFrameStamp();
+    if (frame_stamp) {
+        frame_number = frame_stamp->getFrameNumber();
+    }
+
     for (auto &pass : _passes) {
         osg::Camera *camera = pass->camera;
-        if (!pass->render_condition || pass->render_condition->test()) {
+        bool should_render = !pass->render_condition || pass->render_condition->test();
+        bool first_frame = !pass->render_once || frame_number == 0;
+
+        if (should_render && first_frame) {
             if (pass->inherit_cull_mask) {
                 camera->setCullMask(pass->cull_mask & cull_mask);
                 camera->setCullMaskLeft(pass->cull_mask & cull_mask & ~RIGHT_BIT);
