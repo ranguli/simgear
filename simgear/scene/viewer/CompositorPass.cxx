@@ -444,6 +444,35 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
         osg::Vec2f(1.0f / viewport->width(),
                    1.0f / viewport->height()));
 
+    const SGPropertyNode* p_clustered = root->getChild("use-clustered-uniforms");
+    if (p_clustered) {
+        std::string clustered_pass_name = p_clustered->getStringValue("pass");
+        if (!clustered_pass_name.empty()) {
+            Pass* clustered_pass = compositor->getPass(clustered_pass_name);
+            if (clustered_pass) {
+                auto* cullcb = dynamic_cast<SceneCullCallback*>(
+                    clustered_pass->camera->getCullCallback());
+                if (cullcb) {
+                    auto* clustered = cullcb->getClusteredShading();
+                    if (clustered) {
+                        clustered->exposeUniformsToPass(
+                            camera,
+                            p_clustered->getIntValue("clusters-bind-unit", 11),
+                            p_clustered->getIntValue("indices-bind-unit", 12),
+                            p_clustered->getIntValue("pointlights-bind-unit", 13),
+                            p_clustered->getIntValue("spotlights-bind-unit", 14));
+                    } else {
+                        SG_LOG(SG_INPUT, SG_WARN, "PassBuilder::build: Pass '" << clustered_pass_name << "' does not contain a clustered shading node");
+                    }
+                } else {
+                    SG_LOG(SG_INPUT, SG_WARN, "PassBuilder::build: Pass '" << clustered_pass_name << "' is not a scene pass");
+                }
+            } else {
+                SG_LOG(SG_INPUT, SG_WARN, "PassBuilder::build: Pass '" << clustered_pass_name << "' not found");
+            }
+        }
+    }
+
     return pass.release();
 }
 
@@ -492,38 +521,6 @@ public:
         osg::ref_ptr<osg::StateSet> quad_state = quad->getOrCreateStateSet();
         quad_state->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF
                             | osg::StateAttribute::PROTECTED);
-
-        const SGPropertyNode *p_clustered = root->getChild("use-clustered-uniforms");
-        if (p_clustered) {
-            std::string clustered_pass_name = p_clustered->getStringValue("pass");
-            if (!clustered_pass_name.empty()) {
-                Pass *clustered_pass = compositor->getPass(clustered_pass_name);
-                if (clustered_pass) {
-                    auto *cullcb = dynamic_cast<SceneCullCallback *>(
-                        clustered_pass->camera->getCullCallback());
-                    if (cullcb) {
-                        auto *clustered = cullcb->getClusteredShading();
-                        if (clustered) {
-                            clustered->exposeUniformsToPass(
-                                camera,
-                                p_clustered->getIntValue("clusters-bind-unit", 11),
-                                p_clustered->getIntValue("indices-bind-unit", 12),
-                                p_clustered->getIntValue("pointlights-bind-unit", 13),
-                                p_clustered->getIntValue("spotlights-bind-unit", 14));
-                        } else {
-                            SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
-                                   << clustered_pass_name << "' does not contain a clustered shading node");
-                        }
-                    } else {
-                        SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
-                               << clustered_pass_name << "' is not a scene pass");
-                    }
-                } else {
-                    SG_LOG(SG_INPUT, SG_WARN, "QuadPassBuilder::build: Pass '"
-                           << clustered_pass_name << "' not found");
-                }
-            }
-        }
 
         osg::StateSet *ss = camera->getOrCreateStateSet();
         for (const auto &uniform : compositor->getBuiltinUniforms())
