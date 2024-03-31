@@ -1,26 +1,7 @@
-/* -*-c++-*-
- *
- * Copyright (C) 2007 Tim Moore
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
- *
- */
+// Copyright (C) 2007 Tim Moore
+// SPDX-License-Identifier: LGPL-2.0-or-later
 
-#ifndef SIMGEAR_STATEATTRIBUTEFACTORY_HXX
-#define SIMGEAR_STATEATTRIBUTEFACTORY_HXX 1
+#pragma once
 
 #include <OpenThreads/Mutex>
 #include <osg/ref_ptr>
@@ -45,53 +26,58 @@ class TexEnv;
 // Return read-only instances of common OSG state attributes.
 namespace simgear
 {
-class StateAttributeFactory :
-        public ReferencedSingleton<StateAttributeFactory> {
+class StateAttributeFactory : public ReferencedSingleton<StateAttributeFactory> {
 public:
     ~StateAttributeFactory();
-          
+
+    // XXX: Fixed-pipeline, should go again once we go core profile
     // Alpha test > .01
     osg::AlphaFunc* getStandardAlphaFunc() { return _standardAlphaFunc.get(); }
-    // alpha source, 1 - alpha destination
-    osg::BlendFunc* getStandardBlendFunc() { return _standardBlendFunc.get(); }
     // modulate
     osg::TexEnv* getStandardTexEnv() { return _standardTexEnv.get(); }
     osg::ShadeModel* getSmoothShadeModel() { return _smooth.get(); }
     osg::ShadeModel* getFlatShadeModel() { return _flat.get(); }
+
+    // alpha source, 1 - alpha destination
+    osg::BlendFunc* getStandardBlendFunc() { return _standardBlendFunc.get(); }
+    // White color
+    osg::Vec4Array* getWhiteColor() { return _white.get(); }
     // White, repeating texture
     osg::Texture2D* getWhiteTexture() { return _whiteTexture.get(); }
-    // White color
-    osg::Vec4Array* getWhiteColor() {return _white.get(); }
     // A white, completely transparent texture
-    osg::Texture2D* getTransparentTexture()
-    {
-        return _transparentTexture.get();
-    }
+    osg::Texture2D* getTransparentTexture() { return _transparentTexture.get(); }
     // Null normalmap texture vec3(0.5, 0.5, 1.0)
     osg::Texture2D* getNullNormalmapTexture() { return _nullNormalmapTexture.get(); }
     // cull front and back facing polygons
     osg::CullFace* getCullFaceFront() { return _cullFaceFront.get(); }
     osg::CullFace* getCullFaceBack() { return _cullFaceBack.get(); }
-    // Standard depth with writes disabled.
-    osg::Depth* getDepthWritesDisabled() { return _depthWritesDisabled.get(); }
+    // Standard depth
+    osg::Depth* getStandardDepth() { return _standardDepth.get(); }
+    // Standard depth with writes disabled
+    osg::Depth* getStandardDepthWritesDisabled() { return _standardDepthWritesDisabled.get(); }
     osg::Texture3D* getNoiseTexture(int size);
+
     StateAttributeFactory();    
 protected:
+    // XXX: Legacy stuff, should be removed
     osg::ref_ptr<osg::AlphaFunc> _standardAlphaFunc;
     osg::ref_ptr<osg::ShadeModel> _smooth;
     osg::ref_ptr<osg::ShadeModel> _flat;
-    osg::ref_ptr<osg::BlendFunc> _standardBlendFunc;
     osg::ref_ptr<osg::TexEnv> _standardTexEnv;
+
+    osg::ref_ptr<osg::BlendFunc> _standardBlendFunc;
+    osg::ref_ptr<osg::Vec4Array> _white;
     osg::ref_ptr<osg::Texture2D> _whiteTexture;
     osg::ref_ptr<osg::Texture2D> _transparentTexture;
     osg::ref_ptr<osg::Texture2D> _nullNormalmapTexture;
-    osg::ref_ptr<osg::Vec4Array> _white;
     osg::ref_ptr<osg::CullFace> _cullFaceFront;
     osg::ref_ptr<osg::CullFace> _cullFaceBack;
-    osg::ref_ptr<osg::Depth> _depthWritesDisabled;
-    typedef std::map<int, osg::ref_ptr<osg::Texture3D> > NoiseMap;
+    osg::ref_ptr<osg::Depth> _standardDepth;
+    osg::ref_ptr<osg::Depth> _standardDepthWritesDisabled;
+
+    typedef std::map<int, osg::ref_ptr<osg::Texture3D>> NoiseMap;
     NoiseMap _noises;
     inline static std::mutex _noise_mutex; // Protects the NoiseMap _noises for mult-threaded access
 };
-}
-#endif
+
+} // namespace simgear

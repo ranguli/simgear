@@ -1,23 +1,6 @@
-/* -*-c++-*-
- *
- * Copyright (C) 2007 Tim Moore
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
- *
- */
+// Copyright (C) 2007 Tim Moore
+// SPDX-License-Identifier: LGPL-2.0-or-later
+
 #include <simgear_config.h>
 #include "StateAttributeFactory.hxx"
 
@@ -43,6 +26,7 @@ namespace simgear
 {
 StateAttributeFactory::StateAttributeFactory()
 {
+    // XXX: Legacy stuff, should be removed
     _standardAlphaFunc = new AlphaFunc;
     _standardAlphaFunc->setFunction(osg::AlphaFunc::GREATER);
     _standardAlphaFunc->setReferenceValue(0.01f);
@@ -52,56 +36,80 @@ StateAttributeFactory::StateAttributeFactory()
     _smooth->setDataVariance(Object::STATIC);
     _flat = new ShadeModel(ShadeModel::FLAT);
     _flat->setDataVariance(Object::STATIC);
+    _standardTexEnv = new TexEnv;
+    _standardTexEnv->setMode(TexEnv::MODULATE);
+    _standardTexEnv->setDataVariance(Object::STATIC);
+
+    // Standard blend function
     _standardBlendFunc = new BlendFunc;
     _standardBlendFunc->setSource(BlendFunc::SRC_ALPHA);
     _standardBlendFunc->setDestination(BlendFunc::ONE_MINUS_SRC_ALPHA);
     _standardBlendFunc->setDataVariance(Object::STATIC);
-    _standardTexEnv = new TexEnv;
-    _standardTexEnv->setMode(TexEnv::MODULATE);
-    _standardTexEnv->setDataVariance(Object::STATIC);
-    osg::Image *dummyImage = new osg::Image;
-    dummyImage->allocateImage(1, 1, 1, GL_LUMINANCE_ALPHA,
-                              GL_UNSIGNED_BYTE);
-    unsigned char* imageBytes = dummyImage->data(0, 0);
-    imageBytes[0] = 255;
-    imageBytes[1] = 255;
-    _whiteTexture = new osg::Texture2D;
-    _whiteTexture->setImage(dummyImage);
-    _whiteTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
-    _whiteTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
-    _whiteTexture->setDataVariance(osg::Object::STATIC);
-    // And now the transparent texture
-    dummyImage = new osg::Image;
-    dummyImage->allocateImage(1, 1, 1, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE);
-    imageBytes = dummyImage->data(0, 0);
-    imageBytes[0] = 255;
-    imageBytes[1] = 0;
-    _transparentTexture = new osg::Texture2D;
-    _transparentTexture->setImage(dummyImage);
-    _transparentTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
-    _transparentTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
-    _transparentTexture->setDataVariance(osg::Object::STATIC);
-    // And a null normal map texture
-    dummyImage = new osg::Image;
-    dummyImage->allocateImage(1, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
-    imageBytes = dummyImage->data(0, 0);
-    imageBytes[0] = 127;
-    imageBytes[1] = 127;
-    imageBytes[2] = 255;
-    _nullNormalmapTexture = new osg::Texture2D;
-    _nullNormalmapTexture->setImage(dummyImage);
-    _nullNormalmapTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
-    _nullNormalmapTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
-    _nullNormalmapTexture->setDataVariance(osg::Object::STATIC);
+
+    // White color
     _white = new Vec4Array(1);
     (*_white)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
     _white->setDataVariance(Object::STATIC);
+
+    // White texture
+    osg::ref_ptr<osg::Image> whiteImage = new osg::Image;
+    whiteImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+    unsigned char* whiteImageBytes = whiteImage->data(0, 0);
+    whiteImageBytes[0] = 255;
+    whiteImageBytes[1] = 255;
+    whiteImageBytes[2] = 255;
+    whiteImageBytes[3] = 255;
+    _whiteTexture = new osg::Texture2D;
+    _whiteTexture->setImage(whiteImage);
+    _whiteTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    _whiteTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    _whiteTexture->setDataVariance(osg::Object::STATIC);
+
+    // Transparent texture
+    osg::ref_ptr<osg::Image> transparentImage = new osg::Image;
+    transparentImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+    unsigned char* transparentImageBytes = transparentImage->data(0, 0);
+    transparentImageBytes[0] = 255;
+    transparentImageBytes[1] = 255;
+    transparentImageBytes[2] = 255;
+    transparentImageBytes[3] = 0;
+    _transparentTexture = new osg::Texture2D;
+    _transparentTexture->setImage(transparentImage);
+    _transparentTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    _transparentTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    _transparentTexture->setDataVariance(osg::Object::STATIC);
+
+    // And a null normal map texture
+    osg::ref_ptr<osg::Image> nullNormalMapImage = new osg::Image;
+    nullNormalMapImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+    unsigned char* nullNormalMapBytes = nullNormalMapImage->data(0, 0);
+    nullNormalMapBytes[0] = 128;
+    nullNormalMapBytes[1] = 128;
+    nullNormalMapBytes[2] = 255;
+    nullNormalMapBytes[3] = 255;
+    _nullNormalmapTexture = new osg::Texture2D;
+    _nullNormalmapTexture->setImage(nullNormalMapImage);
+    _nullNormalmapTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+    _nullNormalmapTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    _nullNormalmapTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    _nullNormalmapTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    _nullNormalmapTexture->setDataVariance(osg::Object::STATIC);
+
+    // Cull front facing polygons
     _cullFaceFront = new CullFace(CullFace::FRONT);
     _cullFaceFront->setDataVariance(Object::STATIC);
+
+    // Cull back facing polygons
     _cullFaceBack = new CullFace(CullFace::BACK);
     _cullFaceBack->setDataVariance(Object::STATIC);
-    _depthWritesDisabled = new Depth(Depth::LESS, 0.0, 1.0, false);
-    _depthWritesDisabled->setDataVariance(Object::STATIC);
+
+    // Standard depth function
+    _standardDepth = new Depth(Depth::LESS, 0.0, 1.0, true);
+    _standardDepth->setDataVariance(Object::STATIC);
+
+    // Standard depth function with writes disabled
+    _standardDepthWritesDisabled = new Depth(Depth::LESS, 0.0, 1.0, false);
+    _standardDepthWritesDisabled->setDataVariance(Object::STATIC);
 }
 
 osg::Image* make3DNoiseImage(int texSize)
@@ -172,4 +180,5 @@ StateAttributeFactory::~StateAttributeFactory()
 {
   
 }
-}
+
+} // namespace simgear
