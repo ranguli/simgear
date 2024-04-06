@@ -474,6 +474,7 @@ void testUpdateNoChanges(HTTP::Client* cl)
 	std::unique_ptr<HTTPRepository> repo;
 	SGPath p(simgear::Dir::current().path());
 	p.append("http_repo_basic"); // same as before
+	(p / ".dirhash").remove();
 
 	global_repo->clearRequestCounts();
 
