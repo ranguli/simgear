@@ -1342,7 +1342,7 @@ void SGTerraSync::syncAirportsModels()
 
 bool isOSMSuffix(const std::string& suffix)
 {
-    return (suffix == "Buildings") || (suffix == "Roads") || (suffix == "Pylons") || (suffix == "Details");
+    return (suffix == "Buildings") || (suffix == "Roads") || (suffix == "Pylons") || (suffix == "Details") || (suffix == "Trees");
 }
 
 void SGTerraSync::syncAreaByPath(const std::string& aPath)
