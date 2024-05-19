@@ -42,10 +42,11 @@
 #include <signal.h>             // signal()
 #include <string.h>
 
-#include <iostream>
+#include <algorithm>
 #include <fstream>
-#include <string>
+#include <iostream>
 #include <map>
+#include <string>
 
 #include <simgear/version.h>
 
