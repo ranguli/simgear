@@ -893,6 +893,7 @@ void ShaderProgramBuilder::buildAttribute(Effect* effect, Pass* pass,
     PropertyList pVertShaders = prop->getChildren("vertex-shader");
     PropertyList pGeomShaders = prop->getChildren("geometry-shader");
     PropertyList pFragShaders = prop->getChildren("fragment-shader");
+    PropertyList pCompShaders = prop->getChildren("compute-shader");
     PropertyList pAttributes = prop->getChildren("attribute");
     ProgramKey prgKey;
     std::back_insert_iterator<vector<ShaderKey> > inserter(prgKey.shaders);
@@ -905,6 +906,9 @@ void ShaderProgramBuilder::buildAttribute(Effect* effect, Pass* pass,
     std::transform(pFragShaders.begin(), pFragShaders.end(), inserter,
                    [] (SGPropertyNode_ptr& ptr) {
                        return makeShaderKey(ptr, Shader::FRAGMENT); });
+    std::transform(pCompShaders.begin(), pCompShaders.end(), inserter,
+                   [] (SGPropertyNode_ptr& ptr) {
+                       return makeShaderKey(ptr, Shader::COMPUTE); });
     for (PropertyList::iterator itr = pAttributes.begin(),
              e = pAttributes.end();
          itr != e;

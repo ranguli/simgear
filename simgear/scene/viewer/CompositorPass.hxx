@@ -6,6 +6,8 @@
 #include <unordered_map>
 
 #include <osg/Camera>
+#include <osg/Vec2f>
+#include <osg/Vec2i>
 #include <osg/View>
 
 #include <simgear/props/condition.hxx>
@@ -61,6 +63,10 @@ struct Pass : public osg::Referenced {
     float                            viewport_width_scale;
     float                            viewport_height_scale;
     SGSharedPtr<SGCondition>         render_condition;
+
+    osg::ref_ptr<osg::Drawable>      compute_node;
+    osg::Vec2i                       compute_wg_size;
+    osg::Vec2f                       compute_global_scale;
 
     struct PassUpdateCallback : public virtual osg::Referenced {
     public:

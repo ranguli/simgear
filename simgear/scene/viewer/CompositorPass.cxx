@@ -5,6 +5,7 @@
 
 #include <osg/BindImageTexture>
 #include <osg/Depth>
+#include <osg/DispatchCompute>
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/PolygonMode>
@@ -687,6 +688,102 @@ protected:
     }
 };
 RegisterPassBuilder<QuadPassBuilder> registerQuadPass("quad");
+
+//------------------------------------------------------------------------------
+
+struct ComputePassBuilder : public PassBuilder {
+public:
+    virtual Pass* build(Compositor* compositor, const SGPropertyNode* root,
+                        const SGReaderWriterOptions* options)
+    {
+        osg::ref_ptr<Pass> pass = PassBuilder::build(compositor, root, options);
+        pass->useMastersSceneData = false;
+
+        osg::Camera* camera = pass->camera;
+        camera->setAllowEventFocus(false);
+
+        // Do not automatically add a depth renderbuffer
+        camera->setImplicitBufferAttachmentMask(0, 0);
+
+        osg::ref_ptr<EffectGeode> compute = new EffectGeode;
+        camera->addChild(compute);
+        compute->setCullingActive(false);
+
+        const std::string eff_file = root->getStringValue("effect");
+        if (!eff_file.empty()) {
+            Effect* eff = makeEffect(eff_file, true, options);
+            if (eff)
+                compute->setEffect(eff);
+        }
+
+        static const char* dimNames[] = {"x", "y", "z"};
+        static const char* dimScaleNames[] = {"x-screen-scale", "y-screen-scale", "z-screen-scale"};
+        const osg::Viewport* vp = compositor->getViewport();
+        osg::Vec3f screenSize(vp->width(), vp->height(), 1);
+        // Get workgroup size (also defined in the shader)
+        osg::Vec3i wgSize(1, 1, 1);
+        const SGPropertyNode* workgroupSizeNode = root->getChild("workgroup-size");
+        if (workgroupSizeNode) {
+            for (int dim = 0; dim < 3; ++dim) {
+                const SGPropertyNode* dimNode = workgroupSizeNode->getChild(dimNames[dim]);
+                if (!dimNode)
+                    continue;
+                wgSize[dim] = dimNode->getIntValue(1);
+                if (wgSize[dim] < 1)
+                    wgSize[dim] = 1;
+            }
+        }
+        pass->compute_wg_size.set(wgSize[0], wgSize[1]);
+
+        // Get global size (will be divided by workgroup size and rounded up)
+        osg::Vec3f globalSize(1.0f, 1.0f, 1.0f);
+        const SGPropertyNode* globalSizeNode = root->getChild("global-size");
+        if (globalSizeNode) {
+            osg::Vec3f screenScale(1.0f, 1.0f, 1.0f);
+            for (int dim = 0; dim < 3; ++dim) {
+                const SGPropertyNode* scaleNode = globalSizeNode->getChild(dimScaleNames[dim]);
+                if (scaleNode)
+                    screenScale[dim] = scaleNode->getFloatValue();
+            }
+            pass->compute_global_scale.set(0.0f, 0.0f);
+            for (int dim = 0; dim < 3; ++dim) {
+                const SGPropertyNode* dimNode = globalSizeNode->getChild(dimNames[dim]);
+                if (!dimNode)
+                    continue;
+                const std::string dimStr = dimNode->getStringValue();
+                if (dimStr == "screen") {
+                    // Compositor::resized() is responsible for updating this
+                    // when the compositor viewport is resized.
+                    globalSize[dim] = ceil(screenSize[dim] * screenScale[dim]);
+                    if (dim < 2)
+                        pass->compute_global_scale[dim] = screenScale[dim];
+                } else {
+                    globalSize[dim] = dimNode->getIntValue(1);
+                }
+            }
+        }
+
+        // Divide by workgroup size
+        int wgCount[3];
+        for (int dim = 0; dim < 3; ++dim) {
+            wgCount[dim] = (int)ceil(globalSize[dim] / wgSize[dim]);
+            if (wgCount[dim] < 1)
+                wgCount[dim] = 1;
+        }
+
+        osg::ref_ptr<osg::Drawable> computeNode = new osg::DispatchCompute(
+            wgCount[0], wgCount[1], wgCount[2]);
+        compute->addDrawable(computeNode);
+        pass->compute_node = computeNode;
+
+        osg::StateSet* ss = camera->getOrCreateStateSet();
+        for (const auto& uniform : compositor->getBuiltinUniforms())
+            ss->addUniform(uniform);
+
+        return pass.release();
+    }
+};
+RegisterPassBuilder<ComputePassBuilder> registerComputePass("compute");
 
 //------------------------------------------------------------------------------
 

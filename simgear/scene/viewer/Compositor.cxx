@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include <osg/DispatchCompute>
 #include <osg/Texture1D>
 #include <osg/Texture2D>
 #include <osg/Texture2DArray>
@@ -330,6 +331,25 @@ Compositor::resized()
 
             // Force the OSG rendering backend to handle the new sizes
             camera->dirtyAttachmentMap();
+        }
+
+        // Resize any compute dispatch related to screen size
+        if (pass->compute_node.valid() &&
+            (pass->compute_global_scale[0] != 0.0f ||
+             pass->compute_global_scale[1] != 0.0f)) {
+            auto* computeNode = static_cast<osg::DispatchCompute*>(pass->compute_node.get());
+            osg::Vec2f screenSize(_viewport->width(), _viewport->height());
+            osg::Vec3i groups;
+            computeNode->getComputeGroups(groups[0], groups[1], groups[2]);
+            for (int dim = 0; dim < 2; ++dim) {
+                if (pass->compute_global_scale[dim] != 0.0f) {
+                    // resize this dimention
+                    groups[dim] = (int)ceil(ceil(screenSize[dim] * pass->compute_global_scale[dim]) / pass->compute_wg_size[dim]);
+                    if (groups[dim] < 1)
+                        groups[dim] = 1;
+                }
+            }
+            computeNode->setComputeGroups(groups[0], groups[1], groups[2]);
         }
 
         // Update the uniforms even if it isn't a RTT camera
