@@ -70,6 +70,8 @@ PropStringMap<BufferFormat> buffer_format_map {
     {"depth24-stencil8", {GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8}},
     {"depth32f", {GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT}},
     {"depth32f-stencil8", {GL_DEPTH32F_STENCIL8, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV}},
+    {"r8ui", {GL_R8UI, GL_RED, GL_UNSIGNED_BYTE}},
+    {"r16ui", {GL_R16UI, GL_RED, GL_UNSIGNED_SHORT}},
     {"r32ui", {GL_R32UI, GL_RED, GL_UNSIGNED_INT}}
 };
 
