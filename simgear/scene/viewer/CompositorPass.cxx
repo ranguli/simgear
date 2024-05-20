@@ -3,6 +3,7 @@
 
 #include "CompositorPass.hxx"
 
+#include <osg/BindImageTexture>
 #include <osg/Depth>
 #include <osg/Geode>
 #include <osg/Geometry>
@@ -277,6 +278,113 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
                 osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
         } catch (sg_exception &e) {
             SG_LOG(SG_INPUT, SG_ALERT, "PassBuilder::build: Skipping binding "
+                   << p_binding->getIndex() << " in pass " << pass->render_order
+                   << ": " << e.what());
+        }
+    }
+
+    // Image bindings (glBindImageTexture) require OpenGL 4.2
+    PropertyList p_images = root->getChildren("image-binding");
+    for (auto const& p_binding : p_images) {
+        if (!checkConditional(p_binding))
+            continue;
+        try {
+            std::string buffer_name = p_binding->getStringValue("buffer");
+            if (buffer_name.empty())
+                throw sg_exception("No buffer specified");
+
+            Buffer* buffer = compositor->getBuffer(buffer_name);
+            if (!buffer)
+                throw sg_exception(std::string("Unknown buffer '") +
+                                   buffer_name + "'");
+
+            osg::Texture* texture = buffer->texture;
+
+            int unit = p_binding->getIntValue("unit", -1);
+            if (unit < 0)
+                throw sg_exception("No image unit specified");
+
+            osg::BindImageTexture::Access access;
+            std::string accessStr = p_binding->getStringValue("access");
+            if (accessStr.empty())
+                throw sg_exception("No access specified");
+            if (accessStr == "read-only")
+                access = osg::BindImageTexture::READ_ONLY;
+            else if (accessStr == "write-only")
+                access = osg::BindImageTexture::WRITE_ONLY;
+            else if (accessStr == "read-write")
+                access = osg::BindImageTexture::READ_WRITE;
+            else
+                throw sg_exception(std::string("Unknown access '") +
+                                   accessStr + "'");
+
+            static const struct {
+                const char* name;
+                GLenum format;
+            } formatNames[] = {
+                // see glBindImageTexture(3G)
+                { "rgba32f",        GL_RGBA32F },
+                { "rgba16f",        GL_RGBA16F },
+                { "rg32f",          GL_RG32F },
+                { "rg16f",          GL_RG16F },
+                { "r11f_g11f_b10f", GL_R11F_G11F_B10F },
+                { "r32f",           GL_R32F },
+                { "r16f",           GL_R16F },
+                { "rgba32ui",       GL_RGBA32UI },
+                { "rgba16ui",       GL_RGBA16UI },
+                { "rgb10_a2ui",     GL_RGB10_A2UI },
+                { "rgba8ui",        GL_RGBA8UI },
+                { "rg32ui",         GL_RG32UI },
+                { "rg16ui",         GL_RG16UI },
+                { "rg8ui",          GL_RG8UI },
+                { "r32ui",          GL_R32UI },
+                { "r16ui",          GL_R16UI },
+                { "r8ui",           GL_R8UI },
+                { "rgba32i",        GL_RGBA32I },
+                { "rgba16i",        GL_RGBA16I },
+                { "rgba8i",         GL_RGBA8I },
+                { "rg32i",          GL_RG32I },
+                { "rg16i",          GL_RG16I },
+                { "rg8i",           GL_RG8I },
+                { "r32i",           GL_R32I },
+                { "r16i",           GL_R16I },
+                { "r8i",            GL_R8I },
+                { "rgba16",         GL_RGBA16 },
+                { "rgb10_a2",       GL_RGB10_A2 },
+                { "rgba8",          GL_RGBA8 },
+                { "rg16",           GL_RG16 },
+                { "rg8",            GL_RG8 },
+                { "r16",            GL_R16 },
+                { "r8",             GL_R8 },
+                { "rgba16_snorm",   GL_RGBA16_SNORM },
+                { "rgba8_snorm",    GL_RGBA8_SNORM },
+                { "rg16_snorm",     GL_RG16_SNORM },
+                { "rg8_snorm",      GL_RG8_SNORM },
+                { "r16_snorm",      GL_R16_SNORM },
+                { "r8_snorm",       GL_R8_SNORM },
+            };
+            std::string formatStr = p_binding->getStringValue("format");
+            if (formatStr.empty())
+                throw sg_exception("No format specified");
+            GLenum format = 0;
+            for (auto& fmt : formatNames) {
+                if (formatStr == fmt.name) {
+                    format = fmt.format;
+                    break;
+                }
+            }
+            if (format == 0)
+                throw sg_exception(std::string("Unknown format '") +
+                                   formatStr + "'");
+
+            // Make the image available to every child of the pass, overriding
+            // existing units
+            auto* binding = new osg::BindImageTexture(unit, texture, access,
+                                                      format);
+            camera->getOrCreateStateSet()->setAttributeAndModes(binding,
+                osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+        } catch (sg_exception &e) {
+            SG_LOG(SG_INPUT, SG_ALERT, "PassBuilder::build: Skipping image binding "
                    << p_binding->getIndex() << " in pass " << pass->render_order
                    << ": " << e.what());
         }

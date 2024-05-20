@@ -168,6 +168,9 @@ ref_ptr<Uniform> UniformFactoryImpl::getUniform( Effect * effect,
     case Uniform::SAMPLER_1D_SHADOW:
     case Uniform::SAMPLER_2D_SHADOW:
     case Uniform::SAMPLER_CUBE:
+    case Uniform::IMAGE_1D:
+    case Uniform::IMAGE_2D:
+    case Uniform::IMAGE_3D:
     	initFromParameters(effect, valProp, uniform.get(),
                            static_cast<bool (Uniform::*)(int)>(&Uniform::set),
                            options);
@@ -1049,7 +1052,10 @@ EffectNameValue<Uniform::Type> uniformTypesInit[] =
     {"sampler-2d", Uniform::SAMPLER_2D},
     {"sampler-2d-shadow", Uniform::SAMPLER_2D_SHADOW},
     {"sampler-3d", Uniform::SAMPLER_3D},
-    {"sampler-cube", Uniform::SAMPLER_CUBE}
+    {"sampler-cube", Uniform::SAMPLER_CUBE},
+    {"image-1d", Uniform::IMAGE_1D},
+    {"image-2d", Uniform::IMAGE_2D},
+    {"image-3d", Uniform::IMAGE_3D},
 };
 EffectPropertyMap<Uniform::Type> uniformTypes(uniformTypesInit);
 
