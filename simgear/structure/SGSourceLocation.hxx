@@ -25,6 +25,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <mutex>
 
 class SGPath;
 class sg_location;
@@ -75,7 +76,8 @@ public:
 private:
     void setPath(const std::string& str);
 
-    static std::map<std::string, std::shared_ptr<std::string>> _paths;
+    inline static std::map<std::string, std::shared_ptr<std::string>> _paths;
+    inline static std::mutex _pathsMutex;
 
     std::shared_ptr<std::string> _path;
     int _line;

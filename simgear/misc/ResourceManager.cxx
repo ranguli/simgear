@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <mutex>
 
 #include <simgear_config.h>
 
@@ -28,6 +29,7 @@
 namespace simgear
 {
     
+static inline std::mutex static_manager_mutex;
 static ResourceManager* static_manager = nullptr;
 
 ResourceProvider::~ResourceProvider()
@@ -42,6 +44,7 @@ ResourceManager::ResourceManager()
 
 ResourceManager* ResourceManager::instance()
 {
+    const std::lock_guard<std::mutex> lock(static_manager_mutex);
     if (!static_manager) {
         static_manager = new ResourceManager();
     }
@@ -51,11 +54,13 @@ ResourceManager* ResourceManager::instance()
 
 bool ResourceManager::haveInstance()
 {
+    const std::lock_guard<std::mutex> lock(static_manager_mutex);
     return static_manager != nullptr;
 }
 
 ResourceManager::~ResourceManager()
 {
+    const std::lock_guard<std::mutex> lock(static_manager_mutex);
     assert(this == static_manager);
     static_manager = nullptr;
     std::for_each(_providers.begin(), _providers.end(), 
@@ -64,6 +69,7 @@ ResourceManager::~ResourceManager()
 
 void ResourceManager::reset()
 {
+    const std::lock_guard<std::mutex> lock(static_manager_mutex);
     if (static_manager) {
         delete static_manager;
         static_manager = nullptr;

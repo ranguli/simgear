@@ -267,6 +267,7 @@ void addTreeToLeafGeode(Geode* geode, const SGVec3f& p, const SGVec3f& t)
 typedef std::map<std::string, osg::observer_ptr<Effect> > EffectMap;
 
 static EffectMap treeEffectMap;
+inline static std::mutex treeEffectMapMutex; // Protects the treeEffectMap for multi-threaded access
 
 // Helper classes for creating the quad tree
 namespace
@@ -382,7 +383,6 @@ osg::Group* createForest(SGTreeBinList& forestList, const osg::Matrix& transform
                          const SGReaderWriterOptions* options, int depth)
 {
     Matrix transInv = Matrix::inverse(transform);
-    static Matrix ident;
     // Set up some shared structures.
     ref_ptr<Group> group;
     MatrixTransform* mt = new MatrixTransform(transform);
@@ -407,22 +407,25 @@ osg::Group* createForest(SGTreeBinList& forestList, const osg::Matrix& transform
         TreeBin* forest = *i;
 
         ref_ptr<Effect> effect;
-        EffectMap::iterator iter = treeEffectMap.find(forest->texture);
 
-        if ((iter == treeEffectMap.end())||
-            (!iter->second.lock(effect)))
         {
-            SGPropertyNode_ptr effectProp = new SGPropertyNode;
-            makeChild(effectProp, "inherits-from")->setStringValue(forest->teffect);
-            SGPropertyNode* params = makeChild(effectProp, "parameters");
-            // emphasize n = 0
-            params->getChild("texture", 0, true)->getChild("image", 0, true)
-                ->setStringValue(forest->texture);
-            effect = makeEffect(effectProp, true, options);
-            if (iter == treeEffectMap.end())
-                treeEffectMap.insert(EffectMap::value_type(forest->texture, effect));
-            else
-                iter->second = effect; // update existing, but empty observer
+            const std::lock_guard<std::mutex> lock(treeEffectMapMutex); // Lock the treeEffectMap for this scope
+            EffectMap::iterator iter = treeEffectMap.find(forest->texture);
+            if ((iter == treeEffectMap.end())||
+                (!iter->second.lock(effect)))
+            {
+                SGPropertyNode_ptr effectProp = new SGPropertyNode;
+                makeChild(effectProp, "inherits-from")->setStringValue(forest->teffect);
+                SGPropertyNode* params = makeChild(effectProp, "parameters");
+                // emphasize n = 0
+                params->getChild("texture", 0, true)->getChild("image", 0, true)
+                    ->setStringValue(forest->texture);
+                effect = makeEffect(effectProp, true, options);
+                if (iter == treeEffectMap.end())
+                    treeEffectMap.insert(EffectMap::value_type(forest->texture, effect));
+                else
+                    iter->second = effect; // update existing, but empty observer
+            }
         }
 
         // Now, create a quadtree for the forest.

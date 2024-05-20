@@ -27,8 +27,6 @@
 #include <simgear/misc/sg_path.hxx>
 #include <simgear/structure/exception.hxx>
 
-std::map<std::string, std::shared_ptr<std::string>> SGSourceLocation::_paths;
-
 SGSourceLocation::SGSourceLocation()
     : _line(-1),
       _column(-1)
@@ -65,6 +63,7 @@ SGSourceLocation::SGSourceLocation(const char* path, int line, int column)
 
 void SGSourceLocation::setPath(const std::string& str)
 {
+    const std::lock_guard<std::mutex> lock(_pathsMutex);
     auto it = _paths.find(str);
     if (it == _paths.end()) {
         _path = std::make_shared<std::string>(str);
