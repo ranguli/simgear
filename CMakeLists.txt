@@ -102,7 +102,8 @@ option(USE_OPENALSOFT   "Set to ON to use OpenAL from OpenAL-soft" OFF)
 option(ENABLE_PKGUTIL   "Set to ON to build the sg_pkgutil application (default)" ON)
 option(ENABLE_SIMD      "Enable SSE/SSE2 support for compilers" ON)
 option(ENABLE_SIMD_CODE	"Enable SSE/SSE2 support code for compilers" OFF)
-option(ENABLE_ASAN      "Set to ON to build SimGear with LLVM AddressSanitizer (ASan) support" OFF)
+option(ENABLE_ASAN      "Set to ON to build SimGear with LLVM AddressSanitizer (ASan) support.  Incompatile with ENABLE_TSAN." OFF)
+option(ENABLE_TSAN      "Set to ON to build SimGear with LLVM ThreadSanitizer (TSan) support. Incompatile with ENABLE_ASAN." OFF)
 option(ENABLE_VIDEO_RECORD "Set to ON to build SimGear with video recording" ON)
 
 if (NOT ENABLE_SIMD AND ENABLE_SIMD_CODE)
@@ -343,6 +344,20 @@ if (ENABLE_ASAN)
 
   # needed for check_cxx_source_compiles
   set(CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
+  if (ENABLE_TSAN)
+    message(FATAL_ERROR  "ENABLE_ASAN=ON incompatible with ENABLE_TSAN=ON")
+  endif()
+else ()
+  if (ENABLE_TSAN)
+    message(WARNING  "ThreadSanitizer (ENABLE_TSAN=ON) has a performance impact.")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=thread")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
+
+    # needed for check_cxx_source_compiles
+    set(CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
+  endif()
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
