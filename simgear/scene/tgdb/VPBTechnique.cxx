@@ -1276,8 +1276,8 @@ void VPBTechnique::applyColorLayers(BufferData& buffer, osg::ref_ptr<SGMaterialC
             buffer._waterRasterTexture->setWrap(osg::Texture::WRAP_T,osg::Texture::CLAMP_TO_EDGE);
             SG_LOG(SG_TERRAIN, SG_DEBUG, "Loaded coastline texture from " << filePath << " or " << archiveFilePath << " " << result.statusMessage());
         } else  {
-            VPBRasterRenderer* renderer = new VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
-            buffer._waterRasterTexture = renderer->generateCoastTexture();
+            VPBRasterRenderer renderer = VPBRasterRenderer(propertyNode, _terrainTile, world, buffer._width, buffer._height);
+            buffer._waterRasterTexture = renderer.generateCoastTexture();
         }
 
         stateset->setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
