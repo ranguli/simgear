@@ -39,10 +39,11 @@
 #  include <simgear_config.h>
 #endif
 
+#include <mutex>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>         // for random(), srandom()
-#include <time.h>           // for time() to seed srandom()        
+#include <time.h>           // for time() to seed srandom()
 
 #include "sg_random.hxx"
 
@@ -119,6 +120,7 @@ const int PC_MAP_X  =     251; /* = modulo for noise map in x direction */
 const int PC_MAP_Y  =     257; /* = modulo for noise map in y direction */
 const int PC_MAP_I  =      16; /* = number of indices for each [x;y] location */
 
+static std::mutex pc_precompute_mutex;
 static bool   pc_initialised = false;
 static int    pc_int32[PC_SIZE];
 static double pc_uniform[PC_SIZE];
@@ -141,10 +143,7 @@ static void pc_precompute_numbers() {
         for (int k = 0; k < 12; k++) {
             pc_normal[i] += mt_rand(&seed);
         }
-
     }
-
-    pc_initialised = true;
 }
 
 /**
@@ -152,8 +151,12 @@ static void pc_precompute_numbers() {
  */
 void pc_init(unsigned int seed) {
 
-    if (!pc_initialised) {
-        pc_precompute_numbers();
+    {
+        std::lock_guard<std::mutex> lock(pc_precompute_mutex);
+        if (!pc_initialised) {
+            pc_precompute_numbers();
+            pc_initialised = true;
+        }
     }
 
     // https://stackoverflow.com/questions/664014/what-integer-hash-function-are-good-that-accepts-an-integer-hash-key
