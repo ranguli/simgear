@@ -392,7 +392,17 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
     }
 
     PropertyList p_attachments = root->getChildren("attachment");
-    if (p_attachments.empty()) {
+    if (pass->type == "compute") {
+        // Compute shaders don't have fixed function read or draw buffers.
+        // If we set FRAME_BUFFER, OSG will attempt to resize the viewport, but
+        // if we set FRAME_BUFFER_OBJECT it will create an FBO.
+        // Therefore we set FRAME_BUFFER, and clone the viewport so it won't
+        // mess with the compositor viewport on window resize.
+        camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+        camera->setDrawBuffer(GL_NONE);
+        camera->setReadBuffer(GL_NONE);
+        camera->setViewport(new osg::Viewport(*compositor->getViewport()));
+    } else if (p_attachments.empty()) {
         // If there are no attachments, assume the pass is rendering
         // directly to the screen
         camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
