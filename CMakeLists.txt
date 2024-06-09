@@ -8,6 +8,14 @@ if(POLICY CMP0093)
   cmake_policy(SET CMP0093 NEW)
 endif()
 
+if(POLICY CMP0145)
+  cmake_policy(SET CMP0145 NEW)
+endif()
+
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 message(STATUS "CMAKE Build type: ${CMAKE_BUILD_TYPE}")
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -436,7 +444,6 @@ configure_file (
   "${PROJECT_BINARY_DIR}/simgear/simgear_config.h"
   )
 
-include (Dart)
 enable_testing()
 include(AddSimGearTest) # helper to setup a test
 
