@@ -67,7 +67,7 @@ public:
             memcpy(_data, data.data(), size);
         }
     }
-    ~RTIData()
+    virtual ~RTIData()
     {
         if (_capacity)
             delete [] _data;

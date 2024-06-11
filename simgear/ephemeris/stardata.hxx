@@ -35,7 +35,7 @@ public:
     SGStarData( const SGPath& path );
 
     // Destructor
-    ~SGStarData();
+    virtual ~SGStarData();
 
     // load the stars database
     bool load( const SGPath& path );

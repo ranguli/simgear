@@ -79,7 +79,7 @@ public:
     /**
      * Destructor
      */
-    ~SGCloudLayer( void );
+    virtual ~SGCloudLayer( void );
 
     /** get the cloud span (in meters) */
     float getSpan_m () const;

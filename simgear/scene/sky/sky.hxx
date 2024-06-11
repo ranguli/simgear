@@ -263,7 +263,7 @@ public:
     SGSky( void );
 
     /** Destructor */
-    ~SGSky( void );
+    virtual ~SGSky( void );
 
     /**
      * Initialize the sky and connect the components to the scene

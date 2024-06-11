@@ -65,7 +65,7 @@ public:
     Compositor(osg::View *view,
                osg::GraphicsContext *gc,
                osg::Viewport *viewport);
-    ~Compositor();
+    virtual ~Compositor();
 
     /**
      * \brief Create a Compositor from a property tree.

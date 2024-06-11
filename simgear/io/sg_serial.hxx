@@ -69,7 +69,7 @@ public:
     SGSerial( const std::string& device_name, const std::string& baud_rate );
 
     /** Destructor */
-    ~SGSerial();
+    virtual ~SGSerial();
 
     // open the serial port based on specified direction
     bool open( const SGProtocolDir d );

@@ -42,7 +42,7 @@ public:
 
     Star (double mjd);
     Star ();
-    ~Star();
+    virtual ~Star();
     void updatePosition(double mjd);
     double getM() const;
     double getw() const;

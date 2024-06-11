@@ -59,7 +59,7 @@ public:
           double offset = 0.0,
           double scale = 1.0);
     Value(double value = 0.0);
-    ~Value();
+    virtual ~Value();
 
     /**
      *

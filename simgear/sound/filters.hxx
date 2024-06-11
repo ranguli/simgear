@@ -51,7 +51,7 @@ private:
 public:
     
     FreqFilter(int order, float fs, float cutoff, float Qfactor = 1.0f);
-    ~FreqFilter();
+    virtual ~FreqFilter();
     
     void update( int16_t *data, unsigned int num );
 };
@@ -67,7 +67,7 @@ public:
 
     // level ranges from 0.0f (all muted) to 1.0f (no change)
     BitCrusher(float level);
-    ~BitCrusher();
+    virtual ~BitCrusher();
 
     void update( int16_t *data, unsigned int num );
 };

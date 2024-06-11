@@ -67,7 +67,7 @@ public:
     SGMagVar();
 
     /** Destructor */
-    ~SGMagVar();
+    virtual ~SGMagVar();
 
     /** Recalculate the magnetic offset and dip.
      * The update() method requires you to pass in your position and

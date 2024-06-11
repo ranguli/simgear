@@ -36,7 +36,7 @@ class ResourceProvider;
 class ResourceManager
 {
 public:
-    ~ResourceManager();
+    virtual ~ResourceManager();
 
     typedef enum {
       PRIORITY_DEFAULT = 0,

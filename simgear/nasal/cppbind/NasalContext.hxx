@@ -114,7 +114,7 @@ namespace nasal
   {
     public:
       Context();
-      ~Context();
+      virtual ~Context();
 
       Context(const Context&) = delete;
       Context& operator=(const Context&) = delete;

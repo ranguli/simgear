@@ -184,7 +184,7 @@ public:
   SGBuildingBin(const SGMaterial *mat, bool useVBOs);
   SGBuildingBin(const SGPath& absoluteFileName, const SGMaterial *mat, bool useVBOs);
 
-  ~SGBuildingBin();
+  virtual ~SGBuildingBin();
 
   // Generate a building specifying the exact position, dimensions and texture index.
   void insert(SGVec3f p,

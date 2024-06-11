@@ -283,7 +283,7 @@ public:
     /**
      * Destroy this dequeue.
      */
-    ~SGBlockingDeque() = default;
+    virtual ~SGBlockingDeque() = default;
 
     /**
      *

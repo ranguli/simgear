@@ -94,7 +94,7 @@ public:
      */
     void addFromMap(const ContextMap& context);
 
-    ~ErrorReportContext();
+    virtual ~ErrorReportContext();
 
 private:
     std::vector<std::string> _keys;

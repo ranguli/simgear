@@ -68,7 +68,7 @@ public:
 		{ build((const float *) &v[0], v.size()); }
 
 	// Destructor - recursively frees the tree
-	~KDtree();
+	virtual ~KDtree();
 
 	// The queries: returns closest point to a point or a ray,
 	// provided it's within sqrt(maxdist2) and is compatible

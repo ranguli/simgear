@@ -94,7 +94,7 @@ public:
     {
         setTraversalMask(SG_NODEMASK_TERRAIN_BIT);
     }
-    ~BoundingVolumeBuildVisitor()
+    virtual ~BoundingVolumeBuildVisitor()
     {
     }
 

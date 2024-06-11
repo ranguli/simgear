@@ -93,7 +93,7 @@ public:
     double interpolate(double x) const;
 
     /** Destructor */
-    ~SGInterpTable();
+    virtual ~SGInterpTable();
 
 private:
     typedef std::map<double, double> Table;

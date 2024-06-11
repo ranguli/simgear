@@ -18,7 +18,7 @@ namespace compositor {
 class ClusteredShading : public osg::Referenced {
 public:
     ClusteredShading(osg::Camera *camera, const SGPropertyNode *config);
-    ~ClusteredShading();
+    virtual ~ClusteredShading();
 
     void exposeUniformsToPass(osg::Camera *camera,
                               int clusters_bind_unit,

@@ -112,7 +112,7 @@ public:
   /**
    * Destructor.
    */
-  ~SGMaterial( void );
+  virtual ~SGMaterial( void );
 
 
   ////////////////////////////////////////////////////////////////////

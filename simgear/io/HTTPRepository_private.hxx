@@ -65,7 +65,7 @@ public:
   {
   }
 
-  ~HTTPRepoPrivate();
+  virtual ~HTTPRepoPrivate();
 
   HTTPRepository *p; // link back to outer
   HTTP::Client* http = nullptr;

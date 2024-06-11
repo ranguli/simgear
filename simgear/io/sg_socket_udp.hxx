@@ -92,7 +92,7 @@ public:
     SGSocketUDP( const std::string& host, const std::string& port );
 
     /** Destructor */
-    ~SGSocketUDP();
+    virtual ~SGSocketUDP();
 
     // If specified as a server (in direction for now) open the master
     // listening socket.  If specified as a client (out direction),

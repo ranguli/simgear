@@ -7,7 +7,7 @@ class ReportBadAllocGuard
 {
 public:
     ReportBadAllocGuard();
-    ~ReportBadAllocGuard();
+    virtual ~ReportBadAllocGuard();
 
     static bool isSet();
 };

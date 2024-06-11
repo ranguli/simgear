@@ -73,7 +73,7 @@ public:
     SGSerialPort(const string& device, int baud);
 
     /** Destructor */
-    ~SGSerialPort();
+    virtual ~SGSerialPort();
 
     /** Open a the serial port
      * @param device name of device

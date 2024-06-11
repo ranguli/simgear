@@ -41,7 +41,7 @@ public:
   template<typename U>
   SGWeakPtr(const SGWeakPtr<U>& p)
   { SGSharedPtr<T> sharedPtr = p.lock(); assign(sharedPtr.get()); }
-  ~SGWeakPtr(void)
+  virtual ~SGWeakPtr(void)
   { }
   
   template<typename U>

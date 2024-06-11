@@ -36,7 +36,7 @@ public:
 
     SampleHistogram (double low, double hi, double bucketWidth = -1.0);
 
-   ~SampleHistogram ();
+   virtual ~SampleHistogram ();
 
   virtual void reset ();
   virtual void operator += (double);

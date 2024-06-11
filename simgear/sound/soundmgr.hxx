@@ -54,7 +54,7 @@ class SGSoundMgr : public SGSubsystem
 {
 public:
     SGSoundMgr();
-    ~SGSoundMgr();
+    virtual ~SGSoundMgr();
 
     // Subsystem API.
     void init() override;

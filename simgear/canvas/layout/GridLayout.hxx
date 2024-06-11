@@ -7,18 +7,17 @@
 
 #include "Layout.hxx"
 
-namespace simgear {
-namespace canvas {
+namespace simgear::canvas {
 
 /**
-   * Align LayoutItems in a grid (which fills a rectangular are)
+   * Align LayoutItems in a grid (which fills a rectangular area)
    * Each column / row has consistent sizing for its items
    */
 class GridLayout : public Layout
 {
 public:
     GridLayout();
-    ~GridLayout();
+    virtual ~GridLayout();
 
     void setDimensions(const SGVec2i& dim);
     size_t numRows() const;
@@ -50,11 +49,11 @@ protected:
 
     struct ItemData {
         LayoutItemRef layout_item;
-        SGVec2i size; //!< layouted size
+        SGVec2i size; //!< layout size
         bool visible : 1,
             has_align : 1, //!< Has alignment factor set (!= AlignFill)
             has_hfw : 1,   //!< height for width
-            done : 1;      //!< layouting done
+            done : 1;      //!< layout done
 
         /** Clear values (reset to default/empty state) */
         void reset();
@@ -74,7 +73,7 @@ protected:
         int calcSize = 0;
         int calcStart = 0;
         bool hasVisible = false;
-        ///<padding preceeding this row/col. Zero for first row/col, or if there are no visible items
+        ///<padding preceding this row/col. Zero for first row/col, or if there are no visible items
         ///this ensures spacing items or hidden items don't cause double padding
         int padding = 0;
 
@@ -113,5 +112,4 @@ protected:
 
 typedef SGSharedPtr<GridLayout> GridLayoutRef;
 
-} // namespace canvas
-} // namespace simgear
+} // namespace simgear::canvas

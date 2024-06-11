@@ -65,7 +65,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline float32x4_t (&m4x4(void))[4] {
         return simd4x4;
@@ -288,7 +288,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline __m256d (&m4x4(void))[4] {
         return simd4x4;
@@ -528,7 +528,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline int32x4_t (&m4x4(void))[4] {
         return simd4x4;

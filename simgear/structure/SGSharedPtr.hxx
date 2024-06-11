@@ -86,7 +86,7 @@ public:
         reset(p.lock().get());
     }
 
-    ~SGSharedPtr(void)
+    virtual ~SGSharedPtr(void)
     {
         reset();
     }

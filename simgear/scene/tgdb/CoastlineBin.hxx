@@ -38,7 +38,7 @@ public:
     CoastlineBin() = default;
     CoastlineBin(const SGPath& absoluteFileName);
 
-    ~CoastlineBin() = default;
+    virtual ~CoastlineBin() = default;
 
     struct Coastline {
         const std::list<osg::Vec3d> _nodes;

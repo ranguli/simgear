@@ -112,7 +112,7 @@ public:
     SGPath filePath() const;
 
 protected:
-    ~Effect();
+    virtual ~Effect();
     // Support for a cache of effects that inherit from this one, so
     // Effect objects with the same parameters and techniques can be
     // shared.

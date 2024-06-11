@@ -35,7 +35,7 @@ class SGTimerQueue
 {
 public:
     SGTimerQueue() = default;
-    ~SGTimerQueue() = default;
+    virtual ~SGTimerQueue() = default;
 
     void clear();
     void update(double deltaSecs, std::map<std::string, double> &timingStats);
@@ -64,7 +64,7 @@ class SGEventMgr : public SGSubsystem
 {
 public:
     SGEventMgr();
-    ~SGEventMgr();
+    virtual ~SGEventMgr();
 
     // Subsystem API.
     void init() override;

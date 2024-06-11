@@ -62,7 +62,7 @@ public:
     SGSun( void );
 
     // Destructor
-    ~SGSun( void );
+    virtual ~SGSun( void );
 
     // return the sun object
     osg::Node* build( SGPath path, double sun_size, SGPropertyNode *property_tree_Node );

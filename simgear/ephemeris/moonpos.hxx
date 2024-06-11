@@ -59,7 +59,7 @@ public:
 
     MoonPos(double mjd);
     MoonPos();
-    ~MoonPos();
+    virtual ~MoonPos();
     void updatePositionTopo(double mjd, double lst, double lat, Star *ourSun);
     void updatePosition(double mjd, Star *ourSun);
   // void newImage();

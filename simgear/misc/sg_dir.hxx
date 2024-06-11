@@ -43,7 +43,7 @@ namespace simgear
   {
   public:
     Dir();
-    ~Dir();
+    virtual ~Dir();
     
     /**
      * when this directory object is destroyed, remove the corresponding

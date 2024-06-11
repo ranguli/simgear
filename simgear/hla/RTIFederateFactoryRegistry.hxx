@@ -30,7 +30,7 @@ namespace simgear {
 
 class RTIFederateFactoryRegistry : public SGReferenced {
 public:
-    ~RTIFederateFactoryRegistry();
+    virtual ~RTIFederateFactoryRegistry();
 
     SGSharedPtr<RTIFederate> create(const std::string& name, const std::list<std::string>& stringList) const;
 

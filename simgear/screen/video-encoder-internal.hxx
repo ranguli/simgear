@@ -214,7 +214,7 @@ struct FfmpegEncoder
     }
     
     /* Destructor flushes any remaining encoded video and cleans up. */
-    ~FfmpegEncoder()
+    virtual ~FfmpegEncoder()
     {
         clearall();
     }

@@ -51,7 +51,7 @@ public:
   SGGalaxy( SGPropertyNode* props = nullptr );
 
   // Destructor
-  ~SGGalaxy( void );
+  virtual ~SGGalaxy( void );
 
   // build the galaxy object
   osg::Node *build( SGPath path, double galaxy_size, simgear::SGReaderWriterOptions *options);

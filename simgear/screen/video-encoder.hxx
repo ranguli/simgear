@@ -58,7 +58,7 @@ struct VideoEncoder
     configuration doesn't fail until we start sending frames. */
     void encode(double dt, osg::GraphicsContext* gc);
     
-    ~VideoEncoder();
+    virtual ~VideoEncoder();
     
     private:
     osg::ref_ptr<struct VideoEncoderInternal>   m_internal;

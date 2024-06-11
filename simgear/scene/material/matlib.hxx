@@ -73,7 +73,7 @@ public:
     osg::ref_ptr<simgear::Atlas> getAtlas() { return _atlas; };
 
     // Destructor
-    ~SGMaterialCache ( void );
+    virtual ~SGMaterialCache ( void );
 
 private:
     typedef std::map < std::string, SGSharedPtr<SGMaterial> > material_cache;
@@ -163,7 +163,7 @@ public:
     static const SGMaterial *findMaterial(const osg::Geode* geode);
 
     // Destructor
-    ~SGMaterialLib ( void );
+    virtual ~SGMaterialLib ( void );
 
 };
 

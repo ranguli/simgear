@@ -111,7 +111,7 @@ public:
     /**
      * Destroy the condition object.
      */
-    ~SGWaitCondition();
+    virtual ~SGWaitCondition();
 
     /**
      * Wait for this condition variable to be signaled.

@@ -37,7 +37,7 @@ void shutdownLogging();
 class logstream
 {
 public:
-    ~logstream();
+    virtual ~logstream();
     
     static void initGlobalLogstream();
 

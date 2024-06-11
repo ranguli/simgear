@@ -100,7 +100,7 @@ public:
     SGEphemeris( const SGPath &path );
 
     /** Destructor */
-    ~SGEphemeris( void );
+    virtual ~SGEphemeris( void );
 
     /**
      * Update (recalculate) the positions of all objects for the

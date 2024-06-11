@@ -50,7 +50,7 @@ namespace canvas
        */
       NasalWidget(naRef impl);
 
-      ~NasalWidget();
+      virtual ~NasalWidget();
 
       virtual void onRemove();
 

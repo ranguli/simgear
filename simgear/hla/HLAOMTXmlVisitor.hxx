@@ -94,7 +94,7 @@ public:
 
     struct ObjectClass : public SGReferenced {
         ObjectClass(const std::string& name, const std::string& sharing);
-        ~ObjectClass();
+        virtual ~ObjectClass();
 
         const std::string& getName() const;
         const std::string& getSharing() const;
@@ -131,7 +131,7 @@ public:
 
     struct InteractionClass : public SGReferenced {
         InteractionClass(const std::string& name);
-        ~InteractionClass();
+        virtual ~InteractionClass();
 
         const std::string& getName() const;
         const std::string& getDimensions() const;
@@ -173,7 +173,7 @@ public:
     typedef std::vector<SGSharedPtr<InteractionClass> > InteractionClassList;
 
     HLAOMTXmlVisitor();
-    ~HLAOMTXmlVisitor();
+    virtual ~HLAOMTXmlVisitor();
 
     void setDataTypesToFederate(HLAFederate& federate);
     void setToFederate(HLAFederate& federate);

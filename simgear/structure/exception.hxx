@@ -43,7 +43,7 @@ public:
    */
   explicit sg_location(const SGPropertyNode* node) noexcept;
 
-  ~sg_location() = default;
+  virtual ~sg_location() = default;
 
   const char* getPath() const noexcept;
   int getLine() const noexcept;

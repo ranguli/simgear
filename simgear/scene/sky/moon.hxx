@@ -55,7 +55,7 @@ public:
     SGMoon( void );
 
     // Destructor
-    ~SGMoon( void );
+    virtual ~SGMoon( void );
 
     // build the moon object
     osg::Node *build( SGPath path, double moon_size,

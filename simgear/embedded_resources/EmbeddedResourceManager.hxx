@@ -44,7 +44,7 @@ public:
   EmbeddedResourceManager& operator=(EmbeddedResourceManager&&) = delete;
   // The instance is created by createInstance() -> private constructor
   // but it should be deleted by its owning std::unique_ptr -> public destructor
-  ~EmbeddedResourceManager() = default;
+  virtual ~EmbeddedResourceManager() = default;
 
   // Static creator
   static const std::unique_ptr<EmbeddedResourceManager>& createInstance();

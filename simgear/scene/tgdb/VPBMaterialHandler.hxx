@@ -44,7 +44,7 @@ class VPBMaterialHandler {
     double delta_lon;
 
     VPBMaterialHandler() : delta_lat(0.0), delta_lon(0.0) {}
-    ~VPBMaterialHandler() {}
+    virtual ~VPBMaterialHandler() {}
 
     enum ImageChannel { Red, Green, Blue, Alpha };
 
@@ -109,7 +109,7 @@ class VPBMaterialHandler {
 class VegetationHandler : public VPBMaterialHandler {
   public:
     VegetationHandler() {}
-    ~VegetationHandler() {}
+    virtual ~VegetationHandler() {}
 
     bool initialize(osg::ref_ptr<SGReaderWriterOptions> options,
                     osg::ref_ptr<TerrainTile> terrainTile);
@@ -142,7 +142,7 @@ class VegetationHandler : public VPBMaterialHandler {
 class RandomLightsHandler : public VPBMaterialHandler {
   public:
     RandomLightsHandler() {}
-    ~RandomLightsHandler() {}
+    virtual ~RandomLightsHandler() {}
 
     bool initialize(osg::ref_ptr<SGReaderWriterOptions> options,
                     osg::ref_ptr<TerrainTile> terrainTile);

@@ -144,7 +144,7 @@ public:
         std::memcpy(_v4, v.ptr(), sizeof(T[M]));
         for (int i=(M<N)?M:N; i<4; ++i) _v4[i] = 0;
     }
-    ~simd4_t(void) {}
+    virtual ~simd4_t(void) {}
 
     inline T (&v4(void))[N] {
         return vec;

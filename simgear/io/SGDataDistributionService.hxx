@@ -174,7 +174,7 @@ public:
 
     SG_DDS(dds_domainid_t d, std::string& c) : SG_DDS(d, c.c_str()) {};
 
-    ~SG_DDS();
+    virtual ~SG_DDS();
 
     bool add(SG_DDS_Topic *topic, const SGProtocolDir d);
     bool close();

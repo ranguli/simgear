@@ -105,7 +105,7 @@ private:
 
 public:
 	SGEnviro();
-	~SGEnviro();
+	virtual ~SGEnviro();
 
 	/** Read the config from the precipitation rendering config properties.
 	 * @param precip_rendering_cfgNode "/sim/rendering/precipitation" in fg

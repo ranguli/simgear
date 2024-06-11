@@ -43,7 +43,7 @@ class SGNewCloud {
 public:
         SGNewCloud(const SGPath &texture_root, const SGPropertyNode *cld_def, mt* s);
 
-        ~SGNewCloud();
+        virtual ~SGNewCloud();
 
         // Generate a Cloud
         osg::ref_ptr<simgear::EffectGeode> genCloud ();

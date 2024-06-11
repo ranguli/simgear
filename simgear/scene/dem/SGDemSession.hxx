@@ -50,7 +50,7 @@ public:
     {
     }
 
-    ~SGDemSession()
+    virtual ~SGDemSession()
     {
         close();
     }

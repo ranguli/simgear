@@ -57,7 +57,7 @@ namespace nasal
       /**
        *
        */
-      ~ObjectHolder();
+      virtual ~ObjectHolder();
 
       /**
        * Get captured Nasal object

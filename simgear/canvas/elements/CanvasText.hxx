@@ -42,7 +42,7 @@ namespace canvas
             const SGPropertyNode_ptr& node,
             const Style& parent_style,
             ElementWeakPtr parent = 0 );
-      ~Text();
+      virtual ~Text();
 
       void setText(const std::string& text);
       void setFont(const std::string& name);

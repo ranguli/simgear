@@ -58,7 +58,7 @@ public:
     SGStars( SGPropertyNode* props = nullptr);
 
     // Destructor
-    ~SGStars( void );
+    virtual ~SGStars( void );
 
     // initialize the stars structure
     osg::Node* build( int num, const SGVec3d star_data[], double star_dist,

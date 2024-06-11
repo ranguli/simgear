@@ -34,7 +34,7 @@ class SGDem : public SGReferenced
 {
 public:
     SGDem() {};
-    ~SGDem() {};
+    virtual ~SGDem() {};
 
     int addRoot( const SGPath& root );
     int createRoot( const SGPath& root );

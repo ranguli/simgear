@@ -44,7 +44,7 @@ class AirportSignBuilder
 {
 public:
     AirportSignBuilder(SGMaterialLib* mats, const SGGeod& center);
-    ~AirportSignBuilder();
+    virtual ~AirportSignBuilder();
     
     void addSign(const SGGeod& pos, double heading, const std::string& content, int size);
         

@@ -176,7 +176,7 @@ public:
     simd4x4_t(const simd4x4_t<T,N>& m) {
         std::memcpy(array, m, sizeof(T[N*N]));
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     simd4x4_t& operator=(const simd4x4_t& rhs) {
         std::memcpy(array, rhs.array, sizeof(array));
@@ -337,7 +337,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline __m128 (&m4x4(void))[4] {
         return simd4x4;
@@ -541,7 +541,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline __m256d (&m4x4(void))[4] {
         return simd4x4;
@@ -775,7 +775,7 @@ public:
             simd4x4[i][1] = m.m4x4()[i][1];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline __m128d (&m4x4(void))[4][2] {
         return simd4x4;
@@ -1031,7 +1031,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    ~simd4x4_t(void) {}
+    virtual ~simd4x4_t(void) {}
 
     inline __m128i (&m4x4(void))[4] {
         return simd4x4;

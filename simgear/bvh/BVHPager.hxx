@@ -28,7 +28,7 @@ class BVHPageRequest;
 class BVHPager {
 public:
     BVHPager();
-    ~BVHPager();
+    virtual ~BVHPager();
 
     /// Starts the pager thread
     bool start();

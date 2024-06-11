@@ -38,7 +38,7 @@ public:
     LineFeatureBin() = default;
     LineFeatureBin(const SGPath& absoluteFileName, const std::string material);
 
-    ~LineFeatureBin() = default;
+    virtual ~LineFeatureBin() = default;
 
     struct LineFeature {
         const std::list<osg::Vec3d> _nodes;

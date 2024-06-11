@@ -104,7 +104,7 @@ private:
 public:
 
 	SGCloudField();
-	~SGCloudField();
+	virtual ~SGCloudField();
 
 	void clear(void);
 	bool isDefined3D(void);

@@ -121,7 +121,7 @@ public:
     SGSocket( const std::string& host, const std::string& port, const std::string& style );
 
     /** Destructor */
-    ~SGSocket();
+    virtual ~SGSocket();
 
     // private accessors for derived classes
     simgear::Socket* getSock ();
@@ -171,7 +171,7 @@ class SGBroadcastSocket : public SGSocket {
      bool make_client_socket();
  public:
      SGBroadcastSocket (const std::string& host, const std::string& port );
-     ~SGBroadcastSocket();
+     virtual ~SGBroadcastSocket();
      bool open( const SGProtocolDir d );
      int write (const char *buf, const int length );
 };

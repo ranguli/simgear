@@ -28,7 +28,7 @@ namespace simgear
 {
 class StateAttributeFactory : public ReferencedSingleton<StateAttributeFactory> {
 public:
-    ~StateAttributeFactory();
+    virtual ~StateAttributeFactory();
 
     // XXX: Fixed-pipeline, should go again once we go core profile
     // Alpha test > .01

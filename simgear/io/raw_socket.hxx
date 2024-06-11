@@ -44,7 +44,7 @@ class IPAddress
 public:
   IPAddress () : addr(0) {}
   IPAddress ( const char* host, int port ) ;
-  ~IPAddress();
+  virtual ~IPAddress();
   
   static bool lookupNonblocking(const char* host, IPAddress& addr);
   

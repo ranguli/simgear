@@ -62,7 +62,7 @@ private:
         double* curve; // time0, val0, time1, val1, ...
         Interp* next;
 
-        ~Interp() { delete[] curve; }
+        virtual ~Interp() { delete[] curve; }
         double& dt(int i)  { return curve[2*i]; }
         double& val(int i) { return curve[2*i + 1]; }
     };

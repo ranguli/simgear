@@ -51,7 +51,7 @@ public:
     ObjectInstanceBin() = default;
     ObjectInstanceBin(const std::string modelFileName, const std::string effect = "default", const SGPath& STGFilePath = SGPath("dynamically-generated"), const SGPath& instancesFilePath = SGPath());
 
-    ~ObjectInstanceBin() = default;
+    virtual ~ObjectInstanceBin() = default;
 
     void insert(const ObjectInstance& light);
     void insert(const SGVec3f& p, const SGVec3f& r = SGVec3f(0.0f, 0.0f, 0.0f), const float& s = 1.0f, const SGVec4f& c = SGVec4f(0.0f, 0.0f, 0.0f, 0.0f));

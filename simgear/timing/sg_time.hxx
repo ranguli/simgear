@@ -132,7 +132,7 @@ public:
     SGTime( const SGPath& root );
 
     /** Destructor */
-    ~SGTime() = default;
+    virtual ~SGTime() = default;
 
     /**
      * Update the time related variables.

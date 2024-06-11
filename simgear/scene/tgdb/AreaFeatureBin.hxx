@@ -38,7 +38,7 @@ public:
     AreaFeatureBin() = default;
     AreaFeatureBin(const SGPath& absoluteFileName, const std::string material);
 
-    ~AreaFeatureBin() = default;
+    virtual ~AreaFeatureBin() = default;
 
     struct AreaFeature {
         const std::list<osg::Vec3d> _nodes;

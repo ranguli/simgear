@@ -49,7 +49,7 @@ class RTI13Federate;
 
 class RTI13Ambassador : public SGReferenced {
 public:
-    ~RTI13Ambassador()
+    virtual ~RTI13Ambassador()
     { }
 
     void createFederationExecution(const std::string& name, const std::string& objectModel)

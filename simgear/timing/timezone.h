@@ -94,7 +94,7 @@ class SGTimeZoneContainer
 {
 public:
   SGTimeZoneContainer(const SGPath& path);
-    ~SGTimeZoneContainer();
+    virtual ~SGTimeZoneContainer();
   
   SGTimeZone* getNearest(const SGGeod& ref) const;
   

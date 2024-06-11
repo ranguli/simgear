@@ -63,7 +63,7 @@ namespace simgear
         {
         }
 
-        ~lru_cache()
+        virtual ~lru_cache()
         {
         }
 

@@ -44,7 +44,7 @@ class Client
 {
 public:
     Client();
-    ~Client();
+    virtual ~Client();
 
     void update(int waitTimeout = 0);
 

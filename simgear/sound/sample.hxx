@@ -66,7 +66,7 @@ class SGSoundSampleInfo
 {
 public:
     SGSoundSampleInfo();
-    ~SGSoundSampleInfo() {}
+    virtual ~SGSoundSampleInfo() {}
 
     /**
      * Returns the format of this audio sample.

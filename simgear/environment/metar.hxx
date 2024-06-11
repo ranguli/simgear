@@ -162,7 +162,7 @@ protected:
 class SGMetar {
 public:
 	SGMetar(const std::string& m);
-	~SGMetar();
+	virtual ~SGMetar();
 
 	enum ReportType {
 		NONE,

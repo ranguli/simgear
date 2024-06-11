@@ -39,7 +39,7 @@ public:
     TreeBin(const SGMaterial *mat);
     TreeBin(const SGPath& absoluteFileName, const SGMaterial *mat);
 
-    ~TreeBin() = default;
+    virtual ~TreeBin() = default;
 
     struct Tree {
         SGVec3f position;

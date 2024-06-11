@@ -42,7 +42,7 @@ struct BuilderFactory : public osg::Referenced
     typedef std::map<std::string, osg::ref_ptr<const ElementBuilder> >
     BuilderMap;
     BuilderMap builderMap;
-    ~virtual BuilderFactory() {}
+    virtual ~BuilderFactory() {}
     static void registerBuilder(const std::string& name,
                                 const builder_type* prototype)
     {

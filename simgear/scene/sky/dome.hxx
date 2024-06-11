@@ -55,7 +55,7 @@ public:
     SGSkyDome( void );
 
     // Destructor
-    ~SGSkyDome( void );
+    virtual ~SGSkyDome( void );
 
     // initialize the sky object and connect it into our scene graph
     // root

@@ -92,7 +92,7 @@ public:
       SGPath currentDir = SGPath());
 protected:
     SGModelLib();
-    ~SGModelLib ();
+    virtual ~SGModelLib ();
 
 private:
   static SGPropertyNode_ptr static_propRoot;

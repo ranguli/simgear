@@ -23,7 +23,7 @@ public:
     // constructor for writing a tile
     SGDemTile( const SGPath& path, unsigned wo, unsigned so, int w, int h, int x, int y, int overlap, const SGDemSession& s, bool& bWritten );
 
-    ~SGDemTile();
+    virtual ~SGDemTile();
 
     // read / write tile from / to disk
     //int read( bool cache );

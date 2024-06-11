@@ -134,7 +134,7 @@ class Client
 {
 public:
     Client(const std::string& nameserver = {});
-    ~Client();
+    virtual ~Client();
 
     void update(int waitTimeout = 0);
 

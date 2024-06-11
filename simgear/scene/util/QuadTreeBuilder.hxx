@@ -71,7 +71,7 @@ public:
     void setMin(const osg::Vec2& min) { _min = min; }
     osg::Vec2 getMax() { return _max; }
     void setMax(const osg::Vec2& max) { _max = max; }
-    ~QuadTreeBuilder() {}
+    virtual ~QuadTreeBuilder() {}
     osg::Group* getRoot() { return _root.get(); }
 
     void addNode(ObjectType& obj)

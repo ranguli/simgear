@@ -58,7 +58,7 @@ public:
   SGWeakReferenced(const SGWeakReferenced& weakReferenced) :
     mWeakData(new WeakData(this))
   {}
-  ~SGWeakReferenced(void)
+  virtual ~SGWeakReferenced(void)
   { mWeakData->mWeakReferenced = 0; }
 
   /// Do not copy the weak backward references ...

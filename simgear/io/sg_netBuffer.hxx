@@ -96,7 +96,7 @@ protected:
 
 public:
   NetBuffer( int _max_length );
-  ~NetBuffer ();
+  virtual ~NetBuffer ();
   int getLength() const { return length ; }
   int getMaxLength() const { return max_length ; }
 

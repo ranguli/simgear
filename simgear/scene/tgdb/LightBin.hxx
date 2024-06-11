@@ -92,7 +92,7 @@ public:
     LightBin();
     LightBin(const SGPath& absoluteFileName);
 
-    ~LightBin() = default;
+    virtual ~LightBin() = default;
 
     void insert(const Light& light);
     void insert(const SGVec3f& p, const double& s, const double& i, const int& o, const SGVec4f& c);

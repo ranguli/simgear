@@ -46,7 +46,7 @@ public:
     osg::ref_ptr<osg::Texture2D>        _waterRasterTexture;
 
 protected:
-    ~BufferData() {}
+    virtual ~BufferData() {}
 };
 
 };

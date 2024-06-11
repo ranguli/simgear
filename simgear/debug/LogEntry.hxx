@@ -47,7 +47,7 @@ public:
     LogEntry(const LogEntry& c);
     LogEntry& operator=(const LogEntry& c) = delete;
 
-    ~LogEntry();
+    virtual ~LogEntry();
 
     const sgDebugClass debugClass;
     const sgDebugPriority debugPriority;
