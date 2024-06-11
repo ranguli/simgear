@@ -29,6 +29,7 @@ set(HEADERS
     )
 
 set(SOURCES
+    OSGUtils.cxx
     SGAtomic.cxx
     SGBinding.cxx
     SGExpression.cxx
