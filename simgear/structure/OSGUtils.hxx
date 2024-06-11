@@ -295,7 +295,7 @@ struct AttributeType<Viewport>
     : public TypeHolder<StateAttribute::VIEWPORT>
 {};
 
-static osgText::Text::AlignmentType mapAlignment(const std::string& val)
+osgText::Text::AlignmentType mapAlignment(const std::string& val)
 {
     if (val == "left-top" || val == "LeftTop" || val == "LEFT_TOP")
         return osgText::Text::LEFT_TOP;
