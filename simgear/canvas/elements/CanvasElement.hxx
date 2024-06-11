@@ -149,7 +149,7 @@ namespace canvas
       osg::MatrixTransform* getSceneGroup() const;
 
       /**
-       * Transform position to local coordinages.
+       * Transform position to local coordinates.
        */
       osg::Vec2f posToLocal(const osg::Vec2f& pos) const;
 

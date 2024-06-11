@@ -54,7 +54,7 @@ public:
 
 	/**
 	 * @brief API to extract from memory - this can be called multiple
-	 * times for streamking from a network socket etc
+	 * times for streaming from a network socket etc
 	 */
     void extractBytes(const uint8_t* bytes, size_t count);
 

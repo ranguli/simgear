@@ -21,7 +21,7 @@
 // $Id$
 
 
-/* The following is an explanation of our somewhat conveluted and
+/* The following is an explanation of our somewhat convoluted and
    tricky texture scaling/offset scheme:
 
 MAX_TEX_COORD is a value I arrived at by trial and error for my
@@ -70,7 +70,7 @@ offset the first polygon by 7.0 and the second by 8.0:
 
     0.0 --- 1.6 and 0.6 --- 1.0
 
-Our tiling is maintianed becuase the coordinates are continous (mod
+Our tiling is maintained because the coordinates are continuous (mod
 1.0) and we still get the double repeat across both polygons.
 
 We want to be able to scale these values by an arbitrary constant and
@@ -116,7 +116,7 @@ So now we have:
 
     1.0 --- 2.6 and 0.6 --- 1.0
 
-This still tiles nicely and strethes our texture across completely, so
+This still tiles nicely and stretches our texture across completely, so
 far we haven't done any damage.
 
 Now let's double the coordinates:
@@ -125,7 +125,7 @@ Now let's double the coordinates:
 
 The texture is repeated 4x as it should be and is still continuous.
 
-How about halfing the coordinates.  This is where the first scheme
+How about halving the coordinates.  This is where the first scheme
 broke down.  Halving the coordinates yields
 
     0.5 --- 1.3 and 0.3 --- 0.5

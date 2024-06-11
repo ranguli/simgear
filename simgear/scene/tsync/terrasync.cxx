@@ -209,7 +209,7 @@ static const unsigned int NUM_SYNC_SLOTS = 4;
 
 /**
  * @brief translate a sync item type into one of the available slots.
- * This provides the scheduling / balancing / prioritising between slots.
+ * This provides the scheduling / balancing / prioritizing between slots.
  */
 static unsigned int syncSlotForType(SyncItem::Type ty)
 {
@@ -389,7 +389,7 @@ public:
 
     void drainWaitingTiles();
 
-    // commond helpers between both internal and external models
+    // common helpers between both internal and external models
 
     SyncItem::Status isPathCached(const SyncItem& next) const;
     void updated(SyncItem item, bool isNewDirectory);
@@ -558,7 +558,7 @@ std::string SGTerraSync::WorkerThread::dnsSelectServerForService(const std::stri
 
     // walk through responses, they are ordered by 1. order and 2. preference
     // For now, only take entries with lowest order
-    // TODO: try all available servers in the order given by preferenc and order
+    // TODO: try all available servers in the order given by preference and order
     int order = naptrRequest->entries[0]->order;
 
     // get all servers with this order and the same (for now only lowest preference)
@@ -748,7 +748,7 @@ bool SGTerraSync::WorkerThread::beginSyncTile(SyncSlot& slot)
 {
     // avoid 404 requests by doing a sync which excludes all paths
     // except our tile path. In the case of a missing 1x1 tile, we will
-    // stop becuase all directories are filtered out, which is what we want
+    // stop because all directories are filtered out, which is what we want
 
     auto comps = strutils::split(slot.currentItem._dir, "/");
     if (comps.size() != 3) {
@@ -924,7 +924,7 @@ void SGTerraSync::WorkerThread::fail(SyncItem failedItem)
     time_t now = time(0);
 
     if (_osmCityServer.empty() && (failedItem._type == SyncItem::OSMTile)) {
-        // don't count these as errors, otherwise normla sync will keep
+        // don't count these as errors, otherwise normal sync will keep
         // being abandoned
     } else {
         _state._consecutive_errors++;
@@ -941,8 +941,8 @@ void SGTerraSync::WorkerThread::fail(SyncItem failedItem)
 
 void SGTerraSync::WorkerThread::notFound(SyncItem item)
 {
-    // treat not found as authorative, so use the same cache expiry
-    // as succesful download. Important for MP models and similar so
+    // treat not found as authoritative, so use the same cache expiry
+    // as successful download. Important for MP models and similar so
     // we don't spam the server with lookups for models that don't
     // exist
 
@@ -1447,7 +1447,7 @@ void SGTerraSync::writeWarningFile(const SGPath& sceneryDir)
     os << "Any changes you make here or in sub-folders will be overwritten when TerraSync\n";
     os << "downloads updates.\n";
     os << "\n";
-    os << "To use custom scenery or data with FlightGear, put it in a differnet location\n";
+    os << "To use custom scenery or data with FlightGear, put it in a different location\n";
     os << "on your computer, then add the location using either the launcher 'Add-ons' page, or by\n";
     os << "passing '--fg-scenery=<location>' on the command line.";
     os << endl;

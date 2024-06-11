@@ -530,10 +530,10 @@ sgLoad3DModel_internal(const SGPath& path,
 
     if (!path.exists()) {
         // tolerate .xml paths where we removed the wrapper XML
-        // becuase this is a resolved path, only works when the bare model
+        // because this is a resolved path, only works when the bare model
         // is in the same location.
 
-        // NOTE: there is seperate logic to handle this situation, in the ModelRegistry,
+        // NOTE: there is separate logic to handle this situation, in the ModelRegistry,
         // for the DelayedModelLoadCallback case. (See fileNameIsFGDataModelXML)]
         // Would be nice to share the implementation but inside an OSG RegistryCallback,
         // it's tricky to work with SGPaths as our code here does.
@@ -564,7 +564,7 @@ sgLoad3DModel_internal(const SGPath& path,
     osg::ref_ptr<SGModelData> data = options->getModelData();
     options->setModelData(0);
 
-    // remeber the current value of the vertex order setting 
+    // remember the current value of the vertex order setting 
     // because an included <model> may change this.
     bool currentVertexOrderXYZ = options->getVertexOrderXYZ();
 

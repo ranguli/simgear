@@ -120,8 +120,8 @@ protected:
 
     void gotBodyData(const char* s, int n) override
     {
-        // if there's a pre-existing error, discard byte sinstead of pushing
-        // more through the extactor
+        // if there's a pre-existing error, discard bytes instead of pushing
+        // more through the extractor
         if (m_extractor->hasError()) {
             return;
         }
@@ -234,7 +234,7 @@ private:
         if (canRetry && !m_urls.empty()) {
             SG_LOG(SG_GENERAL, SG_WARN, "archive download failed from:" << m_activeURL
                    << "\n\twill retry with next mirror");
-            // becuase selectMirrorUrl erased the active URL from m_urls,
+            // because selectMirrorUrl erased the active URL from m_urls,
             // this new request will select one of the other mirrors
             auto retryDownload = new PackageArchiveDownloader(m_owner, m_urls);
             m_owner->m_download.reset(retryDownload);

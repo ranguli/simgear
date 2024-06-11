@@ -1154,8 +1154,8 @@ HTTPRepository::failure() const
         simgear::sha1nfo hashContext;
         std::unique_ptr<SGBinaryFile> file;
 
-        /// becuase we cancel() in the case of an IO failure, we need to a way to distuinguish
-        /// user initated cancellation and IO-failure cancellation in onFail. This flag lets us do that
+        /// because we cancel() in the case of an IO failure, we need to a way to distinguish
+        /// user initiated cancellation and IO-failure cancellation in onFail. This flag lets us do that
         bool ioFailureOccurred = false;
     };
 
@@ -1208,7 +1208,7 @@ HTTPRepository::failure() const
 
               _directory->failedToUpdate(HTTPRepository::REPO_ERROR_CHECKSUM);
 
-              // don't retry checkums failures
+              // don't retry checksums failures
               _directory->repository()->finishedRequest(
                   this, HTTPRepoPrivate::RequestFinish::Done);
               return;

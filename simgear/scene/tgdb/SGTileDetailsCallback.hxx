@@ -177,7 +177,7 @@ public:
                      const int_list& pts_v,
                      const int_list& pts_n)
     {
-        // If the normal indices match the vertex indices, use seperate
+        // If the normal indices match the vertex indices, use separate
         // normal indices. Else reuse the vertex indices for the normals.
         if (pts_v.size() == pts_n.size()) {
             for (unsigned i = 0; i < pts_v.size(); ++i)

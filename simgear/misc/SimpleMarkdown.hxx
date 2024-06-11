@@ -25,7 +25,7 @@
 namespace simgear
 {
   /**
-   * Really simple mardown parser. Currently just paragraphs, new lines and
+   * Really simple markdown parser. Currently just paragraphs, new lines and
    * one level of unordered lists are supported.
    *
    * @see http://en.wikipedia.org/wiki/Markdown

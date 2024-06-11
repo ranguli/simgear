@@ -233,7 +233,7 @@ static void create_chrome(osg::Group* group, osg::Texture2D* texture)
     } else {
 	stateSet = new osg::StateSet;
 	// If the model doesn't have any texture, we need to have one
-	// activated so that we don't need a seperate combiner
+	// activated so that we don't need a separate combiner
 	// attribute for the non-textured case. This texture will be
 	// shadowed by any attached to the model.
 	osg::Image *dummyImage = new osg::Image;

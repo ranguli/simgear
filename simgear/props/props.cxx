@@ -22,7 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iterator>
-#include <exception> // can't use sg_exception becuase of PROPS_STANDALONE
+#include <exception> // can't use sg_exception because of PROPS_STANDALONE
 #include <mutex>
 #include <thread>
 
@@ -129,7 +129,7 @@ void SGPropertyLockControl(
 #ifdef SG_PROPS_GATHER_TIMING
 
 // Code for gathering timing information about use of locks. Unfortunately the
-// act of measuring gives small but noticable overheads (e.g. 17.7 fps to 18.6
+// act of measuring gives small but noticeable overheads (e.g. 17.7 fps to 18.6
 // fps), so it's macro-ed out by default.
 //
 static double       s_property_locking_time_acquire = 0;
@@ -228,8 +228,8 @@ struct ScopedTime
         double dt = t - m_time_start;
         *m_total += dt;
         *m_n += 1;
-        int diagnosic_interval = 100;
-        if (((*m_n) % diagnosic_interval) == 0) {
+        int diagnostic_interval = 100;
+        if (((*m_n) % diagnostic_interval) == 0) {
             if (ScopedTime_t0 == 0) {
                 ScopedTime_t0 = t;
             }
@@ -1117,7 +1117,7 @@ struct SGPropertyNodeImpl
     {
         if (parent._attr & SGPropertyNode::VALUE_CHANGED_DOWN)
         {
-            // Propogate to child nodea.
+            // Propagate to child nodes.
             child->setAttribute(SGPropertyNode::VALUE_CHANGED_DOWN, true);
             child->setAttribute(SGPropertyNode::VALUE_CHANGED_UP, true);
         }
@@ -2433,7 +2433,7 @@ SGPropertyNode::unalias ()
   SGPropertyLockExclusive exclusive(*this);
   if (_type != props::ALIAS)
     return false;
-  // we always cleae this flag when un-aliasing; since the property
+  // we always clean this flag when un-aliasing; since the property
   // cannot be tied anyway
   SGPropertyNodeImpl::setAttribute(exclusive, *this, LISTENER_SAFE, false);
   SGPropertyNodeImpl::clearValue(exclusive, *this);
@@ -4384,7 +4384,7 @@ inline bool SGPropertyNode::setValue(
 }
 
 
-// Explicit specialisations and instantiations.
+// Explicit specializations and instantiations.
 //
 
 template bool SGPropertyNode::getValue<bool>(void*) const;

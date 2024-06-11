@@ -2,7 +2,7 @@
 
 #if 0
 
-set bindings for action seperate from defintion ?
+set bindings for action separate from defintion ?
     - in XML, especially aircraft XML
 
 define actions from command / Nasal

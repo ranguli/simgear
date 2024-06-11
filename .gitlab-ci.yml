@@ -7,7 +7,7 @@ variables:
   BUILD_DIR: "$CI_PROJECT_DIR/build"
   PREFIX_DIR: "$CI_PROJECT_DIR/simgear-dist"
   
-  # create a root dir *above* the Simgear chekcout, otherwise CMake
+  # create a root dir *above* the Simgear checkout, otherwise CMake
   # complains about INTERFACE_INCLUDE_DIRECTORIES being the source dir
   WIN_FG_DIR: $CI_BUILDS_DIR\flightgear
 
@@ -112,7 +112,7 @@ macos-x64-build:
       - export HOMEBREW_NO_INSTALL_CLEANUP=1
       - brew install ninja cmake boost
   script:
-  # we build with tests disabled becuase they need cross-compiled Boost test
+  # we build with tests disabled because they need cross-compiled Boost test
   # libs, but that would mean installing x86_64 version of Boost via Homebrew in
   # the 'other' prefix (/usr/local), which gets messy.
     - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja 

@@ -31,7 +31,7 @@ public:
 
   /**
     return an SGGeod for which isValid() returns false.
-    This is necessaerby becuase for historical reasons, ther defaulrt constructor above initialsies to zero,zero,zero
+    This is necessary because for historical reasons, ther default constructor above initialises to zero,zero,zero
     which *is*
    */
   static SGGeod invalid();
@@ -105,10 +105,10 @@ private:
   //// FIXME: wrong comment!
   /// The actual data, angles in degrees, elevation in meters
   /// The rationale for storing the values in degrees is that most code places
-  /// in flightgear/terragear use degrees as a nativ input and output value.
+  /// in flightgear/terragear use degrees as a native input and output value.
   /// The places where it makes sense to use radians is when we convert
   /// to other representations or compute rotation matrices. But both tasks
-  /// are computionally intensive anyway and that additional 'toRadian'
+  /// are computationally intensive anyway and that additional 'toRadian'
   /// conversion does not hurt too much
   double _lon;
   double _lat;

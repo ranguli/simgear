@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE( horizontal_layout )
   BOOST_CHECK_EQUAL(stretch_widget->geometry(), SGRecti(0, 0, 123, 32));
   BOOST_CHECK_EQUAL(fast_stretch->geometry(), SGRecti(128, 0, 128, 32));
 
-  // Test superflous space to padding
+  // Test superfluous space to padding
   box_layout_stretch->setGeometry(SGRecti(0,0,512,32));
 
   BOOST_CHECK_EQUAL(stretch_widget->geometry(), SGRecti(83, 0, 128, 32));
@@ -613,7 +613,7 @@ BOOST_AUTO_TEST_CASE( boxlayout_hfw )
   BOOST_CHECK_EQUAL(w2->geometry(), SGRecti(0, 38, 24, 47));
   BOOST_CHECK_EQUAL(w_no_hfw->geometry(), SGRecti(0, 90, 24, 32));
 
-  // Vertical layouting modifies size hints, so check if they are correctly
+  // Vertical layout modifies size hints, so check if they are correctly
   // restored
   BOOST_CHECK_EQUAL(min_size, vbox.minimumSize());
   BOOST_CHECK_EQUAL(size_hint, vbox.sizeHint());

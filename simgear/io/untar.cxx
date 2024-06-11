@@ -67,7 +67,7 @@ typedef struct
     const size_t TAR_HEADER_BLOCK_SIZE = 512;
 
 #define TMAGIC   "ustar"        /* ustar and a null */
-#define TMAGLEN  5              // 5, not 6, becuase some files use 'ustar '
+#define TMAGLEN  5              // 5, not 6, because some files use 'ustar '
 #define TVERSION "00"           /* 00 and no null */
 #define TVERSLEN 2
 
@@ -511,7 +511,7 @@ public:
 
 	void extractBytes(const uint8_t* bytes, size_t count) override
 	{
-		// becuase the .zip central directory is at the end of the file,
+		// because the .zip central directory is at the end of the file,
 		// we have no choice but to simply buffer bytes here until flush()
 		// is called
 		m_buffer.append((const char*) bytes, count);

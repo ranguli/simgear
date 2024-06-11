@@ -579,7 +579,7 @@ void Root::refresh(bool aForce)
 {
     bool didStartAny = false;
 
-    // copy all candidate catalogs to a seperate list, since refreshing
+    // copy all candidate catalogs to a separate list, since refreshing
     // can modify both the main collection and/or the disabled list
     CatalogList toRefresh;
     CatalogDict::iterator it = d->catalogs.begin();

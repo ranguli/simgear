@@ -176,7 +176,7 @@ BVHSubTreeCollector::apply(const BVHStaticBinary& node,
         _staticNode = &node;
         
     } else {
-        // We have still a chance to seperate something out, try it.
+        // We have still a chance to separate something out, try it.
         
         node.getLeftChild()->accept(*this, data);
         SGSharedPtr<const BVHStaticNode> leftStaticNode = _staticNode;

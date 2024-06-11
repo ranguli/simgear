@@ -258,7 +258,7 @@ bool Catalog::uninstall()
     bool atLeastOneFailure = false;
 
     try {
-        // clean uninstall of each airacft / package in turn. This is
+        // clean uninstall of each aircraft / package in turn. This is
         // slightly overkill since we then nuke the entire catalog
         // directory anyway
         for (PackageRef p : installedPackages()) {
@@ -386,7 +386,7 @@ void Catalog::parseProps(const SGPropertyNode* aProps)
     for (int i = 0; i < nChildren; i++) {
         const SGPropertyNode* pkgProps = aProps->getChild(i);
         if (pkgProps->getNameString() == "package") {
-            // can't use getPackageById here becuase the variant dict isn't
+            // can't use getPackageById here because the variant dict isn't
             // built yet. Instead we need to look at m_packages directly.
 
             PackageList::iterator pit = std::find_if(m_packages.begin(), m_packages.end(),
@@ -414,7 +414,7 @@ void Catalog::parseProps(const SGPropertyNode* aProps)
     } // of children iteration
 
     if (!orphans.empty()) {
-        SG_LOG(SG_GENERAL, SG_WARN, "have orphan packages: will become inaccesible");
+        SG_LOG(SG_GENERAL, SG_WARN, "have orphan packages: will become inaccessible");
         std::set<PackageRef>::iterator it;
         for (it = orphans.begin(); it != orphans.end(); ++it) {
             SG_LOG(SG_GENERAL, SG_WARN, "\torphan package:" << (*it)->qualifiedId());
@@ -428,7 +428,7 @@ void Catalog::parseProps(const SGPropertyNode* aProps)
         if (m_url != m_props->getStringValue("url")) {
             // this effectively allows packages to migrate to new locations,
             // although if we're going to rely on that feature we should
-            // maybe formalise it!
+            // maybe formalize it!
             SG_LOG(SG_GENERAL, SG_WARN, "package downloaded from:" << m_url
                    << " is now at: " << m_props->getStringValue("url"));
         }
@@ -653,7 +653,7 @@ void Catalog::processAlternate(SGPropertyNode_ptr alt)
     // we have an alternate ID, and it's different from our ID, so let's
     // define a new catalog
     if (!altId.empty()) {
-      // don't auto-re-add Catalogs the user has explicilty rmeoved, that would
+      // don't auto-re-add Catalogs the user has explicitly removed, that would
       // suck
       const auto removedByUser = root()->explicitlyRemovedCatalogs();
       auto it = std::find(removedByUser.begin(), removedByUser.end(), altId);

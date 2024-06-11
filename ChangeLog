@@ -1694,7 +1694,7 @@
 	  Rearrange props.hxx a bit so that the template magic actually
 	  works.
 
-	  Split out extended raw value virtual functions into a seperate
+	  Split out extended raw value virtual functions into a separate
 	  base class.
 
 	  SGRawExtended is chosen as a base class of SGRawValue for
@@ -4572,7 +4572,7 @@
 
 	  When loading terrain, use DrawElementsUShort where possible.
 
-	  Don't chunk unconnected triangles in the terrain into seperate
+	  Don't chunk unconnected triangles in the terrain into separate
 	  Geometry sets; make the sets as big as possible.
 
 2007-11-18 15:22  durk
@@ -7050,13 +7050,13 @@
 
 2006-03-04 13:46  ehofman
 
-	* simgear/props/props.cxx: Mathias Fröhlich:
+	* simgear/props/props.cxx: Mathias Frï¿½hlich:
 
 	  zero out all parent pointers, else they might be dangling.
 
 2006-03-03 16:11  ehofman
 
-	* simgear/sound/xmlsound.cxx: Mathias Fröhlich:
+	* simgear/sound/xmlsound.cxx: Mathias Frï¿½hlich:
 
 	  I have some bugfixes which will avoid fg just crashing if the
 	  sound device could not be opened.
@@ -7185,7 +7185,7 @@
 2006-02-19 18:22  ehofman
 
 	* simgear/math/: SGMathTest.cxx, SGMisc.hxx, SGQuat.hxx,
-	  SGVec3.hxx, SGVec4.hxx: Mathias Fröhlich:
+	  SGVec3.hxx, SGVec4.hxx: Mathias Frï¿½hlich:
 
 	  This patch makes use of the vectors now available in simgear with
 	  that past patch. And using that it simplyfies the carrier code
@@ -7263,7 +7263,7 @@
 	  SGGeodesy.cxx, SGGeodesy.hxx, SGLimits.hxx, SGMath.hxx,
 	  SGMathTest.cxx, SGMatrix.hxx, SGMisc.hxx, SGQuat.hxx, SGVec3.hxx,
 	  SGVec4.hxx, point3d.hxx, polar3d.cxx, polar3d.hxx,
-	  sg_geodesy.cxx, sg_geodesy.hxx: Mathias Fröhlich:
+	  sg_geodesy.cxx, sg_geodesy.hxx: Mathias Frï¿½hlich:
 
 	  The patch adds a vector lib I have put together during the last
 	  time, it is just handy and interfaces well with s(s)g*. Together
@@ -7399,7 +7399,7 @@
 	  scene/sky/cloud.cxx, scene/sky/newcloud.cxx,
 	  sound/sample_openal.hxx, sound/soundmgr_openal.cxx,
 	  sound/soundmgr_openal.hxx, sound/xmlsound.cxx,
-	  sound/xmlsound.hxx: Mathias Fröhlich:
+	  sound/xmlsound.hxx: Mathias Frï¿½hlich:
 
 	  Incorporating the shared ptr code: - All scenegraph references
 	  from SimGear - SGMaterial which already had a reference counter
@@ -7412,7 +7412,7 @@
 
 	* simgear/: props/props.cxx, props/props.hxx,
 	  scene/model/modellib.cxx, scene/model/modellib.hxx: Mathias
-	  Fröhlich:
+	  Frï¿½hlich:
 
 	  Use the new automatic reference counter instead of doing that
 	  ourselfes.
@@ -7463,7 +7463,7 @@
 2005-12-29 13:00  ehofman
 
 	* simgear/structure/: Makefile.am, SGReferenced.hxx,
-	  SGSharedPtr.hxx, ssgSharedPtr.hxx: Mathias Fröhlich:
+	  SGSharedPtr.hxx, ssgSharedPtr.hxx: Mathias Frï¿½hlich:
 
 	  Add the basic infrastructure for a reference counter class.
 	  Adding it now (without using it) enables Mathias and others to
@@ -7537,7 +7537,7 @@
 2005-12-14 11:28  ehofman
 
 	* configure.ac, simgear/screen/Makefile.am,
-	  simgear/screen/RenderTexture.cpp: Mathias Fröhlich:
+	  simgear/screen/RenderTexture.cpp: Mathias Frï¿½hlich:
 
 	  Detect whether we support pubuffers at runtime using the GLX
 	  extension string.
@@ -7721,7 +7721,7 @@
 2005-10-27 10:21  ehofman
 
 	* simgear/scene/: material/matmodel.cxx, model/modellib.cxx:
-	  Mathias Fröhlich:
+	  Mathias Frï¿½hlich:
 
 	  I guess the most important memory leaks are plugged now.  Just by
 	  inspection: An other memory leak in Simgear.
@@ -7836,7 +7836,7 @@
 
 2005-10-14 18:27  ehofman
 
-	* simgear/props/props.hxx: Mathias Fröhlich:
+	* simgear/props/props.hxx: Mathias Frï¿½hlich:
 
 	  This one, removes some virtual qualifiers at a private member
 	  class of SGPropertyNode. These virtual qualifiers are really
@@ -7846,7 +7846,7 @@
 2005-10-14 18:21  ehofman
 
 	* simgear/: props/props.cxx, screen/texture.cxx,
-	  screen/texture.hxx: Mathias Fröhlich:
+	  screen/texture.hxx: Mathias Frï¿½hlich:
 
 	  I have done a valgrind run in flightgear. Just start it up and
 	  close it at the fist change I had about half an hour later.
@@ -8043,7 +8043,7 @@
 2005-09-05 15:23  ehofman
 
 	* simgear/scene/model/: location.cxx, location.hxx, placement.cxx,
-	  placement.hxx: Mathias Fröhlich:
+	  placement.hxx: Mathias Frï¿½hlich:
 
 	  There was a patch from Manuel Masing a few months ago which
 	  cleaned up SGLocation's way depending on input values. That means
@@ -8054,7 +8054,7 @@
 2005-09-05 11:02  ehofman
 
 	* simgear/screen/: RenderTexture.cpp, extensions.cxx: Mathias
-	  Fröhlich:
+	  Frï¿½hlich:
 
 	  just a few split out patches from my zoo of local work ...
 
@@ -10460,7 +10460,7 @@
 2004-02-01 18:47  andy
 
 	* simgear/nasal/lib.c: Yank the MSVC special handling.	It turns
-	  out it was becuase "strlen" has special voodoo in the parser.
+	  out it was because "strlen" has special voodoo in the parser.
 	  That's much more cleanly handled by renaming the function than by
 	  #ifdef'ing.
 
@@ -11851,7 +11851,7 @@
 	  Some more cmall changes to the SimGear header files and removed
 	  the SG_HAVE_NATIVE_SGI_COMPILERS dependancies from FlightGear.
 
-	  I've added a seperate JSBSim patch for the JSBSim source tree.
+	  I've added a separate JSBSim patch for the JSBSim source tree.
 
 2002-12-31 15:47  david
 
