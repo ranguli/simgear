@@ -242,6 +242,11 @@ struct GLTFBuilder {
         }
         makeChild(params, "cull-face")->setStringValue(cullFaceString);
 
+        // NOTE: The texture units that correspond to each texture type (e.g.
+        // 0 for base color, 1 for normal map, etc.) must match the ones in:
+        //  1. PBR Effect: $FG_ROOT/Effects/model-pbr.eff
+        //  2. glTF loader: simgear/scene/model/ReaderWriterGLTF.cxx
+        //  3. PBR animations: simgear/scene/model/SGPBRAnimation.cxx
         SGPropertyNode *baseColorTexNode = makeChild(params, "texture", 0);
         if (!makeTextureParameters(baseColorTexNode, pbr.baseColorTexture.index))
             makeChild(baseColorTexNode, "type")->setValue("white");

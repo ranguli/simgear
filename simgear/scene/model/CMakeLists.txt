@@ -12,6 +12,7 @@ set(HEADERS
     SGClipGroup.hxx
     SGInteractionAnimation.hxx
     SGLight.hxx
+    SGPBRAnimation.hxx
     SGMaterialAnimation.hxx
     SGPickAnimation.hxx
     SGOffsetTransform.hxx
@@ -41,6 +42,7 @@ set(SOURCES
     SGLight.cxx
     SGLightAnimation.cxx
     SGPickAnimation.cxx
+    SGPBRAnimation.cxx
     SGMaterialAnimation.cxx
     SGOffsetTransform.cxx
     SGReaderWriterXML.cxx
