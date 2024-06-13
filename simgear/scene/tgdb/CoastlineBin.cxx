@@ -40,11 +40,6 @@ namespace simgear
 
 CoastlineBin::CoastlineBin(const SGPath& absoluteFileName)
 {
-    if (!absoluteFileName.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Coastline list file " << absoluteFileName << " does not exist.");
-        return;
-    }
-
     sg_gzifstream stream(absoluteFileName);
     if (!stream.is_open()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);

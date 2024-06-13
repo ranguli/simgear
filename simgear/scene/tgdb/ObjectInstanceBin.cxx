@@ -234,11 +234,6 @@ ObjectInstanceBin::ObjectInstanceBin(const std::string modelFileName, const std:
         return;
     }
 
-    if (!instancesFilePath.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Object instances list file " << instancesFilePath << " does not exist.");
-        return;
-    }
-
     sg_gzifstream stream(instancesFilePath);
     if (!stream.is_open()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << instancesFilePath);

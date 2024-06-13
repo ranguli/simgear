@@ -41,11 +41,6 @@ namespace simgear
 LineFeatureBin::LineFeatureBin(const SGPath& absoluteFileName, const std::string material) :
   _material(material)
 {
-    if (!absoluteFileName.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "LineFeature list file " << absoluteFileName << " does not exist.");
-        return;
-    }
-
     sg_gzifstream stream(absoluteFileName);
     if (!stream.is_open()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);

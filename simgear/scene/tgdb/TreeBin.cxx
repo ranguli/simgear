@@ -471,11 +471,6 @@ TreeBin::TreeBin(const SGMaterial *mat)
 TreeBin::TreeBin(const SGPath& absoluteFileName, const SGMaterial *mat) : 
 TreeBin(mat)
 {
-    if (!absoluteFileName.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Tree list file " << absoluteFileName << " does not exist.");
-        return;
-    }
-
     sg_gzifstream stream(absoluteFileName);
     if (!stream.is_open()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);

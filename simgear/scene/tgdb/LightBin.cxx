@@ -88,11 +88,6 @@ LightBin::LightBin() :
 LightBin::LightBin(const SGPath& absoluteFileName) :
     _aggregated_size(0.0), _aggregated_intensity(0.0)  
 { 
-    if (!absoluteFileName.exists()) {
-        SG_LOG(SG_TERRAIN, SG_ALERT, "Light list file " << absoluteFileName << " does not exist.");
-        return;
-    }
-
     sg_gzifstream stream(absoluteFileName);
     if (!stream.is_open()) {
         SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);

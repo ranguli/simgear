@@ -497,11 +497,6 @@ typedef QuadTreeBuilder<LOD*, SGBuildingBin::BuildingInstance, MakeBuildingLeaf,
   SGBuildingBin::SGBuildingBin(const SGPath& absoluteFileName, const SGMaterial *mat, bool useVBOs) :
     SGBuildingBin::SGBuildingBin(mat, useVBOs)
   {
-    if (!absoluteFileName.exists()) {
-      SG_LOG(SG_TERRAIN, SG_ALERT, "Building list file " << absoluteFileName << " does not exist.");
-      return;
-    }
-
     sg_gzifstream stream(absoluteFileName);
     if (!stream.is_open()) {
       SG_LOG(SG_TERRAIN, SG_ALERT, "Unable to open " << absoluteFileName);
