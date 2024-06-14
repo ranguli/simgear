@@ -1,11 +1,11 @@
 /*
- * SPDX-FileName: OSGUtils.cxx
+ * SPDX-FileName: OsgUtils.cxx
  * SPDX-FileComment: Useful templates for interfacing to Open Scene Graph
  * SPDX-FileCopyrightText: Copyright (C) 2008  Tim Moore <timoore@redhat.com>
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
 
-#include "OSGUtils.hxx"
+#include "OsgUtils.hxx"
 
 #include <simgear/debug/logstream.hxx>
 

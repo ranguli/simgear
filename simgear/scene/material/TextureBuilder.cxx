@@ -46,7 +46,7 @@
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/scene/util/SGSceneFeatures.hxx>
 #include <simgear/scene/util/StateAttributeFactory.hxx>
-#include <simgear/structure/OSGUtils.hxx>
+#include <simgear/scene/util/OsgUtils.hxx>
 
 namespace simgear
 {

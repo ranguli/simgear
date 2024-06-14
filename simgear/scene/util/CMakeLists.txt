@@ -12,6 +12,7 @@ set(HEADERS
     OsgDebug.hxx
     OsgMath.hxx
     OsgSingleton.hxx
+    OsgUtils.hxx
     parse_color.hxx
     PrimitiveUtils.hxx
     ProjectionMatrix.hxx
@@ -48,6 +49,7 @@ set(SOURCES
     OptionsReadFileCallback.cxx
     OrthophotoManager.cxx
     OsgDebug.cxx
+    OsgUtils.cxx
     parse_color.cxx
     PrimitiveUtils.cxx
     ProjectionMatrix.cxx

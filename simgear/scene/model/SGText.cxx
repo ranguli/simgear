@@ -36,7 +36,7 @@
 #include <simgear/scene/material/EffectGeode.hxx>
 #include <simgear/scene/util/SGReaderWriterOptions.hxx>
 #include <simgear/debug/ErrorReportingCallback.hxx>
-#include <simgear/structure/OSGUtils.hxx>
+#include <simgear/scene/util/OsgUtils.hxx>
 
 using std::string;
 

@@ -78,7 +78,7 @@
 #include <simgear/scene/util/SGSceneFeatures.hxx>
 #include <simgear/scene/util/StateAttributeFactory.hxx>
 #include <simgear/scene/util/load_shader.hxx>
-#include <simgear/structure/OSGUtils.hxx>
+#include <simgear/scene/util/OsgUtils.hxx>
 #include <simgear/structure/SGExpression.hxx>
 
 namespace simgear

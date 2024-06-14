@@ -46,7 +46,7 @@
 #include <simgear/scene/util/QuadTreeBuilder.hxx>
 #include <simgear/scene/util/RenderConstants.hxx>
 #include <simgear/scene/util/StateAttributeFactory.hxx>
-#include <simgear/structure/OSGUtils.hxx>
+#include <simgear/scene/util/OsgUtils.hxx>
 
 #define SG_BUILDING_QUAD_TREE_DEPTH 2
 #define SG_BUILDING_FADE_OUT_LEVELS 4

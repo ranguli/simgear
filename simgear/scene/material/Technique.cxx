@@ -20,7 +20,7 @@
 #include <osgDB/ParameterOutput>
 
 #include <simgear/props/props.hxx>
-#include <simgear/structure/OSGUtils.hxx>
+#include <simgear/scene/util/OsgUtils.hxx>
 
 namespace simgear
 {
