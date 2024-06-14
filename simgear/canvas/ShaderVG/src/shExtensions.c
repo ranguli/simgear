@@ -65,6 +65,8 @@ PFNGLCREATEPROGRAMPROC glCreateProgram;
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
 
+// FlightGear: Extension checking is not needed for the OpenGL core profile
+#if 0
 /*-----------------------------------------------------
  * Extensions check
  *-----------------------------------------------------*/
@@ -91,6 +93,7 @@ static int checkExtension(const char* extensions, const char* name)
 
     return 0;
 }
+#endif
 
 typedef void (*PFVOID)();
 
@@ -105,8 +108,6 @@ PFVOID shGetProcAddress(const char* name)
 
 void shLoadExtensions(void* c)
 {
-    if (shGetProcAddress == NULL) return;
-
 #if defined(_WIN32)
     glUniform1i = shGetProcAddress("glUniform1i");
     glUniform2fv = shGetProcAddress("glUniform2fv");
