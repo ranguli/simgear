@@ -1,23 +1,8 @@
 // -*- coding: utf-8 -*-
 //
-// EmbeddedResourceManager.hxx --- Manager class for resources embedded in an
-//                                 executable
-// Copyright (C) 2017  Florent Rougon
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-// MA  02110-1301  USA.
+// SPDX-FileComment: Manager class for resources embedded in an executable
+// SPDX-FileCopyrightText: Copyright (C) 2017  Florent Rougon
+// SPDX-License-Identifier: LGPL-2.0-or-later
 
 #ifndef FG_EMBEDDEDRESOURCEMANAGER_HXX
 #define FG_EMBEDDEDRESOURCEMANAGER_HXX
@@ -35,7 +20,7 @@
 namespace simgear
 {
 
-class EmbeddedResourceManager
+class EmbeddedResourceManager final
 {
 public:
   EmbeddedResourceManager(const EmbeddedResourceManager&) = delete;
@@ -44,7 +29,7 @@ public:
   EmbeddedResourceManager& operator=(EmbeddedResourceManager&&) = delete;
   // The instance is created by createInstance() -> private constructor
   // but it should be deleted by its owning std::unique_ptr -> public destructor
-  virtual ~EmbeddedResourceManager() = default;
+  ~EmbeddedResourceManager() = default;
 
   // Static creator
   static const std::unique_ptr<EmbeddedResourceManager>& createInstance();
