@@ -110,7 +110,7 @@ void SGSkyDome::makeDome(int rings, int bands, DrawElementsUShort& elements)
 {
     std::back_insert_iterator<DrawElementsUShort> pusher
         = std::back_inserter(elements);
-    GridIndex grid(*dome_vl, numBands, 1);
+    GridIndex grid(*dome_vl, numBands, 2);
     for (int i = 0; i < bands; i++) {
         *pusher = 0;  *pusher = grid(0, (i+1)%bands);  *pusher = grid(0, i);
         // down a band
@@ -120,6 +120,9 @@ void SGSkyDome::makeDome(int rings, int bands, DrawElementsUShort& elements)
             *pusher = grid(j, i);  *pusher =  grid(j + 1, (i + 1)%bands);
             *pusher =  grid(j + 1, i);
         }
+        // Cap
+        *pusher = grid(rings - 1, i); *pusher = grid(rings - 1, (i + 1)%bands);
+        *pusher = 1;
     }
 }
 
@@ -155,12 +158,13 @@ SGSkyDome::build( double hscale, double vscale, simgear::SGReaderWriterOptions *
     osg::Material* material = new osg::Material;
     stateSet->setAttribute(material);
 
-    dome_vl = new osg::Vec3Array(1 + numRings * numBands);
-    dome_cl = new osg::Vec3Array(1 + numRings * numBands);
+    dome_vl = new osg::Vec3Array(2 + numRings * numBands);
+    dome_cl = new osg::Vec3Array(2 + numRings * numBands);
     // generate the raw vertex data
 
-    (*dome_vl)[0].set(0.0, 0.0, center_elev * vscale);
-    simgear::VectorArrayAdapter<Vec3Array> vertices(*dome_vl, numBands, 1);
+    (*dome_vl)[0].set(0.0, 0.0,  center_elev * vscale);
+    (*dome_vl)[1].set(0.0, 0.0, -center_elev * vscale);
+    simgear::VectorArrayAdapter<Vec3Array> vertices(*dome_vl, numBands, 2);
 
     for ( int i = 0; i < numBands; ++i ) {
         double theta = (i * bandDelta) * SGD_DEGREES_TO_RADIANS;
@@ -256,7 +260,9 @@ SGSkyDome::repaint( const SGVec3f& sun_color, const SGVec3f& sky_color,
 
     // Dome top is always sky_color
     (*dome_cl)[0] = toOsg(sky_color);
-    simgear::VectorArrayAdapter<Vec3Array> colors(*dome_cl, numBands, 1);
+    // Dome bottom is always black
+    (*dome_cl)[1] = osg::Vec3(0.0f, 0.0f, 0.0f);
+    simgear::VectorArrayAdapter<Vec3Array> colors(*dome_cl, numBands, 2);
     const double saif = sun_angle/SG_PI;
     static const SGVec3f blueShift(0.8, 1.0, 1.2);
     const SGVec3f skyFogDelta = sky_color - fog_color;
