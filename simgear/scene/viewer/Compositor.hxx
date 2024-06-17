@@ -30,7 +30,7 @@ namespace compositor {
  *     and they can output to other buffers. They are also integrated with the
  *     Effects framework, so the OpenGL internal state is configurable per pass.
  */
-class Compositor {
+class Compositor final {
 public:
     enum BuiltinUniform {
         SG_UNIFORM_TEXTURE_MATRIX = 0,
@@ -65,7 +65,7 @@ public:
     Compositor(osg::View *view,
                osg::GraphicsContext *gc,
                osg::Viewport *viewport);
-    virtual ~Compositor();
+    ~Compositor();
 
     /**
      * \brief Create a Compositor from a property tree.
