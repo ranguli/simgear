@@ -102,7 +102,7 @@ protected:
         //var rng = new Random();
         TestThreadRecipient  *r = new TestThreadRecipient(transmitter, addDuringReceive);
         char temp[100];
-        sprintf(temp, "Notif %d", threadId);
+        snprintf(temp, sizeof(temp), "Notif %d", threadId);
         printf("starting thread %s\n", temp);
         SGSharedPtr<TestThreadNotification> tn(new TestThreadNotification("TestThread"));
 
