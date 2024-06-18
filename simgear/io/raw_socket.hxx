@@ -38,13 +38,13 @@ namespace simgear
 /*
  * Socket address, internet style.
  */
-class IPAddress
+class IPAddress final
 {
     mutable struct sockaddr_in* addr;
 public:
   IPAddress () : addr(0) {}
   IPAddress ( const char* host, int port ) ;
-  virtual ~IPAddress();
+  ~IPAddress();   // non-virtual is intentional
   
   static bool lookupNonblocking(const char* host, IPAddress& addr);
   
@@ -75,8 +75,8 @@ class Socket
   
 public:
   
-  Socket () ;
-  virtual ~Socket () ;
+  Socket();
+  virtual ~Socket();
 
   static int initSockets();
 

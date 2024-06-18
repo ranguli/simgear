@@ -29,13 +29,13 @@
 
 class SGPath;
 
-class SGStarData {
+class SGStarData final {
 public:
     // Constructor
     SGStarData( const SGPath& path );
 
     // Destructor
-    virtual ~SGStarData();
+    ~SGStarData();  // non-virtual is intentional
 
     // load the stars database
     bool load( const SGPath& path );

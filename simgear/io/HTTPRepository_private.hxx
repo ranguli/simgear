@@ -53,7 +53,7 @@ protected:
 
 using RepoRequestPtr = SGSharedPtr<HTTPRepoGetRequest>;
 
-class HTTPRepoPrivate {
+class HTTPRepoPrivate final {
 public:
 
 
@@ -65,7 +65,7 @@ public:
   {
   }
 
-  virtual ~HTTPRepoPrivate();
+  ~HTTPRepoPrivate();   // non-virtual is intentional
 
   HTTPRepository *p; // link back to outer
   HTTP::Client* http = nullptr;

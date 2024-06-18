@@ -34,10 +34,10 @@ void shutdownLogging();
 /**
  * Class to manage the debug logging stream.
  */
-class logstream
+class logstream final
 {
 public:
-    virtual ~logstream();
+    ~logstream();   // non-virtual is intentional
     
     static void initGlobalLogstream();
 

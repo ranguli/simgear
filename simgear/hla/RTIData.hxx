@@ -26,10 +26,10 @@ namespace simgear {
 
 /// Sigh, this is std::vector<char>, except that
 /// you could feed that with external pointers without copying ...
-/// Note on alignment: the c++ standard garantees (5.3.4.10) that
+/// Note on alignment: the c++ standard guarantees (5.3.4.10) that
 /// new (unsigned) char returns sufficiently aligned memory
 /// for all relevant cases
-class RTIData {
+class RTIData final {
 public:
     RTIData() :
         _data(0),
@@ -67,7 +67,7 @@ public:
             memcpy(_data, data.data(), size);
         }
     }
-    virtual ~RTIData()
+    ~RTIData()  // non-virtual is intentional
     {
         if (_capacity)
             delete [] _data;

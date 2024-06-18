@@ -68,7 +68,7 @@ public:
     SG_DDS_Topic(const char* topic, const dds_topic_descriptor_t *desc, size_t size);
 
     // Store the pointer to the buffer to be able to call read() without
-    // any paramaters. Make sure the buffer is always available and of
+    // any parameters. Make sure the buffer is always available and of
     // sufficient size to store a type T otherwise a segmentation fault
     // will occur.
     template<typename T>
@@ -81,12 +81,12 @@ public:
     /** Destructor */
     virtual ~SG_DDS_Topic();
 
-    // Set the paramaters which weren't available at creation time and use
+    // Set the parameters which weren't available at creation time and use
     // a custom topic name.
     void setup(const char* topic, const dds_topic_descriptor_t *desc, size_t size);
 
     // Store the pointer to the buffer to be able to call read() without
-    // any paramaters. Make sure the buffer is always available and of
+    // any parameters. Make sure the buffer is always available and of
     // sufficient size to store a type T otherwise a segmentation fault
     // will occur.
     template<typename T>
@@ -104,7 +104,7 @@ public:
 
     // If specified as a server start a publishing participant.
     // If specified as a client start a subscribing participant.
-    // Create a new partipant and unique identifier and establish a connection.
+    // Create a new participant and unique identifier and establish a connection.
     bool open(const SGProtocolDir d);
 
     // Establish the connection using a shared participant.
@@ -155,7 +155,7 @@ public:
 };
 
 // a class to manage multiple DDS topics
-class SG_DDS {
+class SG_DDS final {
 private:
     dds_entity_t domain = -1;
     dds_entity_t participant = -1;
@@ -174,7 +174,7 @@ public:
 
     SG_DDS(dds_domainid_t d, std::string& c) : SG_DDS(d, c.c_str()) {};
 
-    virtual ~SG_DDS();
+    ~SG_DDS();      // non-virtual is intentional
 
     bool add(SG_DDS_Topic *topic, const SGProtocolDir d);
     bool close();

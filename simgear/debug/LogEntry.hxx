@@ -25,7 +25,7 @@ namespace simgear {
  * the various threads to the logging thread, and also to store the startup
  * entries
  */
-class LogEntry
+class LogEntry final
 {
 public:
     LogEntry(sgDebugClass c, sgDebugPriority p,
@@ -47,7 +47,7 @@ public:
     LogEntry(const LogEntry& c);
     LogEntry& operator=(const LogEntry& c) = delete;
 
-    virtual ~LogEntry();
+    ~LogEntry();    // non-virtual is intentional
 
     const sgDebugClass debugClass;
     const sgDebugPriority debugPriority;

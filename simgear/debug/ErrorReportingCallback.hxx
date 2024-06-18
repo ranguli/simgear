@@ -36,8 +36,8 @@ using ErrorReportCallback = std::function<void(const std::string& msg, const std
 void setErrorReportCallback(ErrorReportCallback cb);
 
 /** kinds of failures we can report. This is *how* (or why) something failed. Extend
-  as necessary but update the correponsdings string translations if you do. More detail isn't
- necessariyl useful here: better to provide that in the 'details' string
+  as necessary but update the corrsponding string translations if you do. More detail isn't
+ necessarily useful here: better to provide that in the 'details' string
  */
 enum class LoadFailure {
     Unknown,
@@ -65,17 +65,17 @@ enum class ErrorCode {
     GUIDialog,
     AudioFX,
     XMLLoadCommand,
-    AircraftSystems, // autopilot, hydrualics, instruments
+    AircraftSystems, // autopilot, hydraulics, instruments
     InputDeviceConfig,
     AITrafficSchedule,
     TerraSync
 };
 /**
  @brief Define an error-reporting context value, for the duration of this
- object's lifetime. The context value will be active for any errors occuring on the same thread, while
+ object's lifetime. The context value will be active for any errors occurring on the same thread, while
  this object exists.
  */
-class ErrorReportContext
+class ErrorReportContext final
 {
 public:
     ErrorReportContext(const std::string& key, const std::string& value);
@@ -94,7 +94,7 @@ public:
      */
     void addFromMap(const ContextMap& context);
 
-    virtual ~ErrorReportContext();
+    ~ErrorReportContext();  // non-virtual is intentional
 
 private:
     std::vector<std::string> _keys;

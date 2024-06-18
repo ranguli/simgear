@@ -64,7 +64,7 @@ typedef std::vector<SGWxRadarEcho> list_of_SGWxRadarEcho;
 /**
  * Visual environment helper class.
  */
-class SGEnviro {
+class SGEnviro final {
 friend class SGLightning;
 private:
 	void DrawCone2(float baseRadius, float height, int slices, bool down, double rain_norm, double speed);
@@ -105,7 +105,7 @@ private:
 
 public:
 	SGEnviro();
-	virtual ~SGEnviro();
+	~SGEnviro();	// non-virtual is intentional
 
 	/** Read the config from the precipitation rendering config properties.
 	 * @param precip_rendering_cfgNode "/sim/rendering/precipitation" in fg

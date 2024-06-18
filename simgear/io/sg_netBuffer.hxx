@@ -87,7 +87,7 @@ namespace simgear
 // NetBuffer
 // ===========================================================================
 
-class NetBuffer
+class NetBuffer final
 {
 protected:
   int length ;
@@ -96,7 +96,7 @@ protected:
 
 public:
   NetBuffer( int _max_length );
-  virtual ~NetBuffer ();
+  ~NetBuffer();                   // non-virtual is intentional
   int getLength() const { return length ; }
   int getMaxLength() const { return max_length ; }
 

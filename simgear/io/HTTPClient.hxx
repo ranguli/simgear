@@ -40,11 +40,11 @@ namespace HTTP
 // forward decls
 class Connection;
 
-class Client
+class Client final
 {
 public:
     Client();
-    virtual ~Client();
+    ~Client();  // non-virtual is intentional
 
     void update(int waitTimeout = 0);
 

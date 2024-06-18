@@ -68,7 +68,7 @@
  * method.
  */
 
-class SGEphemeris {
+class SGEphemeris final {
 
     Star *our_sun;
     MoonPos *moon;
@@ -100,7 +100,7 @@ public:
     SGEphemeris( const SGPath &path );
 
     /** Destructor */
-    virtual ~SGEphemeris( void );
+    ~SGEphemeris( void );   // non-virtual is intentional
 
     /**
      * Update (recalculate) the positions of all objects for the

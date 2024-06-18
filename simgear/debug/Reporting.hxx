@@ -3,11 +3,11 @@
 namespace simgear
 {
 
-class ReportBadAllocGuard
+class ReportBadAllocGuard final
 {
 public:
     ReportBadAllocGuard();
-    virtual ~ReportBadAllocGuard();
+    ~ReportBadAllocGuard(); // non-virtual is intentional
 
     static bool isSet();
 };
