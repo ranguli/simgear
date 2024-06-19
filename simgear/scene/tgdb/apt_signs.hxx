@@ -40,11 +40,11 @@ osg::Node* SGMakeSign( SGMaterialLib *matlib, const std::string& content );
 namespace simgear
 {
 
-class AirportSignBuilder
+class AirportSignBuilder final
 {
 public:
     AirportSignBuilder(SGMaterialLib* mats, const SGGeod& center);
-    virtual ~AirportSignBuilder();
+    ~AirportSignBuilder();      // non-virtual intentional
     
     void addSign(const SGGeod& pos, double heading, const std::string& content, int size);
         

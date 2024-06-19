@@ -90,11 +90,11 @@ public:
  * SGTimeZoneContainer 
  */
 
-class SGTimeZoneContainer
+class SGTimeZoneContainer final
 {
 public:
   SGTimeZoneContainer(const SGPath& path);
-    virtual ~SGTimeZoneContainer();
+  ~SGTimeZoneContainer();   // non-virtual intentional
   
   SGTimeZone* getNearest(const SGGeod& ref) const;
   

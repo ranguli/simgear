@@ -47,7 +47,7 @@ using std::string;
 /**
  * A class to encapsulate low level serial port IO.
  */
-class SGSerialPort
+class SGSerialPort final
 {
 #ifdef  _WIN32
     typedef HANDLE fd_type;
@@ -73,7 +73,7 @@ public:
     SGSerialPort(const string& device, int baud);
 
     /** Destructor */
-    virtual ~SGSerialPort();
+    ~SGSerialPort();    // non-virtual intentional
 
     /** Open a the serial port
      * @param device name of device

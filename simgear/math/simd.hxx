@@ -113,7 +113,7 @@ inline simd4_t<T,3> cross(const simd4_t<T,3>& v1, const simd4_t<T,3>& v2)
 
 
 template<typename T, int N>
-class simd4_t
+class simd4_t final
 {
 private:
     union {
@@ -144,7 +144,7 @@ public:
         std::memcpy(_v4, v.ptr(), sizeof(T[M]));
         for (int i=(M<N)?M:N; i<4; ++i) _v4[i] = 0;
     }
-    virtual ~simd4_t(void) {}
+    ~simd4_t(void) {}   // non-virtual intentional
 
     inline T (&v4(void))[N] {
         return vec;

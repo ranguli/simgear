@@ -101,7 +101,7 @@ private:
  * A condition variable is always associated with a mutex to avoid race
  * conditions.
  */
-class SGWaitCondition {
+class SGWaitCondition final {
 public:
     /**
      * Create a new condition variable.
@@ -111,7 +111,7 @@ public:
     /**
      * Destroy the condition object.
      */
-    virtual ~SGWaitCondition();
+    ~SGWaitCondition();     // non-virtual intentional
 
     /**
      * Wait for this condition variable to be signaled.

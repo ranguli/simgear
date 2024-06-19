@@ -33,10 +33,10 @@ class ResourceProvider;
 /**
  * singleton management of resources
  */
-class ResourceManager
+class ResourceManager final
 {
 public:
-    virtual ~ResourceManager();
+    ~ResourceManager();   // non-virtual intentional
 
     typedef enum {
       PRIORITY_DEFAULT = 0,

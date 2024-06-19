@@ -22,7 +22,7 @@
 
 #ifdef __ARM_NEON__
 template<>
-class simd4x4_t<float,4>
+class simd4x4_t<float,4> final
 {
 private:
     typedef float  __mtx4f_t[4][4];
@@ -65,7 +65,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline float32x4_t (&m4x4(void))[4] {
         return simd4x4;
@@ -249,7 +249,7 @@ inline simd4_t<float,3> transform<float>(const simd4x4_t<float,4>& m, const simd
 #if 0
 
 template<>
-class simd4x4_t<double,4>
+class simd4x4_t<double,4> final
 {
 private:
     typedef double  __mtx4d_t[4][4];
@@ -288,7 +288,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline __m256d (&m4x4(void))[4] {
         return simd4x4;
@@ -486,7 +486,7 @@ inline simd4_t<double,3> transform<double>(const simd4x4_t<double,4>& m, const s
 
 
 template<>
-class simd4x4_t<int,4>
+class simd4x4_t<int,4> final
 {
 private:
     typedef int  __mtx4i_t[4][4];
@@ -528,7 +528,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline int32x4_t (&m4x4(void))[4] {
         return simd4x4;

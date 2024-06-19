@@ -33,13 +33,13 @@
 
 namespace simgear
 {
-class TreeBin {
+class TreeBin final {
 public:
     TreeBin() = default;
     TreeBin(const SGMaterial *mat);
     TreeBin(const SGPath& absoluteFileName, const SGMaterial *mat);
 
-    virtual ~TreeBin() = default;
+    ~TreeBin() = default;   // non-virtual intentional
 
     struct Tree {
         SGVec3f position;

@@ -3,7 +3,7 @@
 
 #include <simgear/scene/dem/SGDemRoot.hxx>
 
-class SGDemSession {
+class SGDemSession final {
 public:
     SGDemSession()
         : west_off(0)
@@ -50,7 +50,7 @@ public:
     {
     }
 
-    virtual ~SGDemSession()
+    ~SGDemSession()     // non-virtual intentional
     {
         close();
     }

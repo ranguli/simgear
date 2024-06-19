@@ -41,7 +41,7 @@ class SGModelLOD;  // defined below
 /**
  * Class for loading and managing models with XML wrappers.
  */
-class SGModelLib
+class SGModelLib final
 {
 public:
     typedef osg::Node *(*panel_func)(SGPropertyNode *);
@@ -92,7 +92,7 @@ public:
       SGPath currentDir = SGPath());
 protected:
     SGModelLib();
-    virtual ~SGModelLib ();
+    ~SGModelLib();    // non-virtual intentional
 
 private:
   static SGPropertyNode_ptr static_propRoot;

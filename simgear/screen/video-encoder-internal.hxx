@@ -75,7 +75,7 @@ static const char* select(const char** names, int names_num, double select)
 
 
 /* Video encoder which uses ffmpeg libraries. */
-struct FfmpegEncoder
+struct FfmpegEncoder final
 {
     double              m_quality = 0;
     double              m_speed = 0;
@@ -214,7 +214,7 @@ struct FfmpegEncoder
     }
     
     /* Destructor flushes any remaining encoded video and cleans up. */
-    virtual ~FfmpegEncoder()
+    ~FfmpegEncoder()    // non-virtual intentional
     {
         clearall();
     }

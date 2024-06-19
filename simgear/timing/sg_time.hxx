@@ -59,7 +59,7 @@ class SGGeod;
 
  */
 
-class SGTime {
+class SGTime final {
 
 private:
 
@@ -132,7 +132,7 @@ public:
     SGTime( const SGPath& root );
 
     /** Destructor */
-    virtual ~SGTime() = default;
+    ~SGTime() = default;    // non-virtual intentional
 
     /**
      * Update the time related variables.

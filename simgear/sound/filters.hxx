@@ -31,7 +31,7 @@ namespace simgear {
 // Four stages therefore equals to an 8th order filter with a 48dB/oct slope.
 #define SG_FREQFILTER_MAX_STAGES	4
 
-class FreqFilter {
+class FreqFilter final {
     
 private:
 
@@ -51,14 +51,14 @@ private:
 public:
     
     FreqFilter(int order, float fs, float cutoff, float Qfactor = 1.0f);
-    virtual ~FreqFilter();
+    ~FreqFilter();      // non-virtual intentional
     
     void update( int16_t *data, unsigned int num );
 };
 
 
 
-class BitCrusher {
+class BitCrusher final {
 
 private:
     float factor, devider;
@@ -67,7 +67,7 @@ public:
 
     // level ranges from 0.0f (all muted) to 1.0f (no change)
     BitCrusher(float level);
-    virtual ~BitCrusher();
+    ~BitCrusher();      // non-virtual intentional
 
     void update( int16_t *data, unsigned int num );
 };

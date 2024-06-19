@@ -24,7 +24,7 @@ class SGPropertyNode;
  * line number, line number and column number, or byte offset from the
  * beginning of the resource.
  */
-class sg_location
+class sg_location final
 {
 public:
   enum {max_path = 1024};
@@ -43,7 +43,7 @@ public:
    */
   explicit sg_location(const SGPropertyNode* node) noexcept;
 
-  virtual ~sg_location() = default;
+  ~sg_location() = default;   // non-virtual intentional
 
   const char* getPath() const noexcept;
   int getLine() const noexcept;

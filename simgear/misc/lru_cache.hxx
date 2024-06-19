@@ -45,7 +45,7 @@ namespace simgear
 {
     // a cache which evicts the least recently used item when it is full
     template<class Key, class Value>
-    class lru_cache
+    class lru_cache final
     {
     public:
         std::mutex _mutex;
@@ -63,7 +63,7 @@ namespace simgear
         {
         }
 
-        virtual ~lru_cache()
+        ~lru_cache()    // non-virtual intentional
         {
         }
 

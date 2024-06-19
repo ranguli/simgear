@@ -45,7 +45,7 @@ converted to OpenSceneGraph for use in SimGear/FlightGear
 #include <simgear/scene/dem/SGDem.hxx>
 #include <simgear/math/SGMath.hxx>
 
-class KDtree {
+class KDtree final {
 private:
 	class Node;
 	Node *root;
@@ -68,7 +68,7 @@ public:
 		{ build((const float *) &v[0], v.size()); }
 
 	// Destructor - recursively frees the tree
-	virtual ~KDtree();
+	~KDtree();		// non-virtual intentional
 
 	// The queries: returns closest point to a point or a ray,
 	// provided it's within sqrt(maxdist2) and is compatible

@@ -103,7 +103,7 @@ struct BuildingBoundingBoxCallback : public Drawable::ComputeBoundingBoxCallback
     }
 };
 
-class SGBuildingBin {
+class SGBuildingBin final {
 public:
 
   enum BuildingType {
@@ -184,7 +184,7 @@ public:
   SGBuildingBin(const SGMaterial *mat, bool useVBOs);
   SGBuildingBin(const SGPath& absoluteFileName, const SGMaterial *mat, bool useVBOs);
 
-  virtual ~SGBuildingBin();
+  ~SGBuildingBin();   // non-virtual intentional
 
   // Generate a building specifying the exact position, dimensions and texture index.
   void insert(SGVec3f p,

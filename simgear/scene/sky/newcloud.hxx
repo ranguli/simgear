@@ -38,12 +38,12 @@ using std::vector;
 /**
  * 3D cloud class.
  */
-class SGNewCloud {
+class SGNewCloud final {
 
 public:
         SGNewCloud(const SGPath &texture_root, const SGPropertyNode *cld_def, mt* s);
 
-        virtual ~SGNewCloud();
+        ~SGNewCloud();  // non-virtual intentional
 
         // Generate a Cloud
         osg::ref_ptr<simgear::EffectGeode> genCloud ();

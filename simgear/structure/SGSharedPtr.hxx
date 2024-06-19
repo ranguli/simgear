@@ -47,7 +47,7 @@ class SGWeakPtr;
 /// https://web.archive.org/web/20061012014801/http://dburns.dhs.org/OSG/Articles/RefPointers/RefPointers.html
 
 template<typename T>
-class SGSharedPtr {
+class SGSharedPtr final {
 public:
     typedef T element_type;
 
@@ -86,7 +86,7 @@ public:
         reset(p.lock().get());
     }
 
-    virtual ~SGSharedPtr(void)
+    ~SGSharedPtr(void)      // non-virtual intentional
     {
         reset();
     }

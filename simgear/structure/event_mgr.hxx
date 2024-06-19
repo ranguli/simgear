@@ -31,11 +31,11 @@ public:
 };
 
 /*! Queue to execute SGTimers after given delays */
-class SGTimerQueue
+class SGTimerQueue final
 {
 public:
     SGTimerQueue() = default;
-    virtual ~SGTimerQueue() = default;
+    ~SGTimerQueue() = default;      // non-virtual intentional
 
     void clear();
     void update(double deltaSecs, std::map<std::string, double> &timingStats);

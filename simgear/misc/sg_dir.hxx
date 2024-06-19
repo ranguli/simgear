@@ -39,15 +39,15 @@ namespace simgear
 {
   typedef std::vector<SGPath> PathList;
 
-  class Dir
+  class Dir final
   {
   public:
     Dir();
-    virtual ~Dir();
+    ~Dir();   // non-virtual intentional
     
     /**
      * when this directory object is destroyed, remove the corresponding
-     * diretory (and its contents) from the disk. Often used with temporary
+     * directory (and its contents) from the disk. Often used with temporary
      * directories to ensure they are cleaned up.
      */
     void setRemoveOnDestroy();

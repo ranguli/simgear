@@ -269,7 +269,7 @@ private:
  * when none are available.
  */
 template<class T>
-class SGBlockingDeque
+class SGBlockingDeque final
 {
 public:
     using value_type = T;
@@ -283,7 +283,7 @@ public:
     /**
      * Destroy this dequeue.
      */
-    virtual ~SGBlockingDeque() = default;
+    ~SGBlockingDeque() = default;   // non-virtual intentional
 
     /**
      *

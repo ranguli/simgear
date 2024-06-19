@@ -147,10 +147,10 @@ protected:
     bool useWind = false;
 };
 
-class ParticlesGlobalManager
+class ParticlesGlobalManager final
 {
 public:
-    virtual ~ParticlesGlobalManager();
+    ~ParticlesGlobalManager();      // non-virtual intentional
 
     static ParticlesGlobalManager* instance();
     static void clear();

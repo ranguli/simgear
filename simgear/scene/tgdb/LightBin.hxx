@@ -35,7 +35,7 @@ const int LIGHT_ATTR4 = 11;
 
 namespace simgear
 {
-class LightBin {
+class LightBin final {
 public:
     struct Light {
         // Omni-directional non-animated lights constructor
@@ -92,7 +92,7 @@ public:
     LightBin();
     LightBin(const SGPath& absoluteFileName);
 
-    virtual ~LightBin() = default;
+    ~LightBin() = default;      // non-virtual intentional
 
     void insert(const Light& light);
     void insert(const SGVec3f& p, const double& s, const double& i, const int& o, const SGVec4f& c);

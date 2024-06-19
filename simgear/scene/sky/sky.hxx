@@ -212,7 +212,7 @@ struct SGSkyColor
 
  */
 
-class SGSky {
+class SGSky final {
 
 private:
     typedef std::vector<SGSharedPtr<SGCloudLayer> > layer_list_type;
@@ -263,7 +263,7 @@ public:
     SGSky( void );
 
     /** Destructor */
-    virtual ~SGSky( void );
+    ~SGSky( void );   // non-virtual intentional
 
     /**
      * Initialize the sky and connect the components to the scene

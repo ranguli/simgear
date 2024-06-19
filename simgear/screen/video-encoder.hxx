@@ -16,7 +16,7 @@ Generated video contains information about frame times, and also copes with
 changes to the width and/or height of the frames.
 
 So replay will replicate variable frame rates and window resizing. */
-struct VideoEncoder
+struct VideoEncoder final
 {
     /* Constructor; sets things up to write compressed video to file <path>.
     
@@ -58,7 +58,7 @@ struct VideoEncoder
     configuration doesn't fail until we start sending frames. */
     void encode(double dt, osg::GraphicsContext* gc);
     
-    virtual ~VideoEncoder();
+    ~VideoEncoder();    // non-virtual intentional
     
     private:
     osg::ref_ptr<struct VideoEncoderInternal>   m_internal;

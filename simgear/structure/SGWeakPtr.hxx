@@ -25,7 +25,7 @@
  * or SGVirtualWeakReferenced.
  */
 template<typename T>
-class SGWeakPtr {
+class SGWeakPtr final {
 public:
   typedef T element_type;
 
@@ -41,7 +41,8 @@ public:
   template<typename U>
   SGWeakPtr(const SGWeakPtr<U>& p)
   { SGSharedPtr<T> sharedPtr = p.lock(); assign(sharedPtr.get()); }
-  virtual ~SGWeakPtr(void)
+  
+  ~SGWeakPtr(void)    // non-virtual intentional
   { }
   
   template<typename U>

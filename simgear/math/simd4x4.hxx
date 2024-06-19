@@ -142,7 +142,7 @@ inline simd4_t<T,3> transform(const simd4x4_t<T,4>& mtx, const simd4_t<T,3>& pt)
 } /* namespace simd4x4 */
 
 template<typename T, int N>
-class simd4x4_t
+class simd4x4_t final
 {
 private:
     union {
@@ -176,7 +176,7 @@ public:
     simd4x4_t(const simd4x4_t<T,N>& m) {
         std::memcpy(array, m, sizeof(T[N*N]));
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     simd4x4_t& operator=(const simd4x4_t& rhs) {
         std::memcpy(array, rhs.array, sizeof(array));
@@ -298,7 +298,7 @@ inline simd4x4_t<T,N> operator*(const simd4x4_t<T,N>& m1, const simd4x4_t<T,N>& 
 
 # ifdef __SSE__
 template<>
-class alignas(16) simd4x4_t<float,4>
+class alignas(16) simd4x4_t<float,4> final
 {
 private:
     typedef float  __mtx4f_t[4][4];
@@ -337,7 +337,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline __m128 (&m4x4(void))[4] {
         return simd4x4;
@@ -502,7 +502,7 @@ inline simd4_t<float,3> transform<float>(const simd4x4_t<float,4>& m, const simd
 
 # ifdef __AVX_unsupported__
 template<>
-class alignas(32) simd4x4_t<double,4>
+class alignas(32) simd4x4_t<double,4> final
 {
 private:
     typedef double  __mtx4d_t[4][4];
@@ -541,7 +541,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline __m256d (&m4x4(void))[4] {
         return simd4x4;
@@ -723,7 +723,7 @@ inline simd4_t<double,3> transform<double>(const simd4x4_t<double,4>& m, const s
 # elif defined __SSE2__
 
 template<>
-class alignas(16) simd4x4_t<double,4>
+class alignas(16) simd4x4_t<double,4> final
 {
 private:
     typedef double  __mtx4d_t[4][4];
@@ -775,7 +775,7 @@ public:
             simd4x4[i][1] = m.m4x4()[i][1];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline __m128d (&m4x4(void))[4][2] {
         return simd4x4;
@@ -993,7 +993,7 @@ inline simd4_t<double,3> transform<double>(const simd4x4_t<double,4>& m, const s
 
 # ifdef __SSE2__
 template<>
-class alignas(16) simd4x4_t<int,4>
+class alignas(16) simd4x4_t<int,4> final
 {
 private:
     typedef int  __mtx4i_t[4][4];
@@ -1031,7 +1031,7 @@ public:
             simd4x4[i] = m.m4x4()[i];
         }
     }
-    virtual ~simd4x4_t(void) {}
+    ~simd4x4_t(void) {}     // non-virtual intentional
 
     inline __m128i (&m4x4(void))[4] {
         return simd4x4;

@@ -35,7 +35,7 @@ typedef std::map<osg::ref_ptr<osg::Node>,int> LodMap;
 // Create a quad tree based on x, y extents
 template <typename LeafType, typename ObjectType, typename MakeLeaf,
           typename AddLeafObject, typename GetObjectLocalCoords>
-class QuadTreeBuilder {
+class QuadTreeBuilder final {
 public:
     QuadTreeBuilder(const GetObjectLocalCoords& getLocalCoords,
                     const AddLeafObject& addLeafObject, int depth = 2,
@@ -71,7 +71,9 @@ public:
     void setMin(const osg::Vec2& min) { _min = min; }
     osg::Vec2 getMax() { return _max; }
     void setMax(const osg::Vec2& max) { _max = max; }
-    virtual ~QuadTreeBuilder() {}
+
+    ~QuadTreeBuilder() {}       // non-virtual intentional
+
     osg::Group* getRoot() { return _root.get(); }
 
     void addNode(ObjectType& obj)
