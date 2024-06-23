@@ -26,7 +26,7 @@ public:
     /**
      * Destroy this object.
      */
-    virtual ~SGQueue() {}
+    virtual ~SGQueue() = default;
 
     /**
      * Returns whether this queue is empty (contains no elements).
@@ -73,20 +73,20 @@ protected:
 /**
  * A simple thread safe queue.  All access functions are guarded with a mutex.
  */
-template<class T>
-class SGLockedQueue : public SGQueue<T>
+template <class T>
+class SGLockedQueue final : public SGQueue<T>
 {
 public:
 
     /**
      * Create a new SGLockedQueue object.
      */
-    SGLockedQueue() {}
+    SGLockedQueue() = default;
 
     /**
      * Destroy this object.
      */
-    virtual ~SGLockedQueue() {}
+    ~SGLockedQueue() = default;
 
     /**
      * Returns whether this queue is empty (contains no elements).
@@ -166,19 +166,19 @@ private:
  * A guarded queue blocks threads trying to retrieve items
  * when none are available.
  */
-template<class T>
-class SGBlockingQueue : public SGQueue<T>
+template <class T>
+class SGBlockingQueue final : public SGQueue<T>
 {
 public:
     /**
      * Create a new SGBlockingQueue.
      */
-    SGBlockingQueue() {}
+    SGBlockingQueue() = default;
 
     /**
      * Destroy this queue.
      */
-    virtual ~SGBlockingQueue() {}
+    ~SGBlockingQueue() = default;
 
     /**
      *

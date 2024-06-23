@@ -36,6 +36,8 @@ public:
      */
     CanvasMgr(SGPropertyNode_ptr node);
 
+    virtual ~CanvasMgr() = default;
+
     /**
      * Create a new canvas
      *
