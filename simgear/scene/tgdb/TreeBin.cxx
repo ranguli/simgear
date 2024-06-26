@@ -287,18 +287,23 @@ struct MakeTreesLeaf
 
     LOD* operator() () const
     {
-        LOD* result = new LOD;
+        if (LOD* result = new LOD; result) {
+            // Create a series of LOD nodes so trees cover decreases slightly
+            // gradually with distance from _range to 2*_range
+            for (float i = 0.0f; i < SG_TREE_FADE_OUT_LEVELS; ++i)
+            {
+                if (EffectGeode* geode = createTreeGeode(_width, _height, _varieties); geode) {
+                    geode->setEffect(_effect.get());
+                    result->addChild(geode, 0, _range * (1.0f + i / (SG_TREE_FADE_OUT_LEVELS - 1.0f)));
+                }
+            }
 
-        // Create a series of LOD nodes so trees cover decreases slightly
-        // gradually with distance from _range to 2*_range
-        for (float i = 0.0; i < SG_TREE_FADE_OUT_LEVELS; i++)
-        {
-            EffectGeode* geode = createTreeGeode(_width, _height, _varieties);
-            geode->setEffect(_effect.get());
-            result->addChild(geode, 0, _range * (1.0 + i / (SG_TREE_FADE_OUT_LEVELS - 1.0)));
+            return result;
         }
-        return result;
+
+        return nullptr;
     }
+
     float _range;
     int _varieties;
     float _width;
@@ -352,6 +357,13 @@ struct QuadTreeCleaner : public osg::NodeVisitor
     {
         for (int i  = lod.getNumChildren() - 1; i >= 0; --i) {
             EffectGeode* geode = dynamic_cast<EffectGeode*>(lod.getChild(i));
+            // EffectGeode* geode = nullptr;
+            // try {
+            //     geode = dynamic_cast<EffectGeode*>(lod.getChild(i));
+            // }
+            // catch (std::bad_cast) {
+            //     SG_LOG(SG_TERRAIN, SG_ALERT, "caught bad_cast exception " << typeof(lod.getChild(i)));
+            // }
             if (!geode)
                 continue;
             bool geodeEmpty = true;

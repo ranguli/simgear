@@ -91,11 +91,12 @@ public:
                       / (_max.y() - _min.y()));
         y = clampTo(y, 0, (_dimension -1));
         if (!_leaves(y, x)) {
-            _leaves(y, x) = _makeLeaf();
-            _leafParents(y / 2, x / 2)->addChild(_leaves(y, x));
+            if (_leaves(y, x) = _makeLeaf(); _leaves(y, x))
+                _leafParents(y / 2, x / 2)->addChild(_leaves(y, x));
         }
         _addLeafObject(_leaves(y, x), obj);
     }
+
     // STL craziness
     struct AddNode
     {
