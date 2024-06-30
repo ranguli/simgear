@@ -5,6 +5,7 @@ set(HEADERS
     color_space.hxx
     CopyOp.hxx
     DeletionManager.hxx
+    MemoryBarrier.hxx
     NodeAndDrawableVisitor.hxx
     Noise.hxx
     OptionsReadFileCallback.hxx
