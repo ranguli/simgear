@@ -109,14 +109,9 @@ option(USE_OPENALSOFT   "Set to ON to use OpenAL from OpenAL-soft" OFF)
 
 option(ENABLE_PKGUTIL   "Set to ON to build the sg_pkgutil application (default)" ON)
 option(ENABLE_SIMD      "Enable SSE/SSE2 support for compilers" ON)
-option(ENABLE_SIMD_CODE	"Enable SSE/SSE2 support code for compilers" OFF)
 option(ENABLE_ASAN      "Set to ON to build SimGear with LLVM AddressSanitizer (ASan) support.  Incompatile with ENABLE_TSAN." OFF)
 option(ENABLE_TSAN      "Set to ON to build SimGear with LLVM ThreadSanitizer (TSan) support. Incompatile with ENABLE_ASAN." OFF)
 option(ENABLE_VIDEO_RECORD "Set to ON to build SimGear with video recording" ON)
-
-if (NOT ENABLE_SIMD AND ENABLE_SIMD_CODE)
-  set(ENABLE_SIMD_CODE OFF)
-endif()
 
 if (USE_SHADERVG)
   set(OPENVG ShaderVG)

@@ -66,13 +66,11 @@ int main( int argc, char *argv[] )
     std::cout << "Vendor: " << _vendor << std::endl;
     std::cout << "Renderer: " << _renderer << std::endl;
 
-    aax::Matrix mtx;
-    mtx.translate(-5000.0, 12500.0, 1000.0);
-
-    aax::Matrix64 mtx64 = mtx.toMatrix64();
+    aax::Matrix64 mtx64;
+    mtx64.translate(-5000.0, 12500.0, 1000.0);
     emitter.matrix(mtx64);
 
-    mtx.translate(-5.0, 2.0, 1.0);
+    mtx64.translate(-5.0, 2.0, 1.0);
     mtx64.inverse();
     aax.sensor_matrix(mtx64);
 

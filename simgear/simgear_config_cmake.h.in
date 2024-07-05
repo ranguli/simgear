@@ -29,7 +29,6 @@
 #cmakedefine USE_AEONWAVE
 #cmakedefine SG_SOUND_USES_OPENALSOFT
 #cmakedefine ENABLE_SIMD
-#cmakedefine ENABLE_SIMD_CODE
 #cmakedefine ENABLE_GDAL
 
 #cmakedefine SG_FFMPEG
