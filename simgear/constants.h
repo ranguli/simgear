@@ -1,34 +1,9 @@
-// constants.h -- various constant definitions
-//
-// Written by Curtis Olson, started February 2000.
-// Last change by Eric van den Berg, Feb 2013
-//
-// Copyright (C) 2000  Curtis L. Olson - http://www.flightgear.org/~curt/
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// $Id$
+// SPDX-FileComment: various constant definitions
+// SPDX-FileCopyrightText: Copyright (C) 2000  Curtis L. Olson - http://www.flightgear.org/~curt/
+// SPDX-FileContributor: Last change by Eric van den Berg, Feb 2013
+// SPDX-License-Identifier: LGPL-2.0-or-later
 
-/** \file constants.h
- * Various constant definitions.
- */
-
-
-#ifndef _SG_CONSTANTS_H
-#define _SG_CONSTANTS_H
-
+#pragma once
 
 #include <simgear/compiler.h>
 
@@ -202,6 +177,8 @@ const float SG_RADIANS_TO_DEGREES = 180.0f / SG_PI;
 /** slug/ft3 to kg/m3 */
 #define SG_SLUGFT3_TO_KGPM3   515.379
 
+// difference between 0 degrees Centigrade and Kelvin
+const double SG_DEG_C_OFFSET = 273.15;
 
 /** For divide by zero avoidance, this will be close enough to zero */
 #define SG_EPSILON 0.0000001
@@ -224,4 +201,3 @@ const float SG_RADIANS_TO_DEGREES = 180.0f / SG_PI;
 /** Radius of scenery tiles in m **/
 #define SG_TILE_RADIUS      14000.0
 
-#endif // _SG_CONSTANTS_H
