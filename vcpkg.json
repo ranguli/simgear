@@ -63,5 +63,11 @@
     {
       "name": "zlib"
     }
+  ],
+    "overrides": [
+    {
+        "name": "tinygltf",
+        "version": "2.8.17"
+    }
   ]
 }
