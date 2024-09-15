@@ -20,4 +20,4 @@ nbproject
 compile_commands.json
 .vscode
 .cache
-
+vcpkg_installed/

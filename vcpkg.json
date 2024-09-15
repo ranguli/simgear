@@ -1,0 +1,67 @@
+{
+  "dependencies": [
+    {
+      "name": "boost"
+    },
+    {
+      "name": "crashrpt",
+      "platform": "windows"
+    },
+    {
+      "name": "curl"
+    },
+    {
+      "name": "dbus"
+    },
+    {
+      "name": "expat"
+    },
+    {
+      "name": "ffmpeg"
+    },
+    {
+      "name": "freeglut"
+    },
+    {
+      "name": "freetype"
+    },
+    {
+      "name": "gettext-libintl"
+    },
+    {
+      "name": "libudns",
+      "platform": "linux"
+    },
+    {
+      "name": "libevent"
+    },
+    {
+      "name": "libjpeg-turbo"
+    },
+    {
+      "name": "liblzma"
+    },
+    {
+      "name": "libpng"
+    },
+    {
+      "name": "nlohmann-json"
+    },
+    {
+      "name": "openal-soft"
+    },
+    {
+      "name": "osg"
+    },
+    {
+      "name": "plib",
+      "platform": "!osx"
+    },
+    {
+      "name": "tinygltf"
+    },
+    {
+      "name": "zlib"
+    }
+  ]
+}
