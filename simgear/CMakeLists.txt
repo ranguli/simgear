@@ -113,6 +113,11 @@ else()
     endif(NOT SIMGEAR_HEADLESS)
 endif(SIMGEAR_SHARED)
 
+# vcpkg
+target_include_directories(SimGearCore INTERFACE
+    ${VCPKG_ROOT}/installed/x64-windows/include
+)
+
 target_include_directories(SimGearCore BEFORE PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
@@ -178,8 +183,11 @@ if(NOT SIMGEAR_HEADLESS)
         ZLIB::ZLIB
         ${OPENGL_LIBRARY}
         ${JPEG_LIBRARY}
-        ${FFMPEG_LIBRARIES}
-        FGTinyGLTF)
+        ${FFMPEG_LIBRARIES})
+
+    # Include directories for the tinygltf library
+    target_include_directories(SimGearScene PRIVATE ${TINYGLTF_INCLUDE_DIRS})
+
 
     # ToDo: define an ALIAS target for the sound backend, to get
     # rid of this logic here

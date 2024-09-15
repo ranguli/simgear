@@ -137,6 +137,10 @@ endif ()
 # Setup MSVC 3rd party directories
 include( ConfigureMsvc3rdParty )
 
+# Add package dependencies from vcpkg
+find_package(tinygltf)
+find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+
 if(APPLE)
   find_library(COCOA_LIBRARY Cocoa)
 endif()
