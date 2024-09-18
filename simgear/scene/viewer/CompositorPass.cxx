@@ -155,6 +155,10 @@ PassBuilder::build(Compositor *compositor, const SGPropertyNode *root,
     }
     pass->type = root->getStringValue("type");
     pass->effect_scheme = root->getStringValue("effect-scheme");
+    if (!EffectSchemeSingleton::instance()->is_valid_scheme(pass->effect_scheme, options)) {
+        SG_LOG(SG_INPUT, SG_WARN, "PassBuilder::build: Pass " << pass->render_order << " ("
+               << pass->name << ") uses unknown Effect scheme \"" << pass->effect_scheme << "\"");
+    }
     pass->render_once = root->getBoolValue("render-once", false);
 
     const SGPropertyNode *p_render_condition = root->getChild("render-condition");

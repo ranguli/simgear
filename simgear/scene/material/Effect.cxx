@@ -208,6 +208,100 @@ void UniformFactoryImpl::updateListeners( SGPropertyNode* propRoot )
 	}
 }
 
+bool EffectSchemeSingleton::is_valid_scheme(const std::string& name,
+                                            const SGReaderWriterOptions* options)
+{
+    if (!_schemes_xml_read) {
+        read_schemes_xml(options);
+    }
+    if (name.empty()) {
+        // Empty Effect scheme means the default scheme, which is a valid scheme
+        return true;
+    }
+    auto it = std::find_if(_schemes.begin(), _schemes.end(),
+                           [&name](const EffectScheme& scheme) {
+                               return name == scheme.name;
+                           });
+    if (it != _schemes.end()) {
+        return true;
+    }
+    return false;
+}
+
+void EffectSchemeSingleton::maybe_merge_fallbacks(Effect* effect,
+                                                  const SGReaderWriterOptions* options)
+{
+    if (!_schemes_xml_read) {
+        read_schemes_xml(options);
+    }
+    for (const auto& scheme : _schemes) {
+        if (!scheme.fallback) {
+            // The scheme does not have a fallback effect, skip
+            continue;
+        }
+        const std::string& scheme_name = scheme.name;
+        std::vector<SGPropertyNode_ptr> techniques = effect->root->getChildren("technique");
+        auto it = std::find_if(techniques.begin(), techniques.end(),
+                               [&scheme_name](const SGPropertyNode_ptr& tniq) {
+                                   return tniq->getStringValue("scheme") == scheme_name;
+                               });
+        // Only merge the fallback effect if we haven't found a technique
+        // implementing the scheme.
+        if (it == techniques.end()) {
+            SGPropertyNode_ptr new_root = new SGPropertyNode;
+            mergePropertyTrees(new_root, effect->root, scheme.fallback->root);
+            effect->root = new_root;
+            effect->parametersProp = new_root->getChild("parameters");
+            // Copy the generator only if it doesn't exist yet
+            if (effect->generator.empty()) {
+                effect->generator = scheme.fallback->generator;
+            }
+        }
+    }
+}
+
+void EffectSchemeSingleton::read_schemes_xml(const SGReaderWriterOptions* options)
+{
+    SGPropertyNode_ptr scheme_list = new SGPropertyNode;
+    const std::string schemes_file{"Effects/schemes.xml"};
+    std::string abs_file_name = SGModelLib::findDataFile(schemes_file, options);
+    if (abs_file_name.empty()) {
+        SG_LOG(SG_INPUT, SG_ALERT, "Could not find Effect schemes file \"" << schemes_file << "\"");
+        return;
+    }
+    try {
+        readProperties(abs_file_name, scheme_list, 0, true);
+    } catch (sg_io_exception& e) {
+        SG_LOG(SG_INPUT, SG_ALERT, "Error reading Effect schemes file \""
+               << schemes_file << "\": " << e.getFormattedMessage());
+        return;
+    }
+
+    PropertyList p_schemes = scheme_list->getChildren("scheme");
+    for (const auto& p_scheme : p_schemes) {
+        EffectScheme scheme;
+        scheme.name = p_scheme->getStringValue("name");
+        if (scheme.name.empty()) {
+            SG_LOG(SG_INPUT, SG_ALERT, "Scheme with index " << p_scheme->getIndex()
+                   << " does not have a name. Skipping...");
+            continue;
+        }
+        std::string fallback_name = p_scheme->getStringValue("fallback");
+        if (!fallback_name.empty()) {
+            // Read the fallback Effect
+            scheme.fallback = makeEffect(fallback_name, false, options);
+            if (!scheme.fallback.valid()) {
+                SG_LOG(SG_INPUT, SG_ALERT, "Scheme fallback was provided (" << fallback_name
+                       << ") for scheme \"" << scheme.name << "\", but it could not be built. Skipping...");
+                continue;
+            }
+        }
+        scheme.description = p_scheme->getStringValue("description");
+        _schemes.push_back(scheme);
+    }
+    _schemes_xml_read = true;
+}
+
 
 Effect::Effect()
     : _cache(0), _isRealized(false)
@@ -1390,7 +1484,12 @@ void buildTechnique(Effect* effect, const SGPropertyNode* prop,
     // REVIEW: Memory Leak - 13,248 bytes in 72 blocks are indirectly lost
     Technique* tniq = new Technique;
     effect->techniques.push_back(tniq);
-    tniq->setScheme(prop->getStringValue("scheme"));
+    std::string scheme = prop->getStringValue("scheme");
+    tniq->setScheme(scheme);
+    if (!EffectSchemeSingleton::instance()->is_valid_scheme(scheme, options)) {
+        SG_LOG(SG_INPUT, SG_ALERT, "technique scheme \"" << scheme << "\" is undefined");
+        tniq->setAlwaysValid(false);
+    }
     const SGPropertyNode* predProp = prop->getChild("predicate");
     if (!predProp) {
         tniq->setAlwaysValid(true);
@@ -1494,53 +1593,6 @@ bool makeParametersFromStateSet(SGPropertyNode* effectRoot, const StateSet* ss)
     return true;
 }
 
-SGPropertyNode_ptr schemeList;
-
-void mergeSchemesFallbacks(Effect *effect, const SGReaderWriterOptions *options)
-{
-    if (!schemeList) {
-        schemeList = new SGPropertyNode;
-        const string schemes_file("Effects/schemes.xml");
-        string absFileName
-            = SGModelLib::findDataFile(schemes_file, options);
-        if (absFileName.empty()) {
-            SG_LOG(SG_INPUT, SG_ALERT, "Could not find '" << schemes_file << "'");
-            return;
-        }
-        try {
-            readProperties(absFileName, schemeList, 0, true);
-        } catch (sg_io_exception& e) {
-            SG_LOG(SG_INPUT, SG_ALERT, "Error reading '" << schemes_file <<
-                   "': " << e.getFormattedMessage());
-            return;
-        }
-    }
-
-    PropertyList p_schemes = schemeList->getChildren("scheme");
-    for (const auto &p_scheme : p_schemes) {
-        string scheme_name   = p_scheme->getStringValue("name");
-        string fallback_name = p_scheme->getStringValue("fallback");
-        if (scheme_name.empty() || fallback_name.empty())
-            continue;
-        vector<SGPropertyNode_ptr> techniques = effect->root->getChildren("technique");
-        auto it = std::find_if(techniques.begin(), techniques.end(),
-                               [&scheme_name](const SGPropertyNode_ptr &tniq) {
-                                   return tniq->getStringValue("scheme") == scheme_name;
-                               });
-        // Only merge the fallback effect if we haven't found a technique
-        // implementing the scheme
-        if (it == techniques.end()) {
-            ref_ptr<Effect> fallback = makeEffect(fallback_name, false, options);
-            if (fallback.valid()) {
-                SGPropertyNode *new_root = new SGPropertyNode;
-                mergePropertyTrees(new_root, effect->root, fallback->root);
-                effect->root = new_root;
-                effect->parametersProp = effect->root->getChild("parameters");
-            }
-        }
-    }
-}
-
 // Walk the techniques property tree, building techniques and
 // passes.
 bool Effect::realizeTechniques(const SGReaderWriterOptions* options)
@@ -1550,7 +1602,7 @@ bool Effect::realizeTechniques(const SGReaderWriterOptions* options)
 
     simgear::ErrorReportContext ec{"effect", getName()};
 
-    mergeSchemesFallbacks(this, options);
+    EffectSchemeSingleton::instance()->maybe_merge_fallbacks(this, options);
 
     PropertyList tniqList = root->getChildren("technique");
     for (PropertyList::iterator itr = tniqList.begin(), e = tniqList.end();

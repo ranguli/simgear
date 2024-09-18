@@ -14,6 +14,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+#include <tuple>
 #ifndef SIMGEAR_EFFECT_HXX
 #define SIMGEAR_EFFECT_HXX 1
 
@@ -209,6 +210,28 @@ private:
 };
 
 typedef Singleton<UniformFactoryImpl> UniformFactory;
+
+class EffectSchemeSingleton : public Singleton<EffectSchemeSingleton> {
+public:
+    EffectSchemeSingleton() = default;
+
+    // Check if a given scheme is defined in schemes.xml
+    bool is_valid_scheme(const std::string& name, const SGReaderWriterOptions* options);
+
+    // Merge the fallback effects if needed. This function must be called at
+    // technique realization after the inheritance chain has been processed.
+    void maybe_merge_fallbacks(Effect* effect, const SGReaderWriterOptions* options);
+private:
+    struct EffectScheme {
+        std::string name, description;
+        osg::ref_ptr<Effect> fallback;
+    };
+
+    void read_schemes_xml(const SGReaderWriterOptions* options);
+
+    bool _schemes_xml_read{false};
+    std::vector<EffectScheme> _schemes;
+};
 
 }
 #endif
