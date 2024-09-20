@@ -11,11 +11,13 @@ variables:
   # complains about INTERFACE_INCLUDE_DIRECTORIES being the source dir
   WIN_FG_DIR: $CI_BUILDS_DIR\flightgear
 
+  MAC_IMAGE: macos-14-xcode-15
+
   # FIXME detect this using vswhere 
-  VS160COMNTOOLS: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\Common7\\Tools"
-  VCVARSALL: "${VS160COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
-  VCVARSPLATFORM: "x64"
-  VCVARSVERSION: "14.29.30133"
+  # VS160COMNTOOLS: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\Common7\\Tools"
+  # VCVARSALL: "${VS160COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
+  # VCVARSPLATFORM: "x64"
+  # VCVARSVERSION: "14.29.30133"
 
 
 linux-build:
@@ -39,9 +41,11 @@ linux-build:
 windows-build:
   stage: build
   tags:
-    - windows
+    - saas-windows-medium-amd64
   before_script:
-    - Invoke-Expression -Command .gitlab\vcvarsall.ps1
+    - C:\"Program Files (x86)\Microsoft Visual Studio"\2022\BuildTools\Common7\Tools\Launch-VsDevShell -SkipAutomaticLocation -Arch amd64
+    - cmake --version
+    - ninja --version
 
   # relocate our upstream deps outside the source dir, otherwise
   # CMake gets sad.
@@ -73,7 +77,7 @@ macos-build:
   stage: build
   tags:
     - saas-macos-medium-m1
-  image: macos-12-xcode-14
+  image: $MAC_IMAGE
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule"
   before_script:
@@ -104,7 +108,7 @@ macos-x64-build:
   stage: build
   tags:
     - saas-macos-medium-m1
-  image: macos-12-xcode-14
+  image: $MAC_IMAGE
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule"
   before_script:
