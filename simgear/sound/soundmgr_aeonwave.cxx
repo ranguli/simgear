@@ -77,7 +77,7 @@ public:
     
     void update_pos_and_orientation()
     {
-        SGVec3d sgv_at = _orientation.backTransform(-SGVec3d::e3());
+        SGVec3d sgv_at = _orientation.backTransform(SGVec3d::e3());
         SGVec3d sgv_up = _orientation.backTransform(SGVec3d::e2());
         SGVec3d pos = SGVec3d::zeros();
 

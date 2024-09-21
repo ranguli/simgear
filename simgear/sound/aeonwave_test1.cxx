@@ -11,42 +11,44 @@
 
 #include <aax/aeonwave.hpp>
 
-#define AUDIOFILE	SRC_DIR"/jet.wav"
+#define AUDIOFILE	SRC_DIR "/jet.wav"
 
-bool testForError(aax::AeonWave& p, std::string s)
+#define TEST(a, b)	testForError(a, b, __LINE__)
+
+bool testForError(aax::AeonWave& p, std::string s, int line)
 {
     enum aaxErrorType error = p.error_no();
     if (error != AAX_ERROR_NONE) {
-       std::cout << "AeonWave Error: "
-                 << aax::strerror(error) << " at " << s << std::endl;
+       std::cout << "AeonWave Error at line " << line << ": " << std::endl
+                 << "    " << aax::strerror(error) << " at " << s << std::endl;
         return true;
     }
     return false;
 }
-
 
 int main( int argc, char *argv[] ) 
 {
     aax::AeonWave aax = aax::AeonWave(AAX_MODE_WRITE_STEREO);
 
     aax.set(AAX_INITIALIZED);
-    testForError(aax, "initialization");
+    aax.error_no(); // clear the error
 
     aax.set(AAX_PLAYING);
-    testForError(aax, "mixer palying");
+    TEST(aax, "mixer playing");
+
+    aax::Buffer& buffer = aax.buffer(AUDIOFILE);
+    TEST(aax, "buffer loading");
 
     aax::Emitter emitter(AAX_ABSOLUTE);
     aax.add(emitter);
-    testForError(aax, "emitter registering");
+    TEST(aax, "emitter registering");
 
-    aax::Emitter emitter2;
-    emitter2 = aax::Emitter(AAX_ABSOLUTE);
-    aax.add(emitter2);
-    testForError(aax, "emitter reasignment");
+    emitter.add(buffer);
+    TEST(aax, "emitter add buffer");
 
     aax::dsp dsp;
     dsp = aax::dsp(aax, AAX_VOLUME_FILTER);
-    dsp.set(AAX_GAIN, 0.0f);
+    dsp.set(AAX_GAIN, 1.0f);
     aax.set(dsp);
 
     dsp = aax::dsp(aax, AAX_DISTANCE_FILTER);
@@ -58,7 +60,7 @@ int main( int argc, char *argv[] )
     dsp.set(AAX_SOUND_VELOCITY, 340.3f);
     aax.set(dsp);
 
-    testForError(aax, "scenery setup");
+    TEST(aax, "scenery setup");
 
     std::string _vendor = (const char *)aax.info(AAX_VENDOR_STRING);
     std::string _renderer = (const char *)aax.info(AAX_RENDERER_STRING);
@@ -77,6 +79,6 @@ int main( int argc, char *argv[] )
     aax.set(AAX_PLAYING);
     emitter.set(AAX_PLAYING);
     aax.set(AAX_UPDATE);
-     
+
     return 0;
 }

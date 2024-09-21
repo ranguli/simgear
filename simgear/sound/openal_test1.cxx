@@ -24,12 +24,21 @@
 # include <AL/alc.h>
 #endif
 
-#define AUDIOFILE	SRC_DIR"/jet.wav"
+#define AUDIOFILE	SRC_DIR "/jet.wav"
 
 #include <simgear/sound/readwav.hxx>
 #include <simgear/debug/logstream.hxx>
 #include <simgear/misc/sg_path.hxx>
 #include <simgear/structure/exception.hxx>
+
+#include "sample.hxx"
+
+#ifndef AL_FORMAT_MONO_MULAW_EXT
+# define AL_FORMAT_MONO_MULAW_EXT	0x10014
+#endif
+#ifndef AL_FORMAT_MONO_IMA4
+# define AL_FORMAT_MONO_IMA4		0x1300
+#endif
 
 static void print_openal_error( ALuint error ) {
     if ( error == AL_INVALID_NAME ) {
@@ -47,6 +56,37 @@ static void print_openal_error( ALuint error ) {
     }
 }
 
+ALenum getALFormat(unsigned int audioFormat)
+{
+    ALenum format = AL_NONE;
+
+    switch (audioFormat)
+    {
+    case SG_SAMPLE_MONO8:
+        format = AL_FORMAT_MONO8;
+        break;
+    case SG_SAMPLE_MONO16:
+        format = AL_FORMAT_MONO16;
+        break;
+    case SG_SAMPLE_STEREO8:
+        format = AL_FORMAT_STEREO8;
+        break;
+    case SG_SAMPLE_STEREO16:
+        format = AL_FORMAT_STEREO16;
+        break;
+    case SG_SAMPLE_ADPCM:
+        format = AL_FORMAT_MONO_IMA4;
+       break;
+    case SG_SAMPLE_MULAW:
+        format = AL_FORMAT_MONO_MULAW_EXT;
+        break;
+    default:
+        break;
+    }
+
+    return format;
+}
+
 ALuint createBufferFromFile(const SGPath& path)
 {
   ALuint buffer = -1;
@@ -54,21 +94,23 @@ ALuint createBufferFromFile(const SGPath& path)
   unsigned int format;
   unsigned int block_align;
   ALsizei size;
+  ALenum err;
   ALfloat sampleFrequency;
   ALvoid* data = simgear::loadWAVFromFile(path, format, size, sampleFrequency, block_align);
   assert(data);
 
   alGenBuffers(1, &buffer);
-  if (alGetError() != AL_NO_ERROR) {
+  if ((err = alGetError()) != AL_NO_ERROR) {
     free(data);
-    throw sg_io_exception("OpenAL buffer allocation failed", sg_location(path.str()));
+    throw sg_io_exception("OpenAL buffer allocation failed" + std::string(alGetString(err)), sg_location(path.str()));
   }
 
-  alBufferData (buffer, format, data, size, (ALsizei) sampleFrequency);
-  if (alGetError() != AL_NO_ERROR) {
+printf("format: %x\n", format);
+  alBufferData (buffer, getALFormat(format), data, size, (ALsizei) sampleFrequency);
+  if ((err = alGetError()) != AL_NO_ERROR) {
     alDeleteBuffers(1, &buffer);
     free(data);
-    throw sg_io_exception("OpenAL setting buffer data failed", sg_location(path.str()));
+    throw sg_io_exception("OpenAL setting buffer data failed: " + std::string(alGetString(err)), sg_location(path.str()));
   }
 #endif
   return buffer;
