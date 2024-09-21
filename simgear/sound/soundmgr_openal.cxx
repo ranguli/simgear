@@ -54,6 +54,7 @@
 #else
 # include <AL/al.h>
 # include <AL/alc.h>
+# include <AL/alext.h>
 #endif
 
 using std::vector;
@@ -792,6 +793,10 @@ void SGSoundMgr::update_sample_config( SGSoundSample *sample, SGVec3d& position,
         alSourcef( source, AL_MAX_DISTANCE, sample->get_max_dist() );
         alSourcef( source, AL_REFERENCE_DISTANCE,
                            sample->get_reference_dist() );
+#if AL_EXT_SOURCE_RADIUS
+        alSourcef( source, AL_SOURCE_RADIUS,
+                           0.5f*sample->get_reference_dist() );
+#endif
         testForError("distance rolloff");
     }
 }
