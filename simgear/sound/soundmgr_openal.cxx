@@ -54,7 +54,6 @@
 #else
 # include <AL/al.h>
 # include <AL/alc.h>
-# include <AL/alext.h>
 #endif
 
 using std::vector;
@@ -64,6 +63,10 @@ using std::vector;
 
 #ifndef ALC_ALL_DEVICES_SPECIFIER
 # define ALC_ALL_DEVICES_SPECIFIER	0x1013
+#endif
+#ifndef AL_EXT_SOURCE_RADIUS
+#define AL_EXT_SOURCE_RADIUS 1
+#define AL_SOURCE_RADIUS		0x1031
 #endif
 #ifndef AL_FORMAT_MONO_MULAW_EXT
 # define AL_FORMAT_MONO_MULAW_EXT	0x10014
@@ -103,6 +106,7 @@ public:
     {
         _at_up_vec[0] = 0.0; _at_up_vec[1] = 0.0; _at_up_vec[2] = -1.0;
         _at_up_vec[3] = 0.0; _at_up_vec[4] = 1.0; _at_up_vec[5] = 0.0;
+        _source_radius = alIsExtensionPresent((ALchar *)"AL_EXT_SOURCE_RADIUS");
     }
     
     void update_pos_and_orientation()
@@ -144,6 +148,7 @@ public:
     ALfloat _at_up_vec[6];
 
     bool _bad_doppler = false;
+    bool _source_radius = false;
     
     sample_group_map _sample_groups;
     buffer_map _buffers;
@@ -158,8 +163,6 @@ public:
 SGSoundMgr::SGSoundMgr() {
     d.reset(new SoundManagerPrivate);
     d->_base_pos = SGVec3d::fromGeod(_geod_pos);
-
-    _block_support = alIsExtensionPresent((ALchar *)"AL_SOFT_block_alignment");
 }
 
 // destructor
@@ -237,6 +240,8 @@ void SGSoundMgr::init()
 
     alDopplerFactor(1.0f);
     alDopplerVelocity(_sound_velocity);
+
+    _block_support = alIsExtensionPresent((ALchar *)"AL_SOFT_block_alignment");
 
     // gain = AL_REFERENCE_DISTANCE / (AL_REFERENCE_DISTANCE +
     //        AL_ROLLOFF_FACTOR * (distance - AL_REFERENCE_DISTANCE));
@@ -793,10 +798,10 @@ void SGSoundMgr::update_sample_config( SGSoundSample *sample, SGVec3d& position,
         alSourcef( source, AL_MAX_DISTANCE, sample->get_max_dist() );
         alSourcef( source, AL_REFERENCE_DISTANCE,
                            sample->get_reference_dist() );
-#if AL_EXT_SOURCE_RADIUS
-        alSourcef( source, AL_SOURCE_RADIUS,
-                           0.5f*sample->get_reference_dist() );
-#endif
+        if (d->_source_radius) {
+            alSourcef( source, AL_SOURCE_RADIUS,
+                               0.5f*sample->get_reference_dist() );
+        }
         testForError("distance rolloff");
     }
 }
