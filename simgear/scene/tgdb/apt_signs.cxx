@@ -437,6 +437,10 @@ void AirportSignBuilder::addSign(const SGGeod& pos, double heading, const std::s
 
         if (! newmat.empty()) {
             material = d->materials->find(newmat, pos);
+            if (!material) {
+                SG_LOG(SG_TERRAIN, SG_INFO, SIGN "could not find material '" << newmat << "'.");
+                continue;
+            }
             newmat.clear();
         }
 
