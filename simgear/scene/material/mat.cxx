@@ -590,6 +590,7 @@ void SGMaterial::buildEffectProperties(const SGReaderWriterOptions* options)
         SGPropertyNode* effectParamProp = effectProp->getChild("parameters", 0);
         for (unsigned int i = 0; i < matState.texture_paths.size(); i++) {
             SGPropertyNode* texProp = makeChild(effectParamProp, "texture", matState.texture_paths[i].second);
+            makeChild(texProp, "type")->setStringValue("2d");
             makeChild(texProp, "image")->setStringValue(matState.texture_paths[i].first);
             makeChild(texProp, "filter")
                 ->setStringValue(mipmap ? "linear-mipmap-linear" : "nearest");
