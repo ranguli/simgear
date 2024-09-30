@@ -76,7 +76,7 @@ bool SGMaterialLib::load( const SGPath &fg_root, const SGPath& mpath,
 
     SG_LOG( SG_INPUT, SG_INFO, "Reading materials from " << mpath );
     try {
-        readProperties( mpath, &materialblocks );
+        readProperties( mpath, &materialblocks, 0, true );
     } catch (const sg_exception &ex) {
         SG_LOG( SG_INPUT, SG_ALERT, "Error reading materials: "
                 << ex.getMessage() );
