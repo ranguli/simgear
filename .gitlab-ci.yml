@@ -146,28 +146,16 @@ macos-x64-build:
     paths:
       - $BUILD_DIR
 
-# test:doc:
-#   image: registry.gitlab.com/ahayzen/home-dash-alpha-g1
-#   stage: test
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE != "schedule"
-#   script:
-#     - cargo test --all-features --doc
-#     - cargo test --all-features --all-targets
-#   cache:
-#     paths:
-#       - .cargo
-#     policy: pull
-#   dependencies:
-#     - build
-
-
 # run tests using the binary built before
 test:
   image: registry.gitlab.com/flightgear/flightgear
   stage: test
   needs:
-    - job: linux-build
+    # needed so we have the OSG libs
+    - project: flightgear/openscenegraph
+      job: linux-build
+      ref: $OSG_REF
+      artifacts: true
   script:
     - cd $BUILD_DIR
     # some tests need OSG libraries
