@@ -666,14 +666,14 @@ void GridLayout::doLayout(const SGRecti& geom)
 
         // note this is building the rect as a min,max pair, and not as min+(w,h)
         // as we normally do.
-        const auto geom = SGRecti{
-            SGVec2i{_columns.at(loc.x()).calcStart,
-                    _rows.at(loc.y()).calcStart},
-            SGVec2i{endCol.calcStart + endCol.calcSize,
-                    endRow.calcStart + endRow.calcSize},
+        const auto newGeom = SGRecti{
+            SGVec2i{_columns.at(loc.x()).calcStart + geom.x(),
+                    _rows.at(loc.y()).calcStart + geom.y()},
+            SGVec2i{endCol.calcStart + endCol.calcSize + geom.x(),
+                    endRow.calcStart + endRow.calcSize + geom.y()},
         };
         // set geometry : alignment is handled internally
-        i.layout_item->setGeometry(geom);
+        i.layout_item->setGeometry(newGeom);
     }
 }
 
