@@ -9,6 +9,8 @@ variables:
   # complains about INTERFACE_INCLUDE_DIRECTORIES being the source dir
   WIN_FG_DIR: $CI_BUILDS_DIR\flightgear
   MAC_IMAGE: macos-14-xcode-15
+  OSG_REF: fgfs-osg-36-2
+  BRANCH_REF: next
 
 linux-build:
   image: registry.gitlab.com/flightgear/flightgear
@@ -17,10 +19,16 @@ linux-build:
     - if: $CI_PIPELINE_SOURCE != "schedule"
   script:
     - cmake -B $BUILD_DIR -S $CI_PROJECT_DIR -G Ninja 
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-      -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR
+      -D CMAKE_BUILD_TYPE=RelWithDebInfo 
+      -D CMAKE_INSTALL_PREFIX=$PREFIX_DIR
+      -D CMAKE_PREFIX_PATH=$CI_PROJECT_DIR/osg-dist
     - cmake --build $BUILD_DIR
     - cmake --build $BUILD_DIR --target install
+  needs:
+    - project: flightgear/openscenegraph
+      job: linux-build
+      ref: $OSG_REF
+      artifacts: true
   artifacts:
     paths:
       - $PREFIX_DIR
@@ -54,7 +62,7 @@ windows-build:
   needs:
     - project: flightgear/openscenegraph
       job: windows_build
-      ref: fgfs-osg-36-2
+      ref: $OSG_REF
       artifacts: true
     - project: flightgear/windows-3rd-party
       job: windows_build_msvc140
@@ -89,7 +97,7 @@ macos-build:
   needs:
     - project: flightgear/openscenegraph
       job: macos-build
-      ref: fgfs-osg-36-2
+      ref: $OSG_REF
       artifacts: true
   artifacts:
     paths:
@@ -124,7 +132,7 @@ macos-x64-build:
   needs:
     - project: flightgear/openscenegraph
       job: macos-build
-      ref: fgfs-osg-36-2
+      ref: $OSG_REF
       artifacts: true
   artifacts:
     paths:
