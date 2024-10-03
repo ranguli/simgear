@@ -170,7 +170,9 @@ test:
     - job: linux-build
   script:
     - cd $BUILD_DIR
-    - ctest
+    # some tests need OSG libraries
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/osg-dist/lib
+    - ctest --output-on-failure
   cache:
     paths:
       - $BUILD_DIR
