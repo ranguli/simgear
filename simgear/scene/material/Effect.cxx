@@ -1447,29 +1447,46 @@ struct DepthBuilder : public PassAttributeBuilder
     {
         if (!isAttributeActive(effect, prop))
             return;
-        ref_ptr<Depth> depth = new Depth;
-        const SGPropertyNode* pfunc
-            = getEffectPropertyChild(effect, prop, "function");
-        if (pfunc) {
-            Depth::Function func = Depth::LESS;
+
+        Depth::Function func = Depth::LESS;
+        const SGPropertyNode* pfunc = getEffectPropertyChild(effect, prop, "function");
+        if (pfunc)
             findAttr(depthFunction, pfunc, func);
-            depth->setFunction(func);
-        }
-        const SGPropertyNode* pnear
-            = getEffectPropertyChild(effect, prop, "near");
+
+        double near = 0.0;
+        const SGPropertyNode* pnear = getEffectPropertyChild(effect, prop, "near");
         if (pnear)
-            depth->setZNear(pnear->getValue<double>());
-        const SGPropertyNode* pfar
-            = getEffectPropertyChild(effect, prop, "far");
+            near = pnear->getValue<double>();
+
+        double far = 1.0;
+        const SGPropertyNode* pfar = getEffectPropertyChild(effect, prop, "far");
         if (pfar)
-            depth->setZFar(pfar->getValue<double>());
-        const SGPropertyNode* pmask
-            = getEffectPropertyChild(effect, prop, "write-mask");
+            far = pfar->getValue<double>();
+
+        bool mask = true;
+        const SGPropertyNode* pmask = getEffectPropertyChild(effect, prop, "write-mask");
         if (pmask)
-            depth->setWriteMask(pmask->getValue<bool>());
-        const SGPropertyNode* penabled
-            = getEffectPropertyChild(effect, prop, "enabled");
-        bool enabled = ( penabled == 0 || penabled->getBoolValue() );
+            mask = pmask->getValue<bool>();
+
+        ref_ptr<Depth> depth;
+        // Try to get a cached depth state attribute
+        if (func == Depth::LESS && equivalent(near, 0.0) && equivalent(far, 1.0))  {
+            if (mask) {
+                depth = StateAttributeFactory::instance()->getStandardDepth();
+            } else {
+                depth = StateAttributeFactory::instance()->getStandardDepthWritesDisabled();
+            }
+        } else {
+            depth = new Depth;
+            depth->setFunction(func);
+            depth->setZNear(near);
+            depth->setZFar(far);
+            depth->setWriteMask(mask);
+        }
+
+        const SGPropertyNode* penabled = getEffectPropertyChild(effect, prop, "enabled");
+        bool enabled = (penabled == 0 || penabled->getBoolValue());
+
         pass->setAttributeAndModes(depth.get(), enabled ? osg::StateAttribute::ON : osg::StateAttribute::OFF);
     }
 };
