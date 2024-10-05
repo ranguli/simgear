@@ -54,13 +54,15 @@ StateAttributeFactory::StateAttributeFactory()
     // White texture
     osg::ref_ptr<osg::Image> whiteImage = new osg::Image;
     whiteImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-    unsigned char* whiteImageBytes = whiteImage->data(0, 0);
+    unsigned char* whiteImageBytes = whiteImage->data();
     whiteImageBytes[0] = 255;
     whiteImageBytes[1] = 255;
     whiteImageBytes[2] = 255;
     whiteImageBytes[3] = 255;
     _whiteTexture = new osg::Texture2D;
     _whiteTexture->setImage(whiteImage);
+    _whiteTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    _whiteTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     _whiteTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
     _whiteTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
     _whiteTexture->setDataVariance(osg::Object::STATIC);
@@ -68,13 +70,15 @@ StateAttributeFactory::StateAttributeFactory()
     // Transparent texture
     osg::ref_ptr<osg::Image> transparentImage = new osg::Image;
     transparentImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-    unsigned char* transparentImageBytes = transparentImage->data(0, 0);
+    unsigned char* transparentImageBytes = transparentImage->data();
     transparentImageBytes[0] = 255;
     transparentImageBytes[1] = 255;
     transparentImageBytes[2] = 255;
     transparentImageBytes[3] = 0;
     _transparentTexture = new osg::Texture2D;
     _transparentTexture->setImage(transparentImage);
+    _transparentTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    _transparentTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     _transparentTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
     _transparentTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
     _transparentTexture->setDataVariance(osg::Object::STATIC);
@@ -82,15 +86,15 @@ StateAttributeFactory::StateAttributeFactory()
     // And a null normal map texture
     osg::ref_ptr<osg::Image> nullNormalMapImage = new osg::Image;
     nullNormalMapImage->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
-    unsigned char* nullNormalMapBytes = nullNormalMapImage->data(0, 0);
+    unsigned char* nullNormalMapBytes = nullNormalMapImage->data();
     nullNormalMapBytes[0] = 128;
     nullNormalMapBytes[1] = 128;
     nullNormalMapBytes[2] = 255;
     nullNormalMapBytes[3] = 255;
     _nullNormalmapTexture = new osg::Texture2D;
     _nullNormalmapTexture->setImage(nullNormalMapImage);
-    _nullNormalmapTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
-    _nullNormalmapTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    _nullNormalmapTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    _nullNormalmapTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     _nullNormalmapTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
     _nullNormalmapTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
     _nullNormalmapTexture->setDataVariance(osg::Object::STATIC);
