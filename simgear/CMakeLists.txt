@@ -57,6 +57,7 @@ if(SIMGEAR_SHARED)
     set_property(TARGET SimGearCore PROPERTY VERSION   ${SIMGEAR_VERSION})
     set_property(TARGET SimGearCore PROPERTY SOVERSION ${SIMGEAR_SOVERSION})
 
+        
 
     if(NOT SIMGEAR_HEADLESS)
         add_library(SimGearScene SHARED ${sceneSources})
@@ -117,6 +118,8 @@ target_include_directories(SimGearCore BEFORE PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
 
+target_precompile_headers(SimGearCore PRIVATE 
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/simgear_precompile.h>")
 # for simgear_config.h
 target_include_directories(SimGearCore PRIVATE ${PROJECT_BINARY_DIR}/simgear)
 
@@ -138,6 +141,12 @@ endif()
 if (ENABLE_RTI)
     target_sources(SimGearCore PRIVATE $<TARGET_OBJECTS:rti> $<TARGET_OBJECTS:rti13>)
     target_link_libraries(SimGearCore PRIVATE PkgConfig::RTI)
+endif()
+
+
+if (APPLE)
+    # PCH doesn't work for Objective-C++
+    set_property(SOURCE misc/CocoaHelpers.mm PROPERTY SKIP_PRECOMPILE_HEADERS ON)
 endif()
 
 # all of these we keep privately
@@ -167,6 +176,11 @@ if(NOT SIMGEAR_HEADLESS)
         OSG::osgTerrain 
         OSG::osgParticle
         OSG::osgViewer
+    )
+
+    target_precompile_headers(SimGearScene PRIVATE 
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/simgear_precompile.h>"
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/simgear_scene_precompile.h>"
     )
 
     if(HAVE_INTTYPES_H)

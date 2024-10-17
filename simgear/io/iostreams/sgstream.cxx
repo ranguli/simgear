@@ -20,6 +20,7 @@
 //
 // $Id$
 
+#include <ios>
 #include <simgear_config.h>
 #include <simgear/compiler.h>
 #include <string>
@@ -149,7 +150,7 @@ skipcomment( istream& in )
     while ( in )
     {
 	// skip whitespace
-	in >> skipws;
+	in >> std::skipws;
 
 	char c;
 	if ( in.get( c ) && c != '#' )
