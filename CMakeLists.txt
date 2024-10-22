@@ -1,12 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
-
-if(POLICY CMP0072)
-  cmake_policy(SET CMP0072 NEW)
-endif()
-
-if(POLICY CMP0093)
-  cmake_policy(SET CMP0093 NEW)
-endif()
+cmake_minimum_required (VERSION 3.20)
 
 if(POLICY CMP0145)
   cmake_policy(SET CMP0145 NEW)
@@ -16,7 +8,10 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
-message(STATUS "CMAKE Build type: ${CMAKE_BUILD_TYPE}")
+if (CMAKE_BUILD_TYPE)
+  message(STATUS "CMAKE Build type: ${CMAKE_BUILD_TYPE}")
+endif()
+
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Debug' as none was specified.")
@@ -47,7 +42,7 @@ string(STRIP ${versionFile} SIMGEAR_VERSION)
 project(SimGear VERSION ${SIMGEAR_VERSION} LANGUAGES C CXX)
 
 # add a dependency on the version file
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS version)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS simgear-version)
 
 set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
 
@@ -67,13 +62,6 @@ endif(InSourceBuild)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
 include(Packaging)
-
-# Change the default build type to something fast
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
 
 # Determine name of library installation directory, i.e. "lib" vs "lib64", which
 # differs between all Debian-based vs all other Linux distros.
@@ -204,7 +192,6 @@ if (SYSTEM_EXPAT)
     message(STATUS "Requested to use system Expat library, forcing SIMGEAR_SHARED to true")
     set(SIMGEAR_SHARED ON)
     find_package(EXPAT REQUIRED)
-
 else()
     message(STATUS "Using built-in expat code")
 endif(SYSTEM_EXPAT)
@@ -390,7 +377,9 @@ if(WIN32)
     set( RT_LIBRARY "winmm" )
 endif(WIN32)
 
-message(STATUS "SIMD flags are ${SIMD_COMPILER_FLAGS}")
+if (ENABLE_SIMD)
+  message(STATUS "SIMD flags are ${SIMD_COMPILER_FLAGS}")
+endif()
 
 # append flags, but ensure we don't duplicate them for multi-config generators
 if (CMAKE_CONFIGURATION_TYPES)

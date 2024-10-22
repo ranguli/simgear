@@ -1,65 +1,14 @@
 
 file(WRITE ${PROJECT_BINARY_DIR}/simgear/version.h "#define SIMGEAR_VERSION ${SIMGEAR_VERSION}")
 
-foreach( mylibfolder
-        bucket
-        debug
-        embedded_resources
-        emesary
-        ephemeris
-        io
-        magvar
-        math
-        misc
-        nasal
-        nasal/cppbind
-        props
-        serial
-        std
-        structure
-        threads
-        timing
-        xml
-        package
-    )
-
-    add_subdirectory(${mylibfolder})
-
-endforeach( mylibfolder )
-
-if(NOT SIMGEAR_HEADLESS)
-    add_subdirectory(bvh)
-    add_subdirectory(canvas)
-    add_subdirectory(environment)
-    add_subdirectory(screen)
-    add_subdirectory(scene)
-    add_subdirectory(sound)
-endif(NOT SIMGEAR_HEADLESS)
-
-
-if(ENABLE_RTI)
-    add_subdirectory(hla)
-endif(ENABLE_RTI)
-
-
-set(HEADERS compiler.h constants.h sg_inlines.h ${PROJECT_BINARY_DIR}/simgear/version.h)
-install (FILES ${HEADERS}  DESTINATION include/simgear/)
-
-get_property(coreSources GLOBAL PROPERTY CORE_SOURCES)
-get_property(sceneSources GLOBAL PROPERTY SCENE_SOURCES)
-get_property(publicHeaders GLOBAL PROPERTY PUBLIC_HEADERS)
-
 if(SIMGEAR_SHARED)
-    message(STATUS "Library building mode: SHARED LIBRARIES")
-    add_library(SimGearCore SHARED ${coreSources} ${localExpatSources})
+    add_library(SimGearCore SHARED ${localExpatSources})
 
     set_property(TARGET SimGearCore PROPERTY LINKER_LANGUAGE CXX)
     set_property(TARGET SimGearCore PROPERTY VERSION   ${SIMGEAR_VERSION})
     set_property(TARGET SimGearCore PROPERTY SOVERSION ${SIMGEAR_SOVERSION})
 
-        
-
-    if(NOT SIMGEAR_HEADLESS)
+    if (NOT SIMGEAR_HEADLESS)
         add_library(SimGearScene SHARED ${sceneSources})
         set_property(TARGET SimGearScene PROPERTY LINKER_LANGUAGE CXX)
         set_property(TARGET SimGearScene PROPERTY VERSION   ${SIMGEAR_VERSION})
@@ -69,50 +18,50 @@ if(SIMGEAR_SHARED)
     export_debug_symbols(SimGearCore)
     export_debug_symbols(SimGearScene)
 else()
-    message(STATUS "Library building mode: STATIC LIBRARIES")
-
-	get_property(FG_GROUPS_CORE_SOURCES_C GLOBAL PROPERTY FG_GROUPS_CORE_SOURCES_C)
-	string(REPLACE "@" ";" groups ${FG_GROUPS_CORE_SOURCES_C} )
-	foreach(g ${groups})
-		string(REPLACE "#" ";" g2 ${g})
-		list(GET g2 0 name)
-		list(REMOVE_AT g2 0)
-		source_group("${name}\\Sources" FILES ${g2})
-	endforeach()
-
-	get_property(FG_GROUPS_CORE_SOURCES_H GLOBAL PROPERTY FG_GROUPS_CORE_SOURCES_H)
-	string(REPLACE "@" ";" groups ${FG_GROUPS_CORE_SOURCES_H} )
-	foreach(g ${groups})
-		string(REPLACE "#" ";" g2 ${g})
-		list(GET g2 0 name)
-		list(REMOVE_AT g2 0)
-		source_group("${name}\\Headers" FILES ${g2})
-	endforeach()
-
-    add_library(SimGearCore STATIC ${coreSources})
-
-    if(NOT SIMGEAR_HEADLESS)
-		get_property(FG_GROUPS_SCENE_SOURCES_C GLOBAL PROPERTY FG_GROUPS_SCENE_SOURCES_C)
-		string(REPLACE "@" ";" groups ${FG_GROUPS_SCENE_SOURCES_C} )
-		foreach(g ${groups})
-			string(REPLACE "#" ";" g2 ${g})
-			list(GET g2 0 name)
-			list(REMOVE_AT g2 0)
-			source_group("${name}\\Sources" FILES ${g2})
-		endforeach()
-
-		get_property(FG_GROUPS_SCENE_SOURCES_H GLOBAL PROPERTY FG_GROUPS_SCENE_SOURCES_H)
-		string(REPLACE "@" ";" groups ${FG_GROUPS_SCENE_SOURCES_H} )
-		foreach(g ${groups})
-			string(REPLACE "#" ";" g2 ${g})
-			list(GET g2 0 name)
-			list(REMOVE_AT g2 0)
-			source_group("${name}\\Headers" FILES ${g2})
-		endforeach()
-
-        add_library(SimGearScene STATIC ${sceneSources})
-    endif(NOT SIMGEAR_HEADLESS)
+    add_library(SimGearCore STATIC)
+    if (NOT SIMGEAR_HEADLESS)
+        add_library(SimGearScene STATIC)
+    endif()
 endif(SIMGEAR_SHARED)
+
+foreach( mylibfolder
+        bucket
+        bvh
+        canvas
+        debug
+        embedded_resources
+        emesary
+        environment
+        ephemeris
+        io
+        magvar
+        math
+        misc
+        nasal
+        nasal/cppbind
+        props
+        scene
+        screen
+        serial
+        sound
+        std
+        structure
+        threads
+        timing
+        xml
+        package
+
+    )
+
+    add_subdirectory(${mylibfolder})
+endforeach( mylibfolder )
+
+if(ENABLE_RTI)
+    add_subdirectory(hla)
+endif(ENABLE_RTI)
+
+set(HEADERS compiler.h constants.h sg_inlines.h ${PROJECT_BINARY_DIR}/simgear/version.h)
+install (FILES ${HEADERS}  DESTINATION include/simgear/)
 
 target_include_directories(SimGearCore BEFORE PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
@@ -123,13 +72,8 @@ target_precompile_headers(SimGearCore PRIVATE
 # for simgear_config.h
 target_include_directories(SimGearCore PRIVATE ${PROJECT_BINARY_DIR}/simgear)
 
-target_include_directories(SimGearCore PUBLIC
-  ${Boost_INCLUDE_DIRS})
-
-if (MSVC)
-    message(WARNING "FIXME: setting _HAS_STD_BYTE=0 for SimGear build, this needs to be fixed.")
-    target_compile_definitions(SimGearCore PRIVATE _HAS_STD_BYTE=0)
-endif()
+# we leak Boost in our public APIs :(
+target_include_directories(SimGearCore PUBLIC ${Boost_INCLUDE_DIRS})
 
 install(TARGETS SimGearCore
         EXPORT SimGearTargets
