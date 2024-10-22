@@ -131,3 +131,9 @@ test:
   cache:
     paths:
       - $BUILD_DIR
+
+staging:
+  stage: deploy
+  trigger:
+    project: flightgear/flightgear
+    branch: next
