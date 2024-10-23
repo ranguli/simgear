@@ -42,4 +42,4 @@ This project is distributed under the GNU Lesser General Public License (LGPL) v
 
 ## Acknowledgements
 
-Please see [CONTRIBUTORS.md](CONTRIBUTORS.md) for an (incomplete) overview of the large number of volunteers who have donated their time and expertise to this project.
+For an historical overview of contributions from volunteers who have donated their time and expertise over the year, please see [HISTORY.md](HISTORY.md).
